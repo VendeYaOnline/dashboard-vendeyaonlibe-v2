@@ -1,24 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Store } from "lucide-react";
+import { loginUser } from "@/app/api/request";
+import { useAuthStore } from "@/store/auth.store";
+import { toast } from "sonner";
 
 export function LoginForm() {
+  const router = useRouter();
+  const setAuth = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
+    setError("");
+
+    try {
+      const response = await loginUser({ email, password });
+      const { user } = response.data;
+      setAuth(user);
+      router.push("/");
+      toast.success("Inicio de sesión exitoso");
+    } catch (err: any) {
+      setError("Credenciales incorrectas");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,6 +57,11 @@ export function LoginForm() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
         {/* Email Field */}
         <div className="space-y-2">
           <Label
