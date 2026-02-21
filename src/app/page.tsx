@@ -12,7 +12,8 @@ import { Mensajes } from "@/components/mensajes";
 import { Atributos } from "@/components/atributos";
 import { Usuarios } from "@/components/usuarios";
 import { Galeria } from "@/components/galeria";
-
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+const queryClient = new QueryClient();
 export default function DashboardPage() {
   const [activeView, setActiveView] = useState("ventas-recibidas");
 
@@ -45,8 +46,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <DashboardSidebar activeView={activeView} onViewChange={setActiveView} />
-      <main className="flex-1 lg:ml-64">{renderView()}</main>
+      <QueryClientProvider client={queryClient}>
+        <DashboardSidebar
+          activeView={activeView}
+          onViewChange={setActiveView}
+        />
+        <main className="flex-1 lg:ml-64">{renderView()}</main>
+      </QueryClientProvider>
     </div>
   );
 }

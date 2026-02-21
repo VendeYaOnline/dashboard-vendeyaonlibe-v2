@@ -22,7 +22,6 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${googleSans.variable} antialiased`}>
         {children}
-
         <Toaster />
       </body>
     </html>

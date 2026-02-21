@@ -6,6 +6,10 @@
   font-family: var(--font-google-sans);
 }
 
+button {
+  cursor: pointer;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

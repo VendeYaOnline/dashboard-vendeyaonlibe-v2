@@ -1,114 +1,128 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Settings2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react"
-import { AttributesTable, type Attribute, type AttributeValue } from "./attributes/attributes-table"
-import { CreateAttributeModal } from "./attributes/create-attribute-modal"
-import { AttributeDetailsModal } from "./attributes/attribute-details-modal"
-import { DeleteAttributeModal } from "./attributes/delete-attribute-modal"
-
-const initialAttributes: Attribute[] = [
-  {
-    id: "1",
-    attributeName: "Colores pasteles",
-    attributeType: "Color",
-    value: [
-      { name: "Rojo", color: "#ea669b" },
-      { name: "Azul", color: "#5f78dd" },
-      { name: "Amarillo", color: "#e1e193" },
-      { name: "Verde", color: "#7dd3a8" },
-    ],
-  },
-  {
-    id: "2",
-    attributeName: "Tallas ropa adulto",
-    attributeType: "Talla",
-    value: ["XS", "S", "M", "L", "XL", "XXL"],
-  },
-  {
-    id: "3",
-    attributeName: "Pesos productos",
-    attributeType: "Peso",
-    value: ["250g", "500g", "1kg", "2kg", "5kg"],
-  },
-  {
-    id: "4",
-    attributeName: "Géneros disponibles",
-    attributeType: "Genero",
-    value: ["Masculino", "Femenino", "Niño", "Niña"],
-  },
-  {
-    id: "5",
-    attributeName: "Dimensiones cajas",
-    attributeType: "Dimension",
-    value: ["10x10x10cm", "20x20x15cm", "30x30x20cm"],
-  },
-  {
-    id: "6",
-    attributeName: "Capacidades bebidas",
-    attributeType: "Mililitro",
-    value: ["250ml", "500ml", "750ml", "1L", "2L"],
-  },
-]
-
-const ITEMS_PER_PAGE = 5
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Settings2,
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { AttributesTable } from "./attributes/attributes-table";
+import { CreateAttributeModal } from "./attributes/create-attribute-modal";
+import { AttributeDetailsModal } from "./attributes/attribute-details-modal";
+import { DeleteAttributeModal } from "./attributes/delete-attribute-modal";
+import { useQueryAttribute } from "@/app/api/queries";
+import {
+  useMutationAttribute,
+  useMutationDeleteAttribute,
+  useMutationUpdatedAttribute,
+} from "@/app/api/mutations";
+import { Attribute } from "@/interfaces/attributes";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { UpdateAttributeModal } from "./attributes/update-attribute-modal";
 
 export function Atributos() {
-  const [attributes, setAttributes] = useState<Attribute[]>(initialAttributes)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [selectedAttribute, setSelectedAttribute] = useState<Attribute | null>(null)
-  const [attributeToDelete, setAttributeToDelete] = useState<Attribute | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedAttribute, setSelectedAttribute] = useState<Attribute | null>(
+    null,
+  );
+  const [attributeToDelete, setAttributeToDelete] = useState<Attribute | null>(
+    null,
+  );
 
-  const filteredAttributes = attributes.filter((attr) =>
-    attr.attributeName.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 1000);
 
-  const totalPages = Math.ceil(filteredAttributes.length / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const endIndex = startIndex + ITEMS_PER_PAGE
-  const paginatedAttributes = filteredAttributes.slice(startIndex, endIndex)
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  const {
+    data: attrData,
+    isLoading,
+    isFetching,
+  } = useQueryAttribute(currentPage, debouncedSearch);
+
+  const createMutation = useMutationAttribute();
+  const deleteMutation = useMutationDeleteAttribute();
+  const updateMutation = useMutationUpdatedAttribute();
 
   const handleViewDetails = (attribute: Attribute) => {
-    setSelectedAttribute(attribute)
-    setIsDetailsModalOpen(true)
-  }
+    setSelectedAttribute(attribute);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleEditClick = (attribute: Attribute) => {
+    setSelectedAttribute(attribute);
+    setIsUpdateModalOpen(true);
+  };
 
   const handleDeleteClick = (attribute: Attribute) => {
-    setAttributeToDelete(attribute)
-    setIsDeleteModalOpen(true)
-  }
+    setAttributeToDelete(attribute);
+    setIsDeleteModalOpen(true);
+  };
 
-  const handleConfirmDelete = () => {
-    if (attributeToDelete) {
-      setAttributes(attributes.filter((a) => a.id !== attributeToDelete.id))
-      setIsDeleteModalOpen(false)
-      setAttributeToDelete(null)
+  const handleConfirmDelete = async () => {
+    if (attributeToDelete?.id) {
+      deleteMutation.mutate(attributeToDelete.id, {
+        onSuccess: () => {
+          toast.success("Atributo eliminado correctamente");
+          setIsDeleteModalOpen(false);
+          setAttributeToDelete(null);
+        },
+        onError: () => {
+          toast.error("Error al eliminar el atributo");
+        },
+      });
     }
-  }
+  };
 
-  const handleCreateAttribute = (newAttribute: {
-    attribute_name: string
-    attribute_type: string
-    value: { name: string; color: string }[] | string[]
-  }) => {
-    console.log("[v0] Attribute created:", newAttribute)
+  const handleCreateAttribute = async (newAttribute: Omit<Attribute, "id">) => {
+    createMutation.mutate(newAttribute as Attribute, {
+      onSuccess: () => {
+        toast.success("Atributo creado correctamente");
+        setIsCreateModalOpen(false);
+      },
+      onError: () => {
+        toast.error("Error al crear el atributo");
+      },
+    });
+  };
 
-    const attribute: Attribute = {
-      id: String(Date.now()),
-      attributeName: newAttribute.attribute_name,
-      attributeType: newAttribute.attribute_type,
-      value: newAttribute.value as AttributeValue[] | string[],
-    }
+  const handleUpdateAttribute = async (updatedAttr: Attribute) => {
+    updateMutation.mutate(updatedAttr, {
+      onSuccess: () => {
+        toast.success("Atributo actualizado correctamente");
+        setIsUpdateModalOpen(false);
+        setSelectedAttribute(null);
+      },
+      onError: () => {
+        toast.error("Error al actualizar el atributo");
+      },
+    });
+  };
 
-    setAttributes([attribute, ...attributes])
-  }
+  const attributes = attrData?.attributes || [];
+  const totalPages = attrData?.totalPages || 1;
+  const totalItems = attrData?.total || 0;
+  const startIndex = (currentPage - 1) * 5; // Assuming fixed size handled by backend
+  const endIndex = startIndex + attributes.length;
 
   return (
     <div className="min-h-screen p-4 lg:p-8 pt-20 lg:pt-8">
@@ -117,8 +131,12 @@ export function Atributos() {
           <div className="flex items-center gap-3">
             <Settings2 className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">Atributos</h1>
-              <p className="text-muted-foreground mt-1">Gestiona los atributos de tus productos</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Atributos
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Gestiona los atributos de tus productos
+              </p>
             </div>
           </div>
           <Button
@@ -131,43 +149,46 @@ export function Atributos() {
         </div>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Buscar</CardTitle>
-          </CardHeader>
-          <CardContent>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nombre de atributo..."
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  setCurrentPage(1)
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
                 }}
                 className="pl-10"
               />
             </div>
-          </CardContent>
+          </CardHeader>
         </Card>
 
         <div className="overflow-x-auto bg-white rounded-md border">
           <AttributesTable
-            attributes={paginatedAttributes}
+            attributes={attributes}
             onViewDetails={handleViewDetails}
+            onEdit={handleEditClick}
             onDelete={handleDeleteClick}
+            isLoading={isLoading || isFetching}
           />
 
-          {filteredAttributes.length > 0 && (
+          {totalItems > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Mostrando {startIndex + 1} a {Math.min(endIndex, filteredAttributes.length)} de{" "}
-                {filteredAttributes.length} atributos
+                Mostrando {startIndex + 1} a {endIndex} de {totalItems}{" "}
+                atributos
               </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -179,7 +200,9 @@ export function Atributos() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages || totalPages === 0}
                 >
                   <span className="hidden sm:inline">Siguiente</span>
@@ -194,6 +217,15 @@ export function Atributos() {
           open={isCreateModalOpen}
           onOpenChange={setIsCreateModalOpen}
           onCreateAttribute={handleCreateAttribute}
+          isLoading={createMutation.isPending}
+        />
+
+        <UpdateAttributeModal
+          attribute={selectedAttribute}
+          open={isUpdateModalOpen}
+          onOpenChange={setIsUpdateModalOpen}
+          onUpdateAttribute={handleUpdateAttribute}
+          isLoading={updateMutation.isPending}
         />
 
         <AttributeDetailsModal
@@ -203,12 +235,13 @@ export function Atributos() {
         />
 
         <DeleteAttributeModal
-          attributeName={attributeToDelete?.attributeName || null}
+          attributeName={attributeToDelete?.attribute_name || null}
           open={isDeleteModalOpen}
           onOpenChange={setIsDeleteModalOpen}
           onConfirm={handleConfirmDelete}
+          isLoading={deleteMutation.isPending}
         />
       </div>
     </div>
-  )
+  );
 }

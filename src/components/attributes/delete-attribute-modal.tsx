@@ -1,22 +1,35 @@
-"use client"
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { AlertTriangle } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 interface DeleteAttributeModalProps {
-  attributeName: string | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => void
+  attributeName: string | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  isLoading: boolean;
 }
 
-export function DeleteAttributeModal({ attributeName, open, onOpenChange, onConfirm }: DeleteAttributeModalProps) {
+export function DeleteAttributeModal({
+  attributeName,
+  open,
+  onOpenChange,
+  onConfirm,
+  isLoading,
+}: DeleteAttributeModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="bg-primary text-primary-foreground p-6 mt-4 rounded-lg text-xl">
+          <DialogTitle className="bg-red-500 text-white p-6 mt-4 rounded-lg text-xl">
             Confirmar Eliminación
           </DialogTitle>
         </DialogHeader>
@@ -28,21 +41,27 @@ export function DeleteAttributeModal({ attributeName, open, onOpenChange, onConf
             </div>
             <DialogDescription className="text-base">
               ¿Estás seguro de que deseas eliminar el atributo{" "}
-              <span className="font-semibold text-foreground">"{attributeName}"</span>? Esta acción no se puede
-              deshacer.
+              <span className="font-semibold text-foreground">
+                "{attributeName}"
+              </span>
+              ? Esta acción no se puede deshacer.
             </DialogDescription>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Eliminar
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? "Eliminando..." : "Eliminar"}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
