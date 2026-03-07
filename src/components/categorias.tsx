@@ -23,6 +23,7 @@ import {
 } from "@/app/api/mutations";
 import { Category } from "@/interfaces/categories";
 import { toast } from "sonner";
+import { handleAxiosError } from "@/lib/error-handler";
 
 export function Categorias() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,8 +79,8 @@ export function Categorias() {
           setIsDeleteModalOpen(false);
           setCategoryToDelete(null);
         },
-        onError: () => {
-          toast.error("Error al eliminar la categoría");
+        onError: (error) => {
+          handleAxiosError(error, "Error al eliminar la categoría");
         },
       });
     }
@@ -91,8 +92,8 @@ export function Categorias() {
         toast.success("Categoría creada correctamente");
         setIsCreateModalOpen(false);
       },
-      onError: () => {
-        toast.error("Error al crear la categoría");
+      onError: (error) => {
+        handleAxiosError(error, "Error al crear la categoría");
       },
     });
   };
@@ -104,8 +105,8 @@ export function Categorias() {
         setIsUpdateModalOpen(false);
         setSelectedCategory(null);
       },
-      onError: () => {
-        toast.error("Error al actualizar la categoría");
+      onError: (error) => {
+        handleAxiosError(error, "Error al actualizar la categoría");
       },
     });
   };

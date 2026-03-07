@@ -4,8 +4,10 @@ import {
   createCategory,
   deleteAttribute,
   deleteCategory,
+  deleteImage,
   updatedAttribute,
   updatedCategory,
+  uploadImages,
 } from "./request";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -67,4 +69,14 @@ export const useMutationUpdatedCategory = () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
+};
+
+// * IMAGES
+
+export const useMutationImages = () => {
+  return useMutation({ mutationFn: uploadImages });
+};
+
+export const useMutationDeleteImage = () => {
+  return useMutation({ mutationFn: deleteImage });
 };

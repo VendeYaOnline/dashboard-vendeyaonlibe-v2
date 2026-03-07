@@ -59,7 +59,9 @@ export function CategoriesTable({
         ) : (
           categories.map((category) => (
             <TableRow key={category.id} className="hover:bg-muted/30">
-              <TableCell className="font-medium">{category.name}</TableCell>
+              <TableCell className="font-medium pl-3">
+                {category.name}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button

@@ -1,6 +1,7 @@
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories } from "@/interfaces/categories";
+import { Images } from "@/interfaces/images";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -59,4 +60,40 @@ export const deleteCategory = async (idElement: number) => {
 
 export const updatedCategory = async (data: { id: number; name: string }) => {
   return axiosConfig.put(`/updated-category/${data.id}`, { name: data.name });
+};
+
+//* Imagenes
+
+export const getImages = async (
+  page: number,
+  search: string,
+  limit: number,
+  categoryId?: string,
+) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    search,
+    limit: String(limit),
+  });
+  if (categoryId) {
+    params.append("categoryId", categoryId);
+  }
+  const result = (
+    await axiosConfig.get<Images>(
+      `/get-images?${params.toString()}`,
+    )
+  ).data;
+  return result;
+};
+
+export const uploadImages = async (data: FormData) => {
+  return axiosConfig.post("/upload-images", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const deleteImage = async (idElement: string) => {
+  return axiosConfig.delete(`/delete-image/${idElement}`);
 };

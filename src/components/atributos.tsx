@@ -23,8 +23,8 @@ import {
 } from "@/app/api/mutations";
 import { Attribute } from "@/interfaces/attributes";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { UpdateAttributeModal } from "./attributes/update-attribute-modal";
+import { handleAxiosError } from "@/lib/error-handler";
 
 export function Atributos() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,8 +86,8 @@ export function Atributos() {
           setIsDeleteModalOpen(false);
           setAttributeToDelete(null);
         },
-        onError: () => {
-          toast.error("Error al eliminar el atributo");
+        onError: (error) => {
+          handleAxiosError(error, "Error al eliminar el atributo");
         },
       });
     }
@@ -99,8 +99,8 @@ export function Atributos() {
         toast.success("Atributo creado correctamente");
         setIsCreateModalOpen(false);
       },
-      onError: () => {
-        toast.error("Error al crear el atributo");
+      onError: (error) => {
+        handleAxiosError(error, "Error al crear el atributo");
       },
     });
   };
@@ -112,8 +112,8 @@ export function Atributos() {
         setIsUpdateModalOpen(false);
         setSelectedAttribute(null);
       },
-      onError: () => {
-        toast.error("Error al actualizar el atributo");
+      onError: (error) => {
+        handleAxiosError(error, "Error al actualizar el atributo");
       },
     });
   };

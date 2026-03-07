@@ -1,76 +1,42 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
+import { ImageCard } from "./image-card";
+import { ImagePreview } from "./image-preview";
+import { UploadDialog } from "./upload-dialog";
+import { RenameDialog } from "./rename-dialog";
+import { DeleteDialog } from "./delete-dialog";
+import { GalleryHeader } from "./gallery-header";
+import { Pagination } from "./pagination";
+import { ImageListItem } from "./image-list-item";
+import { useImages } from "@/hooks/use-images";
 import { ImageIcon } from "lucide-react";
-import { useQueryImages, useQueryCategories } from "@/app/api/queries";
-import { useMutationDeleteImage, useMutationImages } from "@/app/api/mutations";
-import { GalleryHeader } from "./galeria/gallery-header";
-import { ImageCard } from "./galeria/image-card";
-import { ImageListItem } from "./galeria/image-list-item";
-import { Pagination } from "./galeria/pagination";
-import { ImagePreview } from "./galeria/image-preview";
-import { UploadDialog } from "./galeria/upload-dialog";
-import { RenameDialog } from "./galeria/rename-dialog";
-import { DeleteDialog } from "./galeria/delete-dialog";
-import type { ImageItem, Category } from "@/lib/types";
-import { toast } from "sonner";
+import { ImageItem } from "@/lib/types";
 
-export function Galeria() {
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [categoryFilter, setCategoryFilter] = useState<Category>("all");
+export function ImageGallery() {
+  const {
+    data,
+    page,
+    setPage,
+    searchQuery,
+    setSearchQuery,
+    categoryFilter,
+    setCategoryFilter,
+    addImage,
+    updateImage,
+    deleteImage,
+    deleteMultiple,
+  } = useImages();
+
+  const MAX_SELECTION = 10;
+
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [previewImage, setPreviewImage] = useState<ImageItem | null>(null);
   const [editImage, setEditImage] = useState<ImageItem | null>(null);
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showBulkDelete, setShowBulkDelete] = useState(false);
-
-  // Debounce search query (500ms delay)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQuery(searchInput);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-
-  // Reset to page 1 when search changes (debounced search query)
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
-  // Reset to page 1 immediately when filter changes (no delay)
-  useEffect(() => {
-    setPage(1);
-  }, [categoryFilter]);
-
-  const MAX_SELECTION = 10;
-  const LIMIT = 60;
-
-  // Use the real API queries and mutations
-  const { data: imagesData, isLoading } = useQueryImages(
-    page,
-    searchQuery,
-    LIMIT,
-    categoryFilter === "all" ? undefined : categoryFilter,
-  );
-  const { data: categoriesData } = useQueryCategories(1, "");
-  const deleteImageMutation = useMutationDeleteImage();
-  const uploadMutation = useMutationImages();
-
-  // Default empty data structure
-  const data = imagesData || {
-    images: [],
-    total: 0,
-    grandTotal: 0,
-    page: 1,
-    totalPages: 0,
-  };
-
-  const categories = categoriesData?.categories || [];
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const handleSelect = useCallback((key: string) => {
     setSelectedImages((prev) => {
@@ -89,66 +55,43 @@ export function Galeria() {
 
   const handleDeleteConfirm = useCallback(() => {
     if (deleteKey) {
-      deleteImageMutation.mutate(deleteKey, {
-        onSuccess: () => {
-          toast.success("Imagen eliminada");
-          setSelectedImages((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(deleteKey);
-            return newSet;
-          });
-          setDeleteKey(null);
-        },
-        onError: () => {
-          toast.error("Hubo un error al eliminar la imagen");
-        },
+      deleteImage(deleteKey);
+      setSelectedImages((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(deleteKey);
+        return newSet;
       });
+      setDeleteKey(null);
     }
-  }, [deleteKey, deleteImageMutation, toast]);
+  }, [deleteKey, deleteImage]);
 
   const handleBulkDeleteConfirm = useCallback(() => {
-    const keys = Array.from(selectedImages);
-    keys.forEach((key) => {
-      deleteImageMutation.mutate(key);
-    });
+    deleteMultiple(Array.from(selectedImages));
     setSelectedImages(new Set());
     setShowBulkDelete(false);
-    toast.success("Imágenes eliminadas");
-  }, [selectedImages, deleteImageMutation, toast]);
+  }, [selectedImages, deleteMultiple]);
 
   const handleRename = useCallback(
     (oldKey: string, newKey: string) => {
-      toast.warning("La funcionalidad de renombrar no está disponible aún");
-
-      setEditImage(null);
-    },
-    [toast],
-  );
-
-  const handleUpload = useCallback(
-    (formData: FormData) => {
-      uploadMutation.mutate(formData, {
-        onSuccess: () => {
-          toast.success("Imagen subida");
-         
-          setShowUpload(false);
-          setPage(1); // Reset to first page
-        },
-        onError: () => {
-          toast.error("Hubo un error al subir la imagen");
-          
-        },
+      updateImage(oldKey, newKey);
+      setSelectedImages((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(oldKey)) {
+          newSet.delete(oldKey);
+          newSet.add(newKey);
+        }
+        return newSet;
       });
     },
-    [uploadMutation, toast],
+    [updateImage],
   );
 
   return (
-    <div className="min-h-screen bg-background w-full">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <GalleryHeader
-          searchQuery={searchInput}
-          onSearchChange={setSearchInput}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
           selectedCount={selectedImages.size}
           totalImages={data.grandTotal}
           onUpload={() => setShowUpload(true)}
@@ -157,27 +100,14 @@ export function Galeria() {
           onViewModeChange={setViewMode}
           categoryFilter={categoryFilter}
           onCategoryChange={setCategoryFilter}
-          categories={categories}
-          isLoading={isLoading}
         />
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4 animate-pulse">
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">Cargando imágenes...</h3>
-            <p className="text-sm text-muted-foreground">Por favor espera mientras se cargan tus imágenes</p>
-          </div>
-        )}
 
         {/* Gallery Grid or List */}
         {data.images.length > 0 ? (
           <>
             {viewMode === "grid" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 mt-8">
-                {data.images.map((image) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 mt-8">
+                {data.images.map((image: ImageItem) => (
                   <ImageCard
                     key={image.Key}
                     image={image}
@@ -191,7 +121,7 @@ export function Galeria() {
               </div>
             ) : (
               <div className="mt-8 space-y-2">
-                {data.images.map((image) => (
+                {data.images.map((image: ImageItem) => (
                   <ImageListItem
                     key={image.Key}
                     image={image}
@@ -213,7 +143,7 @@ export function Galeria() {
               grandTotal={data.grandTotal}
             />
           </>
-        ) : !isLoading ? (
+        ) : (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <ImageIcon className="h-10 w-10 text-muted-foreground" />
@@ -235,7 +165,7 @@ export function Galeria() {
               </button>
             )}
           </div>
-        ) : null}
+        )}
 
         {/* Dialogs */}
         <ImagePreview
@@ -251,7 +181,7 @@ export function Galeria() {
         <UploadDialog
           isOpen={showUpload}
           onClose={() => setShowUpload(false)}
-          onUpload={handleUpload}
+          onUpload={addImage}
         />
 
         <RenameDialog
