@@ -2,6 +2,8 @@ import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories } from "@/interfaces/categories";
 import { Images } from "@/interfaces/images";
+import { UserRequest } from "@/interfaces/users";
+import { ContactRequest } from "@/interfaces/contacts";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -79,9 +81,7 @@ export const getImages = async (
     params.append("categoryId", categoryId);
   }
   const result = (
-    await axiosConfig.get<Images>(
-      `/get-images?${params.toString()}`,
-    )
+    await axiosConfig.get<Images>(`/get-images?${params.toString()}`)
   ).data;
   return result;
 };
@@ -96,4 +96,59 @@ export const uploadImages = async (data: FormData) => {
 
 export const deleteImage = async (idElement: string) => {
   return axiosConfig.delete(`/delete-image/${idElement}`);
+};
+
+// * Users
+
+export const getUsers = async (page: number, search: string = "") => {
+  const result = (
+    await axiosConfig.get<UserRequest>(
+      `/get-users?page=${page}&search=${search}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const createUser = async (data: {
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+}) => {
+  return axiosConfig.post("/create-user", data);
+};
+
+export const updatedUser = async ({
+  id,
+  data,
+}: {
+  id: number;
+  data: { username: string; email: string; role: string };
+}) => {
+  return axiosConfig.put(`/updated-user/${id}`, data);
+};
+
+export const deleteUser = async (idElement: number) => {
+  return axiosConfig.delete(`/delete-user/${idElement}`);
+};
+
+// * Contacts
+
+export const getContacts = async (page: number, search: string = "") => {
+  const result = (
+    await axiosConfig.get<ContactRequest>(
+      `/get-contacts?page=${page}&search=${search}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const deleteContact = async (idElement: number) => {
+  return axiosConfig.delete(`/delete-contact/${idElement}`);
+};
+
+export const logoutUser = async () => {
+  return axiosConfig.post("/logout-user");
 };

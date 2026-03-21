@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ShoppingCart,
   Star,
@@ -15,9 +16,12 @@ import {
   Menu,
   X,
   Store,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { logoutUser } from "@/app/api/request";
+import { useAuthStore } from "@/store/auth.store";
 
 interface DashboardSidebarProps {
   activeView: string;
@@ -42,6 +46,9 @@ export function DashboardSidebar({
   onViewChange,
 }: DashboardSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+  const { logout } = useAuthStore();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -50,6 +57,18 @@ export function DashboardSidebar({
   const handleMenuClick = (viewId: string) => {
     onViewChange(viewId);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logoutUser();
+    } catch {
+      // continuar con el logout aunque falle la petición
+    } finally {
+      logout();
+      router.push("/login");
+    }
   };
 
   return (
@@ -119,9 +138,18 @@ export function DashboardSidebar({
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-sidebar-border px-6 py-4">
-            <p className="text-xs text-sidebar-foreground/60">
-              © 2025 VendeYaOnline
+          <div className="border-t border-sidebar-border px-3 py-4 space-y-3">
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full justify-start gap-3 text-sm font-medium text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="h-5 w-5" />
+              {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+            </Button>
+            <p className="text-xs text-sidebar-foreground/60 px-3">
+              © {new Date().getFullYear()} VendeYaOnline
             </p>
           </div>
         </div>

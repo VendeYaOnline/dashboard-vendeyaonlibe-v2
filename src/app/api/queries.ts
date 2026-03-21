@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAttributes, getCategories, getImages } from "./request";
+import {
+  getAttributes,
+  getCategories,
+  getContacts,
+  getImages,
+  getUsers,
+} from "./request";
 
 export const useQueryAttribute = (currentPage: number, search: string) => {
   const validPage = currentPage > 0 ? currentPage : 1;
@@ -33,6 +39,28 @@ export const useQueryImages = (
   return useQuery({
     queryKey: ["images", validPage, search, categoryId],
     queryFn: () => getImages(validPage, search, limit, categoryId),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled: currentPage > 0,
+  });
+};
+
+export const useQueryUsers = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["users", validPage, search],
+    queryFn: () => getUsers(validPage, search),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled: currentPage > 0,
+  });
+};
+
+export const useQueryContacts = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["contacts", validPage, search],
+    queryFn: () => getContacts(validPage, search),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 10,
     enabled: currentPage > 0,

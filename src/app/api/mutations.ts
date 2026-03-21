@@ -2,11 +2,15 @@ import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
   createCategory,
+  createUser,
   deleteAttribute,
   deleteCategory,
+  deleteContact,
   deleteImage,
+  deleteUser,
   updatedAttribute,
   updatedCategory,
+  updatedUser,
   uploadImages,
 } from "./request";
 import { useQueryClient } from "@tanstack/react-query";
@@ -79,4 +83,48 @@ export const useMutationImages = () => {
 
 export const useMutationDeleteImage = () => {
   return useMutation({ mutationFn: deleteImage });
+};
+
+// * USERS
+
+export const useMutationUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+export const useMutationUpdatedUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatedUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+export const useMutationDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+};
+
+// * Contacts
+
+export const useMutationDeleteContact = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteContact,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
 };
