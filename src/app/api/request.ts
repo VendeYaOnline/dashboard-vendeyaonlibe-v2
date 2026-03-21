@@ -4,6 +4,7 @@ import { Categories } from "@/interfaces/categories";
 import { Images } from "@/interfaces/images";
 import { UserRequest } from "@/interfaces/users";
 import { ContactRequest } from "@/interfaces/contacts";
+import { ProductRequest } from "@/interfaces/products";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -151,4 +152,55 @@ export const deleteContact = async (idElement: number) => {
 
 export const logoutUser = async () => {
   return axiosConfig.post("/logout-user");
+};
+
+// * Productos
+
+export const getProducts = async (page: number, search: string = "") => {
+  const result = (
+    await axiosConfig.get<ProductRequest>(
+      `/get-products?page=${page}&search=${search}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const getProductsByCategory = async (
+  page: number,
+  search: string = "",
+  categories: { id: number; name: string }[],
+) => {
+  const categoryParams = categories
+    .map((category) => `categoryId=${category.id}`)
+    .join("&");
+  const result = (
+    await axiosConfig.get<ProductRequest>(
+      `/get-products-category?page=${page}&search=${search}&${categoryParams}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const createProduct = async (data: FormData) => {
+  return axiosConfig.post("/create-product", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const updatedProduct = async ({
+  id,
+  data,
+}: {
+  id: number;
+  data: FormData;
+}) => {
+  return axiosConfig.put(`/updated-product/${id}`, data);
+};
+
+export const deleteProduct = async (idElement: number) => {
+  return axiosConfig.delete(`/delete-product/${idElement}`);
 };

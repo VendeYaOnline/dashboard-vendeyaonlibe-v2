@@ -2,14 +2,17 @@ import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
   createCategory,
+  createProduct,
   createUser,
   deleteAttribute,
   deleteCategory,
   deleteContact,
   deleteImage,
+  deleteProduct,
   deleteUser,
   updatedAttribute,
   updatedCategory,
+  updatedProduct,
   updatedUser,
   uploadImages,
 } from "./request";
@@ -125,6 +128,38 @@ export const useMutationDeleteContact = () => {
     mutationFn: deleteContact,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+};
+
+//* Products
+
+export const useMutationProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+export const useMutationUpdatedProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatedProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+export const useMutationDeleteProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };

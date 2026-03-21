@@ -17,6 +17,7 @@ import {
   X,
   Store,
   LogOut,
+  UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,12 @@ const menuItems = [
   { id: "galeria", label: "Galería", icon: ImageIcon },
 ];
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrador",
+  editor: "Editor",
+  viewer: "Espectador",
+};
+
 export function DashboardSidebar({
   activeView,
   onViewChange,
@@ -48,7 +55,7 @@ export function DashboardSidebar({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { logout, user: authUser } = useAuthStore();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -105,12 +112,28 @@ export function DashboardSidebar({
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-2 px-6 py-5 border-b border-sidebar-border">
-            <Store className="h-7 w-7 text-sidebar-primary" />
-            <span className="font-bold text-xl text-sidebar-foreground">
-              VendeYa
-            </span>
-          </div>
+
+          {/* User info card */}
+          {authUser && (
+            <div className="px-4 py-3 border-b border-sidebar-border bg-sidebar-accent/40">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 w-9 h-9 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
+                  <UserCircle className="h-5 w-5 text-sidebar-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                    {authUser.username}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {authUser.email}
+                  </p>
+                  <span className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-sidebar-primary/15 text-sidebar-primary">
+                    {ROLE_LABELS[authUser.role] ?? authUser.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto py-4 px-3">

@@ -198,6 +198,7 @@ export function Usuarios() {
         <div className="overflow-x-auto bg-white rounded-md border">
           <UsersTable
             users={users}
+            selfEmail={authUser?.email}
             onViewDetails={handleViewDetails}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
@@ -207,8 +208,7 @@ export function Usuarios() {
           {totalItems > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-4 py-4">
               <div className="text-sm text-muted-foreground">
-                Mostrando {startIndex + 1} a {endIndex} de {totalItems}{" "}
-                usuarios
+                Mostrando {startIndex + 1} a {endIndex} de {totalItems} usuarios
               </div>
               <div className="flex items-center gap-2">
                 <Button
