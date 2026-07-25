@@ -47,8 +47,8 @@ export function CreateProductModal({
   const [reference, setReference] = useState("");
   const [stock, setStock] = useState("");
   const [specs, setSpecs] = useState<Spec[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<Set<number>>(new Set());
-  const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set());
+  const [selectedAttributes, setSelectedAttributes] = useState<Set<string>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [productImages, setProductImages] = useState<string[]>([]);
 
   // Modals state

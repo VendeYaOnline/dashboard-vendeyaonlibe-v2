@@ -7,7 +7,7 @@ export interface ProductRequest {
 }
 
 export interface Products {
-  id: number;
+  id: string;
   image_product: string;
   quantity: number;
   title: string;
@@ -20,5 +20,5 @@ export interface Products {
   discount: number;
   images: string[];
   specs: string;
-  Categories: { id: number; name: string }[];
+  Categories: { id: string; name: string }[];
 }

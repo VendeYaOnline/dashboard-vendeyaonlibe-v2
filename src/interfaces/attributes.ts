@@ -7,7 +7,7 @@ export interface Attributes {
 }
 
 export interface Attribute {
-  id?: number;
+  id?: string;
   attribute_name: string;
   attribute_type: string;
   value: string[] | { name: string; value: string }[];

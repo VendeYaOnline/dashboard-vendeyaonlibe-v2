@@ -9,6 +9,21 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
   "23514": "Los datos no cumplen con las restricciones requeridas.",
 };
 
+// Códigos de negocio devueltos por el backend
+const API_ERROR_MESSAGES: Record<string, string> = {
+  CAROUSEL_NAME_REQUIRED: "El nombre del carrusel es obligatorio.",
+  CAROUSEL_PRODUCTS_RANGE: "Un carrusel debe tener entre 3 y 8 productos.",
+  CAROUSEL_PRODUCTS_INVALID:
+    "Alguno de los productos seleccionados ya no está disponible.",
+  CAROUSEL_LIMIT_REACHED: "Has alcanzado el límite de carruseles permitidos.",
+  CAROUSEL_NOT_FOUND: "El carrusel ya no existe.",
+  FEATURED_PRODUCT_REQUIRED: "Debes seleccionar un producto.",
+  FEATURED_PRODUCT_NOT_FOUND: "El producto ya no existe.",
+  FEATURED_PRODUCT_DUPLICATED: "Este producto ya está destacado.",
+  FEATURED_LIMIT_REACHED:
+    "Has alcanzado el límite de productos destacados permitidos.",
+};
+
 export const handleAxiosError = (error: unknown, defaultMessage: string) => {
   if (!isAxiosError(error)) {
     toast.error(defaultMessage);
@@ -32,6 +47,12 @@ export const handleAxiosError = (error: unknown, defaultMessage: string) => {
   const dbErrorCode = error.response?.data?.code;
   if (dbErrorCode && DB_ERROR_MESSAGES[dbErrorCode]) {
     toast.error(DB_ERROR_MESSAGES[dbErrorCode]);
+    return;
+  }
+
+  // Business rules coming from the backend
+  if (dbErrorCode && API_ERROR_MESSAGES[dbErrorCode]) {
+    toast.error(API_ERROR_MESSAGES[dbErrorCode]);
     return;
   }
 

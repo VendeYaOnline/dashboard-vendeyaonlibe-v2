@@ -94,7 +94,7 @@ export function Productos() {
     });
   };
 
-  const handleUpdateProduct = async (id: number, formData: FormData) => {
+  const handleUpdateProduct = async (id: string, formData: FormData) => {
     updateMutation.mutate(
       { id, data: formData },
       {

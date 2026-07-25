@@ -114,7 +114,7 @@ export function Usuarios() {
   };
 
   const handleUpdateUser = (
-    id: number,
+    id: string,
     data: { username: string; email: string; role: string },
   ) => {
     updateMutation.mutate(

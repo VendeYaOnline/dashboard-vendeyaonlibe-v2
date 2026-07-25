@@ -24,7 +24,7 @@ interface UpdateUserModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdateUser: (
-    id: number,
+    id: string,
     data: { username: string; email: string; role: string },
   ) => void;
   isLoading: boolean;

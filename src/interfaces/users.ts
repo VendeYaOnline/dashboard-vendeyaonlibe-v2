@@ -7,7 +7,7 @@ export interface UserRequest {
 }
 
 export interface Users {
-  id: number;
+  id: string;
   username: string;
   email: string;
   password: string;

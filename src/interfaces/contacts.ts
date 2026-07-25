@@ -7,7 +7,7 @@ export interface ContactRequest {
 }
 
 export interface Contacts {
-  id: number;
+  id: string;
   subject: string;
   email: string;
   message: string;

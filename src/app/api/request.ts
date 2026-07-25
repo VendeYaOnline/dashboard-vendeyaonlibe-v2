@@ -5,6 +5,8 @@ import { Images } from "@/interfaces/images";
 import { UserRequest } from "@/interfaces/users";
 import { ContactRequest } from "@/interfaces/contacts";
 import { ProductRequest } from "@/interfaces/products";
+import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
+import { FeaturedProductRequest } from "@/interfaces/featured-products";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -35,7 +37,7 @@ export const updatedAttribute = async ({ id, ...data }: Attribute) => {
 };
 
 // ? Delete Attribute
-export const deleteAttribute = async (idElement: number) => {
+export const deleteAttribute = async (idElement: string) => {
   return axiosConfig.delete(`/delete-attribute/${idElement}`);
 };
 
@@ -57,11 +59,11 @@ export const getCategories = async (page: number, search: string = "") => {
   return result;
 };
 
-export const deleteCategory = async (idElement: number) => {
+export const deleteCategory = async (idElement: string) => {
   return axiosConfig.delete(`/delete-category/${idElement}`);
 };
 
-export const updatedCategory = async (data: { id: number; name: string }) => {
+export const updatedCategory = async (data: { id: string; name: string }) => {
   return axiosConfig.put(`/updated-category/${data.id}`, { name: data.name });
 };
 
@@ -87,16 +89,49 @@ export const getImages = async (
   return result;
 };
 
-export const uploadImages = async (data: FormData) => {
-  return axiosConfig.post("/upload-images", data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
+/**
+ * El backend recibe los archivos en el campo `images` (multer.array) y la
+ * categoría por query string, no en el body.
+ */
+export const uploadImages = async ({
+  categoryId,
+  formData,
+}: {
+  categoryId: string;
+  formData: FormData;
+}) => {
+  return axiosConfig.post(
+    `/upload-images?categoryId=${encodeURIComponent(categoryId)}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     },
-  });
+  );
 };
 
-export const deleteImage = async (idElement: string) => {
-  return axiosConfig.delete(`/delete-image/${idElement}`);
+/** Sólo cambia el nombre del archivo; la categoría (carpeta) la conserva el backend. */
+export const renameImage = async ({
+  key,
+  newName,
+}: {
+  key: string;
+  newName: string;
+}) => {
+  return axiosConfig.put<{
+    message: string;
+    key: string;
+    url: string;
+    updatedProducts: number;
+  }>("/rename-image", { key, newName });
+};
+
+// La clave de S3 viaja por query string: DELETE /delete-image?key=...
+export const deleteImage = async (key: string) => {
+  return axiosConfig.delete<{ message: string; updatedProducts: number }>(
+    `/delete-image?key=${encodeURIComponent(key)}`,
+  );
 };
 
 // * Users
@@ -124,13 +159,13 @@ export const updatedUser = async ({
   id,
   data,
 }: {
-  id: number;
+  id: string;
   data: { username: string; email: string; role: string };
 }) => {
   return axiosConfig.put(`/updated-user/${id}`, data);
 };
 
-export const deleteUser = async (idElement: number) => {
+export const deleteUser = async (idElement: string) => {
   return axiosConfig.delete(`/delete-user/${idElement}`);
 };
 
@@ -146,7 +181,7 @@ export const getContacts = async (page: number, search: string = "") => {
   return result;
 };
 
-export const deleteContact = async (idElement: number) => {
+export const deleteContact = async (idElement: string) => {
   return axiosConfig.delete(`/delete-contact/${idElement}`);
 };
 
@@ -166,17 +201,21 @@ export const getProducts = async (page: number, search: string = "") => {
   return result;
 };
 
+/**
+ * Devuelve únicamente los productos que NO pertenecen a ningún carrusel,
+ * por eso se usa como fuente del selector de productos del carrusel.
+ */
 export const getProductsByCategory = async (
   page: number,
   search: string = "",
-  categories: { id: number; name: string }[],
+  categoryIds: string[] = [],
 ) => {
-  const categoryParams = categories
-    .map((category) => `categoryId=${category.id}`)
-    .join("&");
+  const params = new URLSearchParams({ page: String(page), search });
+  categoryIds.forEach((id) => params.append("categoryId", id));
+
   const result = (
     await axiosConfig.get<ProductRequest>(
-      `/get-products-category?page=${page}&search=${search}&${categoryParams}`,
+      `/get-products-category?${params.toString()}`,
     )
   ).data;
 
@@ -195,12 +234,59 @@ export const updatedProduct = async ({
   id,
   data,
 }: {
-  id: number;
+  id: string;
   data: FormData;
 }) => {
   return axiosConfig.put(`/updated-product/${id}`, data);
 };
 
-export const deleteProduct = async (idElement: number) => {
+export const deleteProduct = async (idElement: string) => {
   return axiosConfig.delete(`/delete-product/${idElement}`);
+};
+
+// * Carrusel
+
+export const getCarousels = async (page: number, search: string = "") => {
+  const result = (
+    await axiosConfig.get<CarouselRequest>(
+      `/get-carousels?page=${page}&search=${search}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const createCarousel = async (data: CarouselPayload) => {
+  return axiosConfig.post("/create-carousel", data);
+};
+
+export const updatedCarousel = async ({
+  id,
+  ...data
+}: CarouselPayload & { id: string }) => {
+  return axiosConfig.put(`/updated-carousel/${id}`, data);
+};
+
+export const deleteCarousel = async (idElement: string) => {
+  return axiosConfig.delete(`/delete-carousel/${idElement}`);
+};
+
+// * Productos destacados
+
+export const getFeaturedProducts = async (page: number, search: string = "") => {
+  const result = (
+    await axiosConfig.get<FeaturedProductRequest>(
+      `/get-featured-products?page=${page}&search=${search}`,
+    )
+  ).data;
+
+  return result;
+};
+
+export const createFeaturedProduct = async (productId: string) => {
+  return axiosConfig.post("/create-featured-product", { product_id: productId });
+};
+
+export const deleteFeaturedProduct = async (idElement: string) => {
+  return axiosConfig.delete(`/delete-featured-product/${idElement}`);
 };

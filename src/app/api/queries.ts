@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   getAttributes,
+  getCarousels,
   getCategories,
   getContacts,
+  getFeaturedProducts,
   getImages,
   getProducts,
+  getProductsByCategory,
   getUsers,
 } from "./request";
 
@@ -68,11 +71,57 @@ export const useQueryContacts = (currentPage: number, search: string) => {
   });
 };
 
-export const useQueryProducts = (currentPage: number, search: string) => {
+export const useQueryProducts = (
+  currentPage: number,
+  search: string,
+  enabled: boolean = true,
+) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
     queryKey: ["products", validPage, search],
     queryFn: () => getProducts(validPage, search),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled: enabled && currentPage > 0,
+  });
+};
+
+export const useQueryCarousels = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["carousels", validPage, search],
+    queryFn: () => getCarousels(validPage, search),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled: currentPage > 0,
+  });
+};
+
+/**
+ * Productos disponibles para asignar a un carrusel (los que aún no
+ * pertenecen a ninguno). Sin staleTime porque la disponibilidad cambia
+ * cada vez que se crea o edita un carrusel.
+ */
+export const useQueryAvailableProducts = (
+  currentPage: number,
+  search: string,
+  categoryIds: string[],
+  enabled: boolean = true,
+) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["available-products", validPage, search, categoryIds],
+    queryFn: () => getProductsByCategory(validPage, search, categoryIds),
+    refetchOnWindowFocus: false,
+    enabled: enabled && currentPage > 0,
+  });
+};
+
+export const useQueryFeaturedProducts = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["featured-products", validPage, search],
+    queryFn: () => getFeaturedProducts(validPage, search),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 10,
     enabled: currentPage > 0,

@@ -31,7 +31,7 @@ interface UpdateProductModalProps {
   product: Products | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdateProduct: (id: number, data: FormData) => void;
+  onUpdateProduct: (id: string, data: FormData) => void;
   isLoading: boolean;
 }
 
@@ -50,8 +50,8 @@ export function UpdateProductModal({
   const [reference, setReference] = useState("");
   const [stock, setStock] = useState("");
   const [specs, setSpecs] = useState<Spec[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<Set<number>>(new Set());
-  const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set());
+  const [selectedAttributes, setSelectedAttributes] = useState<Set<string>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [productImages, setProductImages] = useState<string[]>([]);
 
   const [isMainImageGalleryOpen, setIsMainImageGalleryOpen] = useState(false);
@@ -87,7 +87,7 @@ export function UpdateProductModal({
       try {
         if (product.attributes) {
           const parsedAttr = typeof product.attributes === "string" ? JSON.parse(product.attributes) : product.attributes;
-          setSelectedAttributes(new Set(Array.isArray(parsedAttr) ? parsedAttr.map(Number) : []));
+          setSelectedAttributes(new Set(Array.isArray(parsedAttr) ? parsedAttr.map(String) : []));
         } else {
           setSelectedAttributes(new Set());
         }
@@ -95,7 +95,7 @@ export function UpdateProductModal({
         setSelectedAttributes(new Set());
       }
 
-      const cats = Array.isArray(product.Categories) ? product.Categories.map(c => Number(c.id)) : [];
+      const cats = Array.isArray(product.Categories) ? product.Categories.map(c => c.id) : [];
       setSelectedCategories(new Set(cats));
     }
   }, [open, product]);

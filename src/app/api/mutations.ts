@@ -1,16 +1,22 @@
 import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
+  createCarousel,
   createCategory,
+  createFeaturedProduct,
   createProduct,
   createUser,
   deleteAttribute,
+  deleteCarousel,
   deleteCategory,
   deleteContact,
+  deleteFeaturedProduct,
   deleteImage,
   deleteProduct,
   deleteUser,
+  renameImage,
   updatedAttribute,
+  updatedCarousel,
   updatedCategory,
   updatedProduct,
   updatedUser,
@@ -81,11 +87,41 @@ export const useMutationUpdatedCategory = () => {
 // * IMAGES
 
 export const useMutationImages = () => {
-  return useMutation({ mutationFn: uploadImages });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadImages,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["images"] });
+    },
+  });
+};
+
+export const useMutationRenameImage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: renameImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["images"] });
+      // La imagen renombrada puede ser la de algún producto: su URL cambió
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["carousels"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+  });
 };
 
 export const useMutationDeleteImage = () => {
-  return useMutation({ mutationFn: deleteImage });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteImage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["images"] });
+      // Puede haber quitado la imagen de la galería secundaria de un producto
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["carousels"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+  });
 };
 
 // * USERS
@@ -160,6 +196,60 @@ export const useMutationDeleteProduct = () => {
     mutationFn: deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+//* Carrusel
+
+/** Crear o editar un carrusel cambia qué productos quedan disponibles. */
+const invalidateCarousels = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ["carousels"] });
+  queryClient.invalidateQueries({ queryKey: ["available-products"] });
+};
+
+export const useMutationCarousel = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCarousel,
+    onSuccess: () => invalidateCarousels(queryClient),
+  });
+};
+
+export const useMutationUpdatedCarousel = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatedCarousel,
+    onSuccess: () => invalidateCarousels(queryClient),
+  });
+};
+
+export const useMutationDeleteCarousel = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteCarousel,
+    onSuccess: () => invalidateCarousels(queryClient),
+  });
+};
+
+//* Productos destacados
+
+export const useMutationFeaturedProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createFeaturedProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+  });
+};
+
+export const useMutationDeleteFeaturedProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteFeaturedProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
     },
   });
 };
