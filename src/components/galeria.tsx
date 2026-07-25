@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { isAxiosError } from "axios";
 import { ImageIcon } from "lucide-react";
 import { useQueryImages, useQueryCategories } from "@/app/api/queries";
-import { useMutationDeleteImage, useMutationImages } from "@/app/api/mutations";
+import {
+  useMutationDeleteImage,
+  useMutationImages,
+  useMutationRenameImage,
+} from "@/app/api/mutations";
 import { GalleryHeader } from "./galeria/gallery-header";
 import { ImageCard } from "./galeria/image-card";
 import { ImageListItem } from "./galeria/image-list-item";
@@ -14,6 +19,7 @@ import { RenameDialog } from "./galeria/rename-dialog";
 import { DeleteDialog } from "./galeria/delete-dialog";
 import type { ImageItem, Category } from "@/lib/types";
 import { toast } from "sonner";
+import { handleAxiosError } from "@/lib/error-handler";
 
 export function Galeria() {
   const [page, setPage] = useState(1);
@@ -27,6 +33,7 @@ export function Galeria() {
   const [deleteKey, setDeleteKey] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Debounce search query (500ms delay)
   useEffect(() => {
@@ -60,6 +67,7 @@ export function Galeria() {
   const { data: categoriesData } = useQueryCategories(1, "");
   const deleteImageMutation = useMutationDeleteImage();
   const uploadMutation = useMutationImages();
+  const renameMutation = useMutationRenameImage();
 
   // Default empty data structure
   const data = imagesData || {
@@ -90,8 +98,15 @@ export function Galeria() {
   const handleDeleteConfirm = useCallback(() => {
     if (deleteKey) {
       deleteImageMutation.mutate(deleteKey, {
-        onSuccess: () => {
-          toast.success("Imagen eliminada");
+        onSuccess: (response) => {
+          const updatedProducts = response.data?.updatedProducts || 0;
+          toast.success(
+            updatedProducts > 0
+              ? `Imagen eliminada y quitada de ${updatedProducts} ${
+                  updatedProducts === 1 ? "producto" : "productos"
+                }`
+              : "Imagen eliminada",
+          );
           setSelectedImages((prev) => {
             const newSet = new Set(prev);
             newSet.delete(deleteKey);
@@ -99,48 +114,108 @@ export function Galeria() {
           });
           setDeleteKey(null);
         },
-        onError: () => {
-          toast.error("Hubo un error al eliminar la imagen");
+        onError: (error) => {
+          handleAxiosError(error, "Hubo un error al eliminar la imagen");
         },
       });
     }
-  }, [deleteKey, deleteImageMutation, toast]);
+  }, [deleteKey, deleteImageMutation]);
 
-  const handleBulkDeleteConfirm = useCallback(() => {
+  const handleBulkDeleteConfirm = useCallback(async () => {
     const keys = Array.from(selectedImages);
-    keys.forEach((key) => {
-      deleteImageMutation.mutate(key);
-    });
-    setSelectedImages(new Set());
+    setIsBulkDeleting(true);
+
+    const results = await Promise.allSettled(
+      keys.map((key) => deleteImageMutation.mutateAsync(key)),
+    );
+
+    // Las que fallaron siguen existiendo: se mantienen seleccionadas
+    const failedResults = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
+    const failedKeys = keys.filter(
+      (_, index) => results[index].status === "rejected",
+    );
+    const deletedCount = keys.length - failedKeys.length;
+
+    setSelectedImages(new Set(failedKeys));
+    setIsBulkDeleting(false);
+
+    if (deletedCount > 0) {
+      toast.success(
+        deletedCount > 1
+          ? `${deletedCount} imágenes eliminadas`
+          : "Imagen eliminada",
+      );
+    }
+
+    if (failedKeys.length > 0) {
+      const allInUse = failedResults.every(
+        (result) =>
+          isAxiosError(result.reason) &&
+          result.reason.response?.data?.code === "IMAGE_IN_USE",
+      );
+
+      toast.error(
+        allInUse
+          ? failedKeys.length > 1
+            ? `${failedKeys.length} imágenes están en uso como imagen principal de un producto`
+            : "Esta imagen está en uso como imagen principal de un producto"
+          : failedKeys.length > 1
+            ? `No se pudieron eliminar ${failedKeys.length} imágenes`
+            : "No se pudo eliminar una imagen",
+      );
+      return;
+    }
+
     setShowBulkDelete(false);
-    toast.success("Imágenes eliminadas");
-  }, [selectedImages, deleteImageMutation, toast]);
+  }, [selectedImages, deleteImageMutation]);
 
   const handleRename = useCallback(
-    (oldKey: string, newKey: string) => {
-      toast.warning("La funcionalidad de renombrar no está disponible aún");
-
-      setEditImage(null);
+    (key: string, newName: string) => {
+      renameMutation.mutate(
+        { key, newName },
+        {
+          onSuccess: (response) => {
+            const updatedProducts = response.data?.updatedProducts || 0;
+            toast.success(
+              updatedProducts > 0
+                ? `Imagen renombrada y actualizada en ${updatedProducts} ${
+                    updatedProducts === 1 ? "producto" : "productos"
+                  }`
+                : "Imagen renombrada",
+            );
+            // La clave cambió: deja de estar seleccionada
+            setSelectedImages((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(key);
+              return newSet;
+            });
+            setEditImage(null);
+          },
+          onError: (error) => {
+            handleAxiosError(error, "Hubo un error al renombrar la imagen");
+          },
+        },
+      );
     },
-    [toast],
+    [renameMutation],
   );
 
   const handleUpload = useCallback(
-    (formData: FormData) => {
-      uploadMutation.mutate(formData, {
+    (payload: { categoryId: string; formData: FormData }) => {
+      uploadMutation.mutate(payload, {
         onSuccess: () => {
           toast.success("Imagen subida");
-         
           setShowUpload(false);
           setPage(1); // Reset to first page
         },
-        onError: () => {
-          toast.error("Hubo un error al subir la imagen");
-          
+        onError: (error) => {
+          handleAxiosError(error, "Hubo un error al subir la imagen");
         },
       });
     },
-    [uploadMutation, toast],
+    [uploadMutation],
   );
 
   return (
@@ -252,6 +327,8 @@ export function Galeria() {
           isOpen={showUpload}
           onClose={() => setShowUpload(false)}
           onUpload={handleUpload}
+          categories={categories}
+          isUploading={uploadMutation.isPending}
         />
 
         <RenameDialog
@@ -259,6 +336,7 @@ export function Galeria() {
           isOpen={!!editImage}
           onClose={() => setEditImage(null)}
           onRename={handleRename}
+          isRenaming={renameMutation.isPending}
         />
 
         <DeleteDialog
@@ -266,6 +344,7 @@ export function Galeria() {
           onClose={() => setDeleteKey(null)}
           onConfirm={handleDeleteConfirm}
           count={1}
+          isDeleting={deleteImageMutation.isPending}
         />
 
         <DeleteDialog
@@ -273,6 +352,7 @@ export function Galeria() {
           onClose={() => setShowBulkDelete(false)}
           onConfirm={handleBulkDeleteConfirm}
           count={selectedImages.size}
+          isDeleting={isBulkDeleting}
         />
       </div>
     </div>

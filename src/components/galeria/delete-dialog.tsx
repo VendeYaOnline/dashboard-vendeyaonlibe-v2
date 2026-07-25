@@ -8,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 
@@ -17,6 +16,7 @@ interface DeleteDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   count: number;
+  isDeleting?: boolean;
 }
 
 export function DeleteDialog({
@@ -24,12 +24,8 @@ export function DeleteDialog({
   onClose,
   onConfirm,
   count,
+  isDeleting = false,
 }: DeleteDialogProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-card border-border">
@@ -51,14 +47,19 @@ export function DeleteDialog({
           </div>
         </DialogHeader>
         <DialogFooter>
-          <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
+          <Button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          >
             Cancelar
           </Button>
           <Button
-            onClick={handleConfirm}
+            onClick={onConfirm}
+            disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Eliminar
+            {isDeleting ? "Eliminando..." : "Eliminar"}
           </Button>
         </DialogFooter>
       </DialogContent>

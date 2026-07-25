@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { Upload, X, Image as ImageIcon, Check } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,13 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Category } from "@/lib/types";
-import { CATEGORIES } from "@/lib/types";
+import type { Category as CategoryData } from "@/interfaces/categories";
 
 interface UploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (formData: FormData) => void;
+  onUpload: (payload: { categoryId: string; formData: FormData }) => void;
+  categories?: CategoryData[];
   isUploading?: boolean;
 }
 
@@ -33,17 +33,14 @@ export function UploadDialog({
   isOpen,
   onClose,
   onUpload,
-  isUploading: isUploadingProp,
+  categories = [],
+  isUploading = false,
 }: UploadDialogProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
-  const [category, setCategory] = useState<Category>("productos");
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadComplete, setUploadComplete] = useState(false);
+  const [categoryId, setCategoryId] = useState("");
   const fileRef = useRef<File | null>(null);
-
-  const isLoading = isUploadingProp || isUploading;
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -81,39 +78,35 @@ export function UploadDialog({
     reader.readAsDataURL(file);
   };
 
-  const handleUpload = async () => {
-    if (!fileName || !fileRef.current) return;
+  const handleUpload = () => {
+    if (!fileName.trim() || !fileRef.current || !categoryId) return;
 
-    setIsUploading(true);
+    // El backend guarda el archivo con su `originalname`, así que el nombre
+    // editado sólo se respeta si se reconstruye el File.
+    const file =
+      fileName === fileRef.current.name
+        ? fileRef.current
+        : new File([fileRef.current], fileName.trim(), {
+            type: fileRef.current.type,
+          });
 
-    try {
-      const formData = new FormData();
-      formData.append("file", fileRef.current);
-      formData.append("categoryId", category);
-      formData.append("name", fileName);
+    const formData = new FormData();
+    formData.append("images", file);
 
-      onUpload(formData);
-
-      setUploadComplete(true);
-
-      setTimeout(() => {
-        handleReset();
-        onClose();
-      }, 1000);
-    } catch (error) {
-      console.error("Upload error:", error);
-      setIsUploading(false);
-    }
+    onUpload({ categoryId, formData });
   };
 
   const handleReset = () => {
     setFileName("");
     setPreviewUrl("");
-    setCategory("productos");
-    setIsUploading(false);
-    setUploadComplete(false);
+    setCategoryId("");
     fileRef.current = null;
   };
+
+  // El diálogo lo cierra el padre cuando la subida termina bien
+  useEffect(() => {
+    if (!isOpen) handleReset();
+  }, [isOpen]);
 
   const handleClose = () => {
     handleReset();
@@ -154,7 +147,7 @@ export function UploadDialog({
                   size="icon"
                   className="absolute top-2 right-2"
                   onClick={handleReset}
-                  disabled={isLoading}
+                  disabled={isUploading}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -177,7 +170,7 @@ export function UploadDialog({
                   accept="image/*"
                   onChange={handleFileSelect}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  disabled={isLoading}
+                  disabled={isUploading}
                 />
               </div>
             )}
@@ -195,23 +188,29 @@ export function UploadDialog({
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="imagen.jpg"
                 className="bg-muted border-border"
-                disabled={isLoading}
+                disabled={isUploading}
               />
             </div>
             <div className="space-y-2">
               <Label className="text-foreground">Categoría</Label>
               <Select
-                value={category}
-                onValueChange={(value) => setCategory(value as Category)}
-                disabled={isLoading}
+                value={categoryId}
+                onValueChange={setCategoryId}
+                disabled={isUploading || categories.length === 0}
               >
                 <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Seleccionar categoría" />
+                  <SelectValue
+                    placeholder={
+                      categories.length === 0
+                        ? "No hay categorías"
+                        : "Seleccionar categoría"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.filter((c) => c.value !== "all").map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,21 +223,16 @@ export function UploadDialog({
             <Button
               variant="secondary"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={isUploading}
             >
               Cancelar
             </Button>
             <Button
               onClick={handleUpload}
-              disabled={!fileName || isLoading || uploadComplete}
+              disabled={!fileName.trim() || !categoryId || isUploading}
               className="min-w-30"
             >
-              {uploadComplete ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Completado
-                </>
-              ) : isLoading ? (
+              {isUploading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                   Subiendo...

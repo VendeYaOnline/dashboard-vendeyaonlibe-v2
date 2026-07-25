@@ -19,32 +19,37 @@ interface RenameDialogProps {
   image: ImageItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onRename: (oldKey: string, newKey: string) => void;
+  onRename: (key: string, newName: string) => void;
+  isRenaming?: boolean;
 }
+
+/** La clave incluye la carpeta de la categoría; sólo se edita el nombre. */
+const getFileName = (key: string) => key.slice(key.lastIndexOf("/") + 1);
 
 export function RenameDialog({
   image,
   isOpen,
   onClose,
   onRename,
+  isRenaming = false,
 }: RenameDialogProps) {
   const [newName, setNewName] = useState("");
 
   useEffect(() => {
     if (image) {
-      setNewName(image.Key);
+      setNewName(getFileName(image.Key));
     }
   }, [image]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (image && newName.trim()) {
-      onRename(image.Key, newName.trim());
-      onClose();
-    }
+    if (!image || !newName.trim()) return;
+    onRename(image.Key, newName.trim());
   };
 
   if (!image) return null;
+
+  const isUnchanged = newName.trim() === getFileName(image.Key);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -70,16 +75,28 @@ export function RenameDialog({
               onChange={(e) => setNewName(e.target.value)}
               placeholder="nuevo-nombre.jpg"
               className="bg-muted border-border"
+              disabled={isRenaming}
               autoFocus
             />
+            <p className="text-xs text-muted-foreground">
+              Conserva la extensión del archivo (.jpg, .png...).
+            </p>
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              disabled={isRenaming}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!newName.trim()}>
-              Guardar cambios
+            <Button
+              type="submit"
+              disabled={!newName.trim() || isUnchanged || isRenaming}
+            >
+              {isRenaming ? "Guardando..." : "Guardar cambios"}
             </Button>
           </div>
         </form>
