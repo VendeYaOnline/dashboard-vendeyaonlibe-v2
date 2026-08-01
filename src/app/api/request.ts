@@ -7,7 +7,7 @@ import { ContactRequest } from "@/interfaces/contacts";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
-import { CreateSalePayload } from "@/features/ventas/types";
+import { CreateSalePayload, SaleRequest } from "@/features/ventas/types";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -296,4 +296,24 @@ export const deleteFeaturedProduct = async (idElement: string) => {
 
 export const createSale = async (payload: CreateSalePayload) => {
   return axiosConfig.post("/create-sale", payload);
+};
+
+/**
+ * El backend espera la fecha como `DD/MM/YYYY` (parte manualmente el string
+ * por "/" en `getSales`), no ISO — ver sales.controller.js.
+ */
+export const getSales = async (
+  page: number,
+  filters: { date?: string; status?: string } = {},
+) => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (filters.date) params.append("date", filters.date);
+  if (filters.status) params.append("status", filters.status);
+
+  return (await axiosConfig.get<SaleRequest>(`/get-sales?${params.toString()}`))
+    .data;
+};
+
+export const deleteSale = async (idElement: string) => {
+  return axiosConfig.delete(`/delete-sale/${idElement}`);
 };

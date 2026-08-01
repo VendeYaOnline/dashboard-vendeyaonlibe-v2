@@ -1,18 +1,22 @@
 import type { Products } from "@/interfaces/products";
 
-export interface SaleProductDetail {
-  id: number | string;
+/**
+ * Snapshot de un producto dentro de una venta, tal como lo guarda el backend
+ * en la columna JSON `products` (plano, sin envoltorio): ver
+ * `ModalDetailsSale.tsx` / `ProductSale` en dashboard-cliente v1, que lee la
+ * misma tabla. `id` es opcional porque las ventas creadas antes de este
+ * cambio no lo incluyen.
+ */
+export interface SaleProduct {
+  id?: string;
   image_product: string;
   title: string;
   price: string;
-  reference: string;
-}
-
-export interface SaleProduct {
+  discount_price: string;
+  discount: number;
+  images: string[];
   quantity: number;
-  product: SaleProductDetail;
-  purchase_total?: string;
-  total?: string;
+  purchase_total: string;
 }
 
 /**
@@ -40,25 +44,35 @@ export interface CreateSalePayload {
   total: string;
 }
 
+/** Venta tal como la devuelve `GET /get-sales` (ver sales.controller.js). */
 export interface Sale {
-  id: string | number;
-  date: string;
-  city: string;
+  id: string;
+  id_number: string;
+  type_purchase: string;
+  first_name: string;
+  last_name: string;
   phone: string;
-  status: string;
-  orderNumber: string;
-  paymentMethod: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  idNumber: string;
   department: string;
+  city: string;
   address: string;
-  additionalReferences: string;
-  productsCount: number;
-  quantity: number | string;
-  totalPaid: string;
-  productsList?: SaleProduct[];
+  additional_info: string;
+  email: string;
+  order_number: string;
+  products: SaleProduct[];
+  quantity: string;
+  status: string;
+  /** Ya viene formateada como DD/MM/YYYY (`formatDate` en el backend). */
+  purchase_date: string;
+  payment_method: string;
+  total: string;
+}
+
+export interface SaleRequest {
+  sales: Sale[];
+  total: number;
+  grandTotal: number;
+  page: number;
+  totalPages: number;
 }
 
 /** Producto del catálogo real, con la cantidad elegida al armar la venta. */
@@ -98,21 +112,13 @@ export const EMPTY_VENTA_FORM: VentaFormValues = {
   paymentMethod: "",
 };
 
-/** Usados por el filtro de la tabla, que hoy filtra sobre `MOCK_SALES`. */
-export const SALE_STATUSES = [
-  { id: "pendiente", label: "Pendiente" },
-  { id: "en-transito", label: "En tránsito" },
-  { id: "completada", label: "Completada" },
-  { id: "cancelada", label: "Cancelada" },
-] as const;
-
 /**
- * Usados por el campo "Estado" del formulario de crear venta. `status` en el
- * backend es texto libre (sin enum), así que se reutiliza el mismo
- * vocabulario que ya usa `dashboard-cliente` v1 contra el mismo backend, para
- * que ambos paneles registren el mismo conjunto de estados.
+ * `status` en el backend es texto libre (sin enum): se reutiliza el mismo
+ * vocabulario que ya usa `dashboard-cliente` v1 contra el mismo backend
+ * (ver `TableSales.tsx`/`ModalDetailsSale.tsx`), para que ambos paneles
+ * registren y filtren el mismo conjunto de estados.
  */
-export const CREATE_SALE_STATUSES = [
+export const SALE_STATUSES = [
   { id: "Pago pendiente", label: "Pago pendiente" },
   { id: "Gestionando pedido", label: "Gestionando pedido" },
   { id: "En tránsito", label: "En tránsito" },
@@ -132,3 +138,17 @@ export const PAYMENT_METHODS = [
   { id: "account_money", label: "Mercado pago" },
   { id: "other", label: "Otro" },
 ] as const;
+
+/**
+ * Códigos que puede traer una venta real pero que no se ofrecen al crear
+ * manualmente desde el panel (p. ej. variantes que arma el checkout de la
+ * tienda). Se usa sólo para mostrar la etiqueta correcta al leer.
+ */
+const PAYMENT_METHOD_DISPLAY: Record<string, string> = {
+  ...Object.fromEntries(PAYMENT_METHODS.map((m) => [m.id, m.label])),
+  bank_transfer_bancolombia: "Transferencia Bancolombia",
+  bank_transfer_bbva: "Transferencia BBVA",
+};
+
+export const getPaymentMethodLabel = (code: string): string =>
+  PAYMENT_METHOD_DISPLAY[code] ?? "Otro medio de pago";

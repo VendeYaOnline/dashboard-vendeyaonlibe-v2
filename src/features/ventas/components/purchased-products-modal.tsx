@@ -31,31 +31,42 @@ export function PurchasedProductsModal({
             <Modal.Body>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {products.map((item, index) => (
-                  <Card key={`${item.product.id}-${index}`}>
+                  <Card key={item.id ?? index}>
                     <Card.Content className="flex gap-4 p-4">
-                      <img
-                        src={item.product.image_product}
-                        alt={item.product.title}
-                        className="size-20 shrink-0 rounded-md border border-border object-cover"
-                      />
+                      {item.image_product ? (
+                        <img
+                          src={item.image_product}
+                          alt={item.title}
+                          className="size-20 shrink-0 rounded-md border border-border object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-border bg-surface-secondary text-[10px] text-muted">
+                          Sin img
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1 space-y-1">
                         <h4
                           className="line-clamp-2 text-sm leading-tight font-semibold"
-                          title={item.product.title}
+                          title={item.title}
                         >
-                          {item.product.title}
+                          {item.title}
                         </h4>
-                        <p className="truncate text-xs text-muted">
-                          Ref: {item.product.reference}
+                        <p className="text-xs text-muted">
+                          {item.discount > 0 ? (
+                            <>
+                              <span className="line-through">${item.price}</span>{" "}
+                              <span className="text-danger">-{item.discount}%</span>
+                            </>
+                          ) : (
+                            <>${item.price}</>
+                          )}
                         </p>
                         <div className="flex items-center justify-between pt-1">
                           <Chip size="sm" variant="soft">
                             Cant: {item.quantity}
                           </Chip>
                           <p className="font-bold text-accent">
-                            {item.purchase_total
-                              ? `$ ${Number(item.purchase_total).toLocaleString("es-CO")}`
-                              : (item.total ?? item.product.price)}
+                            ${Number(item.purchase_total).toLocaleString("es-CO")}
                           </p>
                         </div>
                       </div>

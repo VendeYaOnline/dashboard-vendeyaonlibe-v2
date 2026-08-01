@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, ShoppingBag } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
-import type { Sale } from "../types";
+import { getPaymentMethodLabel, type Sale } from "../types";
 import { PurchasedProductsModal } from "./purchased-products-modal";
 import { VentaStatusChip } from "./venta-status-chip";
 
@@ -51,13 +51,13 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                     <div className="grid gap-6 md:grid-cols-2">
                       <Section title="Información del cliente">
                         <div className="space-y-3">
-                          <Field label="Fecha de compra">{sale.date}</Field>
-                          <Field label="Nombres">{sale.firstName}</Field>
-                          <Field label="Apellidos">{sale.lastName}</Field>
+                          <Field label="Fecha de compra">{sale.purchase_date}</Field>
+                          <Field label="Nombres">{sale.first_name}</Field>
+                          <Field label="Apellidos">{sale.last_name}</Field>
                           <Field label="Email">
                             <span className="text-sm break-all">{sale.email}</span>
                           </Field>
-                          <Field label="Número de cédula">{sale.idNumber}</Field>
+                          <Field label="Número de cédula">{sale.id_number}</Field>
                         </div>
                       </Section>
 
@@ -69,7 +69,7 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                           </div>
                           <Field label="Dirección">{sale.address}</Field>
                           <Field label="Referencias adicionales">
-                            {sale.additionalReferences}
+                            {sale.additional_info}
                           </Field>
                           <Field label="Teléfono móvil">{sale.phone}</Field>
                         </div>
@@ -80,15 +80,15 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                       <div className="grid gap-6 md:grid-cols-2">
                         <div className="space-y-3">
                           <Field label="Número de orden">
-                            <span className="font-mono">{sale.orderNumber}</span>
+                            <span className="font-mono">{sale.order_number}</span>
                           </Field>
                           <Field label="Productos">
                             <div className="flex items-center gap-4">
                               <span className="flex items-center gap-2">
                                 <ShoppingBag className="size-4 text-muted" />
-                                {sale.productsCount} items
+                                {sale.products.length} items
                               </span>
-                              {sale.productsList && sale.productsList.length > 0 && (
+                              {sale.products.length > 0 && (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -106,9 +106,11 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                         </div>
 
                         <div className="space-y-3">
-                          <Field label="Método de pago">{sale.paymentMethod}</Field>
+                          <Field label="Método de pago">
+                            {getPaymentMethodLabel(sale.payment_method)}
+                          </Field>
                           <Field label="Cantidad total">{sale.quantity}</Field>
-                          <Field label="Total pagado">{sale.totalPaid}</Field>
+                          <Field label="Total pagado">${sale.total}</Field>
                         </div>
                       </div>
                     </Section>
@@ -126,12 +128,12 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
         </Modal.Backdrop>
       </Modal>
 
-      {sale?.productsList && (
+      {sale && (
         <PurchasedProductsModal
           isOpen={showProducts}
           onOpenChange={setShowProducts}
-          products={sale.productsList}
-          orderNumber={sale.orderNumber}
+          products={sale.products}
+          orderNumber={sale.order_number}
         />
       )}
     </>

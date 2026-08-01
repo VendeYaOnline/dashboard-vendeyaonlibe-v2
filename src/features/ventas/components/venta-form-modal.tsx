@@ -17,9 +17,9 @@ import {
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import type { Products } from "@/interfaces/products";
 import {
-  CREATE_SALE_STATUSES,
   EMPTY_VENTA_FORM,
   PAYMENT_METHODS,
+  SALE_STATUSES,
   type CreateSalePayload,
   type SelectedProduct,
   type VentaFormValues,
@@ -124,15 +124,17 @@ export function VentaFormModal({
     event.preventDefault();
     if (!isValid) return;
 
+    // Snapshot plano (no anidado): así es como el backend guarda `products`
+    // en la venta — ver SaleProduct en ../types.
     const items = products.map((product) => ({
+      id: product.id,
+      image_product: product.image_product,
+      title: product.title,
+      price: product.price,
+      discount_price: product.discount_price,
+      discount: product.discount,
+      images: product.images,
       quantity: product.quantity,
-      product: {
-        id: product.id,
-        image_product: product.image_product,
-        title: product.title,
-        price: product.price,
-        reference: product.reference,
-      },
       purchase_total: (unitPrice(product) * product.quantity).toFixed(2),
     }));
 
@@ -303,7 +305,7 @@ export function VentaFormModal({
                       </Select.Trigger>
                       <Select.Popover>
                         <ListBox>
-                          {CREATE_SALE_STATUSES.map((status) => (
+                          {SALE_STATUSES.map((status) => (
                             <ListBoxItem key={status.id} id={status.id}>
                               {status.label}
                             </ListBoxItem>

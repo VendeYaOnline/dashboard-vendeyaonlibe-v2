@@ -8,6 +8,7 @@ import {
   getImages,
   getProducts,
   getProductsByCategory,
+  getSales,
   getUsers,
 } from "./request";
 
@@ -124,6 +125,17 @@ export const useQueryFeaturedProducts = (currentPage: number, search: string) =>
     queryFn: () => getFeaturedProducts(validPage, search),
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 10,
+    enabled: currentPage > 0,
+  });
+};
+
+/** `date` en formato DD/MM/YYYY (ver getSales en request.ts). */
+export const useQuerySales = (currentPage: number, date: string, status: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["sales", validPage, date, status],
+    queryFn: () => getSales(validPage, { date, status }),
+    refetchOnWindowFocus: false,
     enabled: currentPage > 0,
   });
 };

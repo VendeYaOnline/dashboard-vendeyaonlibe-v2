@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -17,16 +17,15 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { TablePagination } from "@/components/shared/table-pagination";
-import { useMutationCreateSale } from "@/app/api/mutations";
+import { useQuerySales } from "@/app/api/queries";
+import { useMutationCreateSale, useMutationDeleteSale } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { MOCK_SALES } from "./mock-data";
-import { SALE_STATUSES, type CreateSalePayload, type Sale } from "./types";
+import { getPaymentMethodLabel, SALE_STATUSES, type CreateSalePayload, type Sale } from "./types";
+import { toBackendDate } from "./utils";
 import { VentaDetailsModal } from "./components/venta-details-modal";
 import { VentaFormModal } from "./components/venta-form-modal";
 import { VentaStatusChip } from "./components/venta-status-chip";
-
-const ITEMS_PER_PAGE = 5;
 
 export function VentasView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -41,22 +40,16 @@ export function VentasView() {
 
   useEffect(() => setPage(1), [statusFilter, dateFilter]);
 
-  // Los datos son locales, así que el filtrado y la paginación son en memoria.
-  const filteredSales = useMemo(
-    () =>
-      MOCK_SALES.filter((sale) => {
-        const statusMatch = statusFilter === "todos" || sale.status === statusFilter;
-        const dateMatch = !dateFilter || sale.date === dateFilter;
-        return statusMatch && dateMatch;
-      }),
-    [statusFilter, dateFilter],
+  const { data, isLoading, isFetching } = useQuerySales(
+    page,
+    toBackendDate(dateFilter),
+    statusFilter === "todos" ? "" : statusFilter,
   );
 
-  const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
-  const startIndex = (page - 1) * ITEMS_PER_PAGE;
-  const paginatedSales = filteredSales.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const sales = data?.sales ?? [];
 
   const createMutation = useMutationCreateSale();
+  const deleteMutation = useMutationDeleteSale();
 
   const handleCreateSale = (payload: CreateSalePayload) => {
     createMutation.mutate(payload, {
@@ -69,19 +62,23 @@ export function VentasView() {
   };
 
   const handleConfirmDelete = () => {
-    // TODO: cablear a DELETE /delete-sale/:id (ver nota en mock-data.ts).
-    console.info("Eliminar venta", saleToDelete?.id);
-    toast.warning("Eliminar ventas todavía no está conectado al servidor");
-    setSaleToDelete(null);
+    if (!saleToDelete) return;
+    deleteMutation.mutate(saleToDelete.id, {
+      onSuccess: () => {
+        toast.success("Venta eliminada correctamente");
+        setSaleToDelete(null);
+      },
+      onError: (error) => handleAxiosError(error, "Error al eliminar la venta"),
+    });
   };
 
   const columns: DataTableColumn<Sale>[] = [
     {
-      key: "date",
+      key: "purchase_date",
       label: "Fecha",
       isRowHeader: true,
       className: "whitespace-nowrap",
-      render: (sale) => <span className="font-medium">{sale.date}</span>,
+      render: (sale) => <span className="font-medium">{sale.purchase_date}</span>,
     },
     {
       key: "city",
@@ -101,16 +98,16 @@ export function VentasView() {
       render: (sale) => <VentaStatusChip status={sale.status} />,
     },
     {
-      key: "orderNumber",
+      key: "order_number",
       label: "Número de orden",
       className: "whitespace-nowrap",
-      render: (sale) => <span className="font-mono text-sm">{sale.orderNumber}</span>,
+      render: (sale) => <span className="font-mono text-sm">{sale.order_number}</span>,
     },
     {
-      key: "paymentMethod",
+      key: "payment_method",
       label: "Método de pago",
       className: "whitespace-nowrap",
-      render: (sale) => <span>{sale.paymentMethod}</span>,
+      render: (sale) => <span>{getPaymentMethodLabel(sale.payment_method)}</span>,
     },
     {
       key: "actions",
@@ -122,7 +119,7 @@ export function VentasView() {
             variant="ghost"
             size="sm"
             isIconOnly
-            aria-label={`Ver detalles de la orden ${sale.orderNumber}`}
+            aria-label={`Ver detalles de la orden ${sale.order_number}`}
             onPress={() => setSelectedSale(sale)}
           >
             <Eye className="size-4" />
@@ -131,7 +128,7 @@ export function VentasView() {
             variant="ghost"
             size="sm"
             isIconOnly
-            aria-label={`Eliminar la orden ${sale.orderNumber}`}
+            aria-label={`Eliminar la orden ${sale.order_number}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setSaleToDelete(sale)}
@@ -208,18 +205,19 @@ export function VentasView() {
       <Card className="overflow-hidden">
         <DataTable
           aria-label="Ventas recibidas"
-          items={paginatedSales}
+          items={sales}
           columns={columns}
-          getRowId={(sale) => String(sale.id)}
+          getRowId={(sale) => sale.id}
+          isLoading={isLoading || isFetching}
+          loadingMessage="Cargando ventas..."
           emptyMessage="No se encontraron ventas con los filtros seleccionados"
         />
         <TablePagination
           currentPage={page}
-          totalPages={totalPages}
-          totalItems={filteredSales.length}
-          itemsInPage={paginatedSales.length}
+          totalPages={data?.totalPages ?? 1}
+          totalItems={data?.total ?? 0}
+          itemsInPage={sales.length}
           itemLabel="ventas"
-          pageSize={ITEMS_PER_PAGE}
           onPageChange={setPage}
         />
       </Card>
@@ -246,11 +244,12 @@ export function VentasView() {
           <>
             ¿Seguro que deseas eliminar la orden{" "}
             <span className="font-semibold text-foreground">
-              {saleToDelete?.orderNumber}
+              {saleToDelete?.order_number}
             </span>
             ? Esta acción no se puede deshacer.
           </>
         }
+        isPending={deleteMutation.isPending}
       />
     </div>
   );

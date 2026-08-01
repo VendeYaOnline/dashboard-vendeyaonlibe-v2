@@ -7,6 +7,7 @@ import {
   createProduct,
   createSale,
   createUser,
+  deleteSale,
   deleteAttribute,
   deleteCarousel,
   deleteCategory,
@@ -261,6 +262,16 @@ export const useMutationCreateSale = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createSale,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+    },
+  });
+};
+
+export const useMutationDeleteSale = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSale,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
     },
