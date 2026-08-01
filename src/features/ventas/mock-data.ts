@@ -1,0 +1,157 @@
+/**
+ * DATOS DE EJEMPLO — la lista de ventas todavía no está conectada a la API.
+ *
+ * El backend ya expone `GET /get-sales` para listar y `PUT /updated-sale/:id`
+ * / `DELETE /delete-sale/:id` para editar y borrar, pero el modelo usa
+ * snake_case (`first_name`, `order_number`, `additional_info`, `products`)
+ * mientras que la UI usa camelCase. Al cablearlos habrá que añadir el mapeo
+ * en `app/api/request.ts` y borrar este archivo.
+ *
+ * El formulario de "Crear venta" (`venta-form-modal.tsx`) sí está conectado
+ * a `POST /create-sale`, así que una venta creada ahí no aparecerá en esta
+ * tabla hasta que se cablee `getSales`.
+ */
+import type { Sale } from "./types";
+
+export const MOCK_SALES: Sale[] = [
+  {
+    id: "40",
+    date: "29/07/2025",
+    city: "VILLANUEVA",
+    phone: "3103435659",
+    status: "En tránsito",
+    orderNumber: "0BKUSMSI4U",
+    paymentMethod: "Otro medio de pago",
+    firstName: "JOSHUA ESTEBAN",
+    lastName: "PARRADO LOZADA",
+    email: "joshuaestebanparradolozada@yahoo.es",
+    idNumber: "1116857877",
+    department: "CASANARE",
+    address: "CALLE 9 #11-39",
+    additionalReferences: "BARRIO FUNDADORES",
+    productsCount: 2,
+    quantity: "2",
+    totalPaid: "No especificado",
+    productsList: [
+      {
+        quantity: 1,
+        product: {
+          id: 14,
+          image_product:
+            "https://muebles-electrodomesticos-del-meta-tvy0g5xm53zbkhw.s3.us-east-2.amazonaws.com/7705191041315-001-750Wx750H.webp",
+          title: "NEVERA CHALLENGER CR 239",
+          price: "$ 1.327.000",
+          reference: "CR239 Titanium",
+        },
+        purchase_total: "1327000",
+      },
+      {
+        quantity: 1,
+        product: {
+          id: 4,
+          image_product:
+            "https://muebles-electrodomesticos-del-meta-tvy0g5xm53zbkhw.s3.us-east-2.amazonaws.com/7705946478663-001-750Wx750H.webp",
+          title: "TV KALLEY ROKU 32 PULGADAS",
+          price: "$ 645.000",
+          reference: "K-RTV32HD",
+        },
+        purchase_total: "645000",
+      },
+    ],
+  },
+  {
+    id: "2",
+    date: "14/01/2025",
+    city: "Arequipa",
+    phone: "+51 912 345 678",
+    status: "pendiente",
+    orderNumber: "ORD-2025-002",
+    paymentMethod: "Transferencia",
+    firstName: "María",
+    lastName: "González",
+    email: "maria@example.com",
+    idNumber: "12345678",
+    department: "Arequipa",
+    address: "Av. Principal 123",
+    additionalReferences: "Cerca del parque",
+    productsCount: 2,
+    quantity: 5,
+    totalPaid: "$150.00",
+  },
+  {
+    id: "3",
+    date: "14/01/2025",
+    city: "Cusco",
+    phone: "+51 923 456 789",
+    status: "completada",
+    orderNumber: "ORD-2025-003",
+    paymentMethod: "Efectivo",
+    firstName: "Pedro",
+    lastName: "Ramírez",
+    email: "pedro@example.com",
+    idNumber: "87654321",
+    department: "Cusco",
+    address: "Calle Sol 456",
+    additionalReferences: "Edificio azul",
+    productsCount: 3,
+    quantity: 3,
+    totalPaid: "$200.00",
+  },
+  {
+    id: "4",
+    date: "13/01/2025",
+    city: "Trujillo",
+    phone: "+51 934 567 890",
+    status: "cancelada",
+    orderNumber: "ORD-2025-004",
+    paymentMethod: "Tarjeta de débito",
+    firstName: "Ana",
+    lastName: "Torres",
+    email: "ana@example.com",
+    idNumber: "11223344",
+    department: "La Libertad",
+    address: "Jr. Independencia 789",
+    additionalReferences: "Frente al mercado",
+    productsCount: 1,
+    quantity: 1,
+    totalPaid: "$50.00",
+  },
+  {
+    id: "5",
+    date: "13/01/2025",
+    city: "Lima",
+    phone: "+51 945 678 901",
+    status: "pendiente",
+    orderNumber: "ORD-2025-005",
+    paymentMethod: "Yape",
+    firstName: "Carlos",
+    lastName: "Mendoza",
+    email: "carlos@example.com",
+    idNumber: "55667788",
+    department: "Lima",
+    address: "Av. Arequipa 321",
+    additionalReferences: "Torre B",
+    productsCount: 4,
+    quantity: 8,
+    totalPaid: "$300.00",
+  },
+  {
+    id: "6",
+    date: "12/01/2025",
+    city: "Chiclayo",
+    phone: "+51 956 789 012",
+    status: "completada",
+    orderNumber: "ORD-2025-006",
+    paymentMethod: "Plin",
+    firstName: "Laura",
+    lastName: "Flores",
+    email: "laura@example.com",
+    idNumber: "99887766",
+    department: "Lambayeque",
+    address: "Calle Comercio 654",
+    additionalReferences: "Casa verde",
+    productsCount: 2,
+    quantity: 4,
+    totalPaid: "$180.00",
+  },
+];

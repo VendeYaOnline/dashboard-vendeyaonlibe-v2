@@ -1,10 +1,13 @@
-// Image Gallery Types
+/**
+ * Imagen tal como la devuelve S3 a través de `GET /get-images`.
+ * La categoría no viene como campo: va en el prefijo de `Key`
+ * (ver `features/galeria/utils.ts`).
+ */
 export interface ImageItem {
   Key: string;
   LastModified: string;
   Size: number;
   Url: string;
-  category?: string;
 }
 
 export interface Images {
@@ -14,15 +17,3 @@ export interface Images {
   page: number;
   totalPages: number;
 }
-
-// Category Types for Gallery
-export const CATEGORIES = [
-  { value: "all", label: "Todas" },
-  { value: "productos", label: "Productos" },
-  { value: "promociones", label: "Promociones" },
-  { value: "eventos", label: "Eventos" },
-  { value: "banners", label: "Banners" },
-  { value: "otros", label: "Otros" },
-] as const;
-
-export type Category = "all" | string;

@@ -5,6 +5,7 @@ import {
   createCategory,
   createFeaturedProduct,
   createProduct,
+  createSale,
   createUser,
   deleteAttribute,
   deleteCarousel,
@@ -250,6 +251,18 @@ export const useMutationDeleteFeaturedProduct = () => {
     mutationFn: deleteFeaturedProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+  });
+};
+
+// * Ventas
+
+export const useMutationCreateSale = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createSale,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
     },
   });
 };

@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import { toast } from "sonner";
+import { toast } from "@heroui/react";
 
 // Database error codes (PostgreSQL)
 const DB_ERROR_MESSAGES: Record<string, string> = {
@@ -26,40 +26,40 @@ const API_ERROR_MESSAGES: Record<string, string> = {
 
 export const handleAxiosError = (error: unknown, defaultMessage: string) => {
   if (!isAxiosError(error)) {
-    toast.error(defaultMessage);
+    toast.danger(defaultMessage);
     return;
   }
 
   // Network & timeout errors
   if (error.message === "Network Error") {
-    toast.error(
+    toast.danger(
       "No se pudo conectar al servidor. Verifica tu conexión a internet.",
     );
     return;
   }
 
   if (error.code === "ECONNABORTED") {
-    toast.error("La conexión está tardando demasiado. Inténtalo nuevamente.");
+    toast.danger("La conexión está tardando demasiado. Inténtalo nuevamente.");
     return;
   }
 
   // Database errors (PostgreSQL codes coming from the backend)
   const dbErrorCode = error.response?.data?.code;
   if (dbErrorCode && DB_ERROR_MESSAGES[dbErrorCode]) {
-    toast.error(DB_ERROR_MESSAGES[dbErrorCode]);
+    toast.danger(DB_ERROR_MESSAGES[dbErrorCode]);
     return;
   }
 
   // Business rules coming from the backend
   if (dbErrorCode && API_ERROR_MESSAGES[dbErrorCode]) {
-    toast.error(API_ERROR_MESSAGES[dbErrorCode]);
+    toast.danger(API_ERROR_MESSAGES[dbErrorCode]);
     return;
   }
 
   // Server message (custom message from the backend)
   const serverMessage = error.response?.data?.message;
   if (serverMessage) {
-    toast.error(serverMessage);
+    toast.danger(serverMessage);
     return;
   }
 
@@ -67,24 +67,24 @@ export const handleAxiosError = (error: unknown, defaultMessage: string) => {
   const status = error.response?.status;
   switch (status) {
     case 400:
-      toast.error("Solicitud incorrecta. Verifique los datos.");
+      toast.danger("Solicitud incorrecta. Verifique los datos.");
       break;
     case 401:
-      toast.error("Sesión expirada o no autorizada.");
+      toast.danger("Sesión expirada o no autorizada.");
       break;
     case 403:
-      toast.error("No tienes permisos para realizar esta acción.");
+      toast.danger("No tienes permisos para realizar esta acción.");
       break;
     case 404:
-      toast.error("Recurso no encontrado.");
+      toast.danger("Recurso no encontrado.");
       break;
     case 409:
-      toast.error("Ya existe un registro con estos datos.");
+      toast.danger("Ya existe un registro con estos datos.");
       break;
     case 500:
-      toast.error("Error interno del servidor. Inténtelo más tarde.");
+      toast.danger("Error interno del servidor. Inténtelo más tarde.");
       break;
     default:
-      toast.error(defaultMessage);
+      toast.danger(defaultMessage);
   }
 };

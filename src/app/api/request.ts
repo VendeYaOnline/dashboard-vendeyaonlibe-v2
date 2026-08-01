@@ -7,6 +7,7 @@ import { ContactRequest } from "@/interfaces/contacts";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
+import { CreateSalePayload } from "@/features/ventas/types";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -289,4 +290,10 @@ export const createFeaturedProduct = async (productId: string) => {
 
 export const deleteFeaturedProduct = async (idElement: string) => {
   return axiosConfig.delete(`/delete-featured-product/${idElement}`);
+};
+
+// * Ventas
+
+export const createSale = async (payload: CreateSalePayload) => {
+  return axiosConfig.post("/create-sale", payload);
 };
