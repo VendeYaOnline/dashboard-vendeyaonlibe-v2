@@ -147,31 +147,33 @@ export function AtributoFormModal({
               />
 
               <Modal.Body className="space-y-5">
-                <TextField value={name} onChange={setName} isRequired autoFocus>
-                  <Label>Nombre del atributo</Label>
-                  <Input placeholder="Ej: Color principal, Talla..." />
-                </TextField>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <TextField value={name} onChange={setName} isRequired autoFocus>
+                    <Label>Nombre del atributo</Label>
+                    <Input placeholder="Ej: Color principal, Talla..." />
+                  </TextField>
 
-                <Select
-                  selectedKey={type}
-                  onSelectionChange={(key) => handleTypeChange(String(key))}
-                  isDisabled={attribute !== null}
-                >
-                  <Label>Tipo de atributo</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {ATTRIBUTE_TYPES.map((value) => (
-                        <ListBoxItem key={value} id={value}>
-                          {value}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+                  <Select
+                    selectedKey={type}
+                    onSelectionChange={(key) => handleTypeChange(String(key))}
+                    isDisabled={attribute !== null}
+                  >
+                    <Label>Tipo de atributo</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {ATTRIBUTE_TYPES.map((value) => (
+                          <ListBoxItem key={value} id={value}>
+                            {value}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                </div>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">

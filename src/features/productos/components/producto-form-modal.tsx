@@ -192,7 +192,7 @@ export function ProductoFormModal({
       <Modal state={state}>
         <Modal.Backdrop isDismissable={!isPending}>
           <Modal.Container size="lg" scroll="inside">
-            <Modal.Dialog>
+            <Modal.Dialog className="max-w-2xl">
               <form onSubmit={handleSubmit}>
                 <ModalFormHeader
                   icon={Package}
@@ -257,28 +257,30 @@ export function ProductoFormModal({
                     </TextField>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Categorías</Label>
-                    <MultiSelectPopover
-                      options={categoryOptions}
-                      selectedIds={selectedCategories}
-                      onChange={setSelectedCategories}
-                      placeholder="Seleccionar categorías"
-                      emptyMessage="No hay categorías"
-                      itemNoun={{ singular: "categoría", plural: "categorías" }}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Categorías</Label>
+                      <MultiSelectPopover
+                        options={categoryOptions}
+                        selectedIds={selectedCategories}
+                        onChange={setSelectedCategories}
+                        placeholder="Seleccionar categorías"
+                        emptyMessage="No hay categorías"
+                        itemNoun={{ singular: "categoría", plural: "categorías" }}
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Atributos</Label>
-                    <MultiSelectPopover
-                      options={attributeOptions}
-                      selectedIds={selectedAttributes}
-                      onChange={setSelectedAttributes}
-                      placeholder="Seleccionar atributos"
-                      emptyMessage="No hay atributos"
-                      itemNoun={{ singular: "atributo", plural: "atributos" }}
-                    />
+                    <div className="space-y-2">
+                      <Label>Atributos</Label>
+                      <MultiSelectPopover
+                        options={attributeOptions}
+                        selectedIds={selectedAttributes}
+                        onChange={setSelectedAttributes}
+                        placeholder="Seleccionar atributos"
+                        emptyMessage="No hay atributos"
+                        itemNoun={{ singular: "atributo", plural: "atributos" }}
+                      />
+                    </div>
                   </div>
 
                   <TextField value={description} onChange={setDescription}>

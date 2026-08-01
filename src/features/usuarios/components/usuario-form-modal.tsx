@@ -78,7 +78,7 @@ export function UsuarioFormModal({
   return (
     <Modal state={state}>
       <Modal.Backdrop isDismissable={!isPending}>
-        <Modal.Container size="md">
+        <Modal.Container size="lg">
           <Modal.Dialog>
             <form onSubmit={handleSubmit}>
               <ModalFormHeader
@@ -91,43 +91,48 @@ export function UsuarioFormModal({
                 }
               />
 
-              <Modal.Body className="space-y-4">
-                <TextField value={username} onChange={setUsername} isRequired autoFocus>
-                  <Label>Nombre de usuario</Label>
-                  <Input placeholder="Ej: maria.gomez" />
-                </TextField>
-
-                <TextField value={email} onChange={setEmail} type="email" isRequired>
-                  <Label>Correo electrónico</Label>
-                  <Input placeholder="usuario@empresa.com" />
-                </TextField>
-
-                {!isEdit && (
-                  <TextField value={password} onChange={setPassword} type="password" isRequired>
-                    <Label>Contraseña</Label>
-                    <Input placeholder="Mínimo 8 caracteres" />
+              <Modal.Body>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <TextField value={username} onChange={setUsername} isRequired autoFocus>
+                    <Label>Nombre de usuario</Label>
+                    <Input placeholder="Ej: maria.gomez" />
                   </TextField>
-                )}
 
-                <Select
-                  selectedKey={role}
-                  onSelectionChange={(key) => setRole(String(key))}
-                >
-                  <Label>Rol</Label>
-                  <Select.Trigger>
-                    <Select.Value />
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {ROLES.map((value) => (
-                        <ListBoxItem key={value} id={value}>
-                          {ROLE_LABELS[value]}
-                        </ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+                  <Select selectedKey={role} onSelectionChange={(key) => setRole(String(key))}>
+                    <Label>Rol</Label>
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {ROLES.map((value) => (
+                          <ListBoxItem key={value} id={value}>
+                            {ROLE_LABELS[value]}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+
+                  <TextField
+                    value={email}
+                    onChange={setEmail}
+                    type="email"
+                    isRequired
+                    className={isEdit ? "sm:col-span-2" : undefined}
+                  >
+                    <Label>Correo electrónico</Label>
+                    <Input placeholder="usuario@empresa.com" />
+                  </TextField>
+
+                  {!isEdit && (
+                    <TextField value={password} onChange={setPassword} type="password" isRequired>
+                      <Label>Contraseña</Label>
+                      <Input placeholder="Mínimo 8 caracteres" />
+                    </TextField>
+                  )}
+                </div>
               </Modal.Body>
 
               <Modal.Footer>
