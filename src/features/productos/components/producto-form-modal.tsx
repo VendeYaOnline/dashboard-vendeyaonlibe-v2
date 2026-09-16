@@ -7,6 +7,7 @@ import {
   Input,
   Label,
   Modal,
+  Switch,
   TextArea,
   TextField,
   useOverlayState,
@@ -22,7 +23,8 @@ import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 import { ColorImagesSection } from "./color-images-section";
 import { ColorSelectModal } from "./color-select-modal";
-import { MAX_IMAGES_PER_COLOR, MAX_PRODUCT_IMAGES } from "./constants";
+import { MAX_IMAGES_PER_COLOR, MAX_PRODUCT_IMAGES, MAX_QUANTITY } from "./constants";
+import { FormSection } from "./form-section";
 
 interface Spec {
   key: string;
@@ -110,7 +112,9 @@ export function ProductoFormModal({
   const [discount, setDiscount] = useState("");
   const [description, setDescription] = useState("");
   const [reference, setReference] = useState("");
-  const [stock, setStock] = useState("");
+  /** Unidades disponibles (0 a MAX_QUANTITY); vacío = no especificado. */
+  const [quantity, setQuantity] = useState("");
+  const [inStock, setInStock] = useState(true);
   const [specs, setSpecs] = useState<Spec[]>([]);
   /** Ordenado: el índice es la posición en que el usuario agregó cada atributo. */
   const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>([]);
@@ -143,7 +147,8 @@ export function ProductoFormModal({
       setDiscount("");
       setDescription("");
       setReference("");
-      setStock("");
+      setQuantity("");
+      setInStock(true);
       setSpecs([]);
       setSelectedAttributeIds([]);
       setAreAttributesHydrated(true);
@@ -164,9 +169,10 @@ export function ProductoFormModal({
     setDiscount(product.discount ? product.discount.toString() : "");
     setDescription(product.description || "");
     setReference(product.reference || "");
-    // Productos anteriores no tienen cantidad guardada: se pide al editar en
-    // vez de asumir 0 (que marcaría el producto como agotado al guardar).
-    setStock(product.quantity != null ? product.quantity.toString() : "");
+    // Productos anteriores no tienen cantidad guardada: se deja vacía y manda
+    // el interruptor de stock, que sí existe desde siempre.
+    setQuantity(product.quantity != null ? product.quantity.toString() : "");
+    setInStock(Boolean(product.stock));
     setProductImages(product.images || []);
     setColorImages(Array.isArray(product.color_images) ? product.color_images : []);
     setPendingChange(null);
@@ -410,6 +416,23 @@ export function ProductoFormModal({
     }
   };
 
+  const quantityValue = quantity === "" ? null : parseInt(quantity, 10);
+  // Con cantidad 0 el producto no puede estar en stock; el interruptor se bloquea.
+  const isStockLocked = quantityValue === 0;
+  const effectiveInStock = isStockLocked ? false : inStock;
+
+  const handleQuantityChange = (value: string) => {
+    if (value === "") {
+      setQuantity("");
+      return;
+    }
+    const num = parseInt(value, 10);
+    if (isNaN(num) || num < 0 || num > MAX_QUANTITY) return;
+    setQuantity(num.toString());
+    // Al pasar de 0/vacío a una cantidad positiva se activa el stock por defecto.
+    if (num > 0 && !(quantityValue !== null && quantityValue > 0)) setInStock(true);
+  };
+
   const handleAddSpec = () => {
     if (specs.length >= MAX_SPECS) return;
     setSpecs((prev) => [...prev, { key: "", value: "" }]);
@@ -436,8 +459,8 @@ export function ProductoFormModal({
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("image_product", imageProduct);
-    formData.append("quantity", stock);
-    formData.append("stock", String((parseInt(stock, 10) || 0) > 0));
+    formData.append("quantity", quantity);
+    formData.append("stock", String(effectiveInStock));
     formData.append("price", price);
     formData.append("discount_price", discountPrice);
     formData.append("discount", discountValue.toString());
@@ -462,7 +485,7 @@ export function ProductoFormModal({
     onSubmit(product?.id ?? null, formData);
   };
 
-  const isValid = title.trim() !== "" && price !== "" && stock !== "";
+  const isValid = title.trim() !== "" && price !== "";
 
   return (
     <>
@@ -470,121 +493,170 @@ export function ProductoFormModal({
         <Modal.Backdrop isDismissable={!isPending}>
           <Modal.Container size="lg" scroll="inside">
             <Modal.Dialog className="max-w-2xl">
-              <form onSubmit={handleSubmit}>
+              {/* Columna flex: así el cuerpo puede encogerse y desplazarse dentro del diálogo. */}
+              <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
                 <ModalFormHeader
                   icon={Package}
                   title={isEdit ? "Editar producto" : "Crear producto"}
                   description="Los campos marcados con * son obligatorios para publicarlo en la tienda."
                 />
 
-                <Modal.Body className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Imagen principal del producto</Label>
-                    <button
-                      type="button"
-                      onClick={() => setIsMainImagePickerOpen(true)}
-                      className="relative flex size-32 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-secondary"
-                    >
-                      {imageProduct ? (
-                        <img
-                          src={imageProduct}
-                          alt="Imagen principal"
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <>
-                          <ImageIcon className="mb-2 size-8 text-muted" />
-                          <span className="text-xs text-muted">Seleccionar</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                <Modal.Body className="space-y-4">
+                  <FormSection
+                    title="Información básica"
+                    description="Nombre, referencia e imagen con la que se muestra en la tienda."
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                      <div className="space-y-2">
+                        <Label>Imagen principal</Label>
+                        <button
+                          type="button"
+                          onClick={() => setIsMainImagePickerOpen(true)}
+                          className="relative flex size-32 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-secondary"
+                        >
+                          {imageProduct ? (
+                            <img
+                              src={imageProduct}
+                              alt="Imagen principal"
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <ImageIcon className="mb-2 size-8 text-muted" />
+                              <span className="text-xs text-muted">Seleccionar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <TextField value={title} onChange={setTitle} isRequired>
-                      <Label>Título del producto *</Label>
-                      <Input placeholder="Ej: Producto increíble" />
-                    </TextField>
+                      <div className="flex-1 space-y-4">
+                        <TextField value={title} onChange={setTitle} isRequired>
+                          <Label>Título del producto *</Label>
+                          <Input placeholder="Ej: Producto increíble" />
+                        </TextField>
 
-                    <TextField value={reference} onChange={setReference}>
-                      <Label>Referencia</Label>
-                      <Input placeholder="SKU-123" />
-                    </TextField>
-
-                    <TextField value={price} onChange={setPrice} type="number" isRequired>
-                      <Label>Precio base *</Label>
-                      <Input placeholder="0.00" min={0} step="0.01" />
-                    </TextField>
-
-                    <TextField value={discount} onChange={handleDiscountChange} type="number">
-                      <Label>Descuento (%)</Label>
-                      <Input placeholder="0 a 100" min={0} max={100} />
-                    </TextField>
-
-                    <div className="space-y-2">
-                      <Label>Precio final con descuento</Label>
-                      <div className="flex h-10 items-center rounded-lg border border-border bg-surface-secondary px-3 text-muted">
-                        {discountPrice ? `$${discountPrice}` : "-"}
+                        <TextField value={reference} onChange={setReference}>
+                          <Label>Referencia</Label>
+                          <Input placeholder="SKU-123" />
+                        </TextField>
                       </div>
                     </div>
 
-                    <TextField value={stock} onChange={setStock} type="number" isRequired>
-                      <Label>Stock *</Label>
-                      <Input placeholder="0" min={0} />
+                    <TextField value={description} onChange={setDescription}>
+                      <Label>Descripción del producto</Label>
+                      <TextArea
+                        placeholder="Escribe la descripción del producto..."
+                        className="min-h-24"
+                      />
                     </TextField>
-                  </div>
+                  </FormSection>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Categorías</Label>
-                      <MultiSelectPopover
-                        options={categoryOptions}
-                        selectedIds={selectedCategories}
-                        onChange={setSelectedCategories}
-                        placeholder="Seleccionar categorías"
-                        emptyMessage="No hay categorías"
-                        itemNoun={{ singular: "categoría", plural: "categorías" }}
-                      />
+                  <FormSection title="Precio">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      <TextField value={price} onChange={setPrice} type="number" isRequired>
+                        <Label>Precio base *</Label>
+                        <Input placeholder="0.00" min={0} step="0.01" />
+                      </TextField>
+
+                      <TextField value={discount} onChange={handleDiscountChange} type="number">
+                        <Label>Descuento (%)</Label>
+                        <Input placeholder="0 a 100" min={0} max={100} />
+                      </TextField>
+
+                      <div className="space-y-2">
+                        <Label>Precio final</Label>
+                        <div className="flex h-10 items-center rounded-lg border border-border bg-surface-secondary px-3 font-medium text-foreground">
+                          {discountPrice ? `$${discountPrice}` : "-"}
+                        </div>
+                      </div>
+                    </div>
+                  </FormSection>
+
+                  <FormSection
+                    title="Inventario"
+                    description={`Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`}
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <TextField value={quantity} onChange={handleQuantityChange} type="number">
+                        <Label>Cantidad</Label>
+                        <Input placeholder="Ej: 25" min={0} max={MAX_QUANTITY} />
+                      </TextField>
+
+                      <div className="space-y-2">
+                        <Label>Stock</Label>
+                        <div className="flex h-10 items-center rounded-lg border border-border bg-surface px-3">
+                          <Switch
+                            isSelected={effectiveInStock}
+                            onChange={setInStock}
+                            isDisabled={isStockLocked}
+                          >
+                            <Switch.Content>
+                              <Switch.Control>
+                                <Switch.Thumb />
+                              </Switch.Control>
+                              <Label>
+                                {isStockLocked
+                                  ? "Sin stock (cantidad 0)"
+                                  : effectiveInStock
+                                    ? "Disponible en la tienda"
+                                    : "Agotado"}
+                              </Label>
+                            </Switch.Content>
+                          </Switch>
+                        </div>
+                      </div>
+                    </div>
+                  </FormSection>
+
+                  <FormSection
+                    title="Clasificación"
+                    description="Categorías donde aparece y atributos (color, talla...) con los que se vende."
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Categorías</Label>
+                        <MultiSelectPopover
+                          options={categoryOptions}
+                          selectedIds={selectedCategories}
+                          onChange={setSelectedCategories}
+                          placeholder="Seleccionar categorías"
+                          emptyMessage="No hay categorías"
+                          itemNoun={{ singular: "categoría", plural: "categorías" }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Atributos</Label>
+                        <MultiSelectPopover
+                          options={attributeOptions}
+                          selectedIds={new Set(selectedAttributeIds)}
+                          onChange={handleAttributesChange}
+                          placeholder="Seleccionar atributos"
+                          emptyMessage="No hay atributos"
+                          itemNoun={{ singular: "atributo", plural: "atributos" }}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Atributos</Label>
-                      <MultiSelectPopover
-                        options={attributeOptions}
-                        selectedIds={new Set(selectedAttributeIds)}
-                        onChange={handleAttributesChange}
-                        placeholder="Seleccionar atributos"
-                        emptyMessage="No hay atributos"
-                        itemNoun={{ singular: "atributo", plural: "atributos" }}
-                      />
+                      <div className="flex items-center justify-between">
+                        <Label>Atributos agregados</Label>
+                        {attributeItems.length > 0 && (
+                          <span className="text-xs text-muted">
+                            {attributeItems.length}{" "}
+                            {attributeItems.length === 1 ? "atributo" : "atributos"} · en orden de
+                            agregación
+                          </span>
+                        )}
+                      </div>
+                      <ProductAttributeList items={attributeItems} onRemove={handleRemoveAttribute} />
                     </div>
-                  </div>
+                  </FormSection>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Atributos agregados</Label>
-                      {attributeItems.length > 0 && (
-                        <span className="text-xs text-muted">
-                          {attributeItems.length}{" "}
-                          {attributeItems.length === 1 ? "atributo" : "atributos"} · en orden de
-                          agregación
-                        </span>
-                      )}
-                    </div>
-                    <ProductAttributeList items={attributeItems} onRemove={handleRemoveAttribute} />
-                  </div>
-
-                  <TextField value={description} onChange={setDescription}>
-                    <Label>Descripción del producto</Label>
-                    <TextArea
-                      placeholder="Escribe la descripción del producto..."
-                      className="min-h-24"
-                    />
-                  </TextField>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Especificaciones (máx. {MAX_SPECS})</Label>
+                  <FormSection
+                    title={`Especificaciones (máx. ${MAX_SPECS})`}
+                    description="Datos técnicos en pares nombre/valor."
+                    action={
                       <Button
                         type="button"
                         variant="outline"
@@ -595,53 +667,55 @@ export function ProductoFormModal({
                         <Plus className="size-4" />
                         Agregar
                       </Button>
-                    </div>
-
-                    <div className="space-y-2">
-                      {specs.map((spec, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            aria-label="Nombre de la especificación"
-                            placeholder="Ej: Color"
-                            value={spec.key}
-                            onChange={(e) => handleSpecChange(index, "key", e.target.value)}
-                          />
-                          <Input
-                            aria-label="Valor de la especificación"
-                            placeholder="Ej: Rojo"
-                            value={spec.value}
-                            onChange={(e) => handleSpecChange(index, "value", e.target.value)}
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            isIconOnly
-                            aria-label="Quitar especificación"
-                            className="shrink-0 text-danger"
-                            onPress={() => handleRemoveSpec(index)}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <Label>
-                          {colorAttribute
-                            ? "Imágenes por color (máx. " + MAX_IMAGES_PER_COLOR + " por color)"
-                            : "Imágenes del producto (máx. " + MAX_PRODUCT_IMAGES + ")"}
-                        </Label>
-                        {colorAttribute && (
-                          <p className="text-xs text-muted">
-                            Cada imagen se relaciona con un color de «{colorAttribute.name}».
-                          </p>
-                        )}
+                    }
+                  >
+                    {specs.length === 0 ? (
+                      <p className="text-xs text-muted">Sin especificaciones.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {specs.map((spec, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Input
+                              aria-label="Nombre de la especificación"
+                              placeholder="Ej: Código"
+                              value={spec.key}
+                              onChange={(e) => handleSpecChange(index, "key", e.target.value)}
+                            />
+                            <Input
+                              aria-label="Valor de la especificación"
+                              placeholder="Ej: DH63"
+                              value={spec.value}
+                              onChange={(e) => handleSpecChange(index, "value", e.target.value)}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              isIconOnly
+                              aria-label="Quitar especificación"
+                              className="shrink-0 text-danger"
+                              onPress={() => handleRemoveSpec(index)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
+                    )}
+                  </FormSection>
+
+                  <FormSection
+                    title={
+                      colorAttribute
+                        ? "Imágenes por color (máx. " + MAX_IMAGES_PER_COLOR + " por color)"
+                        : "Imágenes del producto (máx. " + MAX_PRODUCT_IMAGES + ")"
+                    }
+                    description={
+                      colorAttribute
+                        ? `Cada imagen se relaciona con un color de «${colorAttribute.name}».`
+                        : "Galería secundaria que se muestra junto a la imagen principal."
+                    }
+                    action={
                       <Button
                         type="button"
                         variant="outline"
@@ -656,8 +730,8 @@ export function ProductoFormModal({
                         <Plus className="size-4" />
                         Agregar
                       </Button>
-                    </div>
-
+                    }
+                  >
                     {colorAttribute ? (
                       <ColorImagesSection
                         colors={colorOptions}
@@ -666,6 +740,8 @@ export function ProductoFormModal({
                         onPickForColor={handlePickForColor}
                         onRemoveImage={handleRemoveImage}
                       />
+                    ) : productImages.length === 0 ? (
+                      <p className="text-xs text-muted">Sin imágenes adicionales.</p>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {productImages.map((img) => (
@@ -686,7 +762,7 @@ export function ProductoFormModal({
                         ))}
                       </div>
                     )}
-                  </div>
+                  </FormSection>
                 </Modal.Body>
 
                 <Modal.Footer>

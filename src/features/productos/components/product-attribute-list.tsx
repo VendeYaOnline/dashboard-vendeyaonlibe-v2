@@ -37,7 +37,7 @@ export function ProductAttributeList({ items, onRemove }: ProductAttributeListPr
       {items.map((item, index) => (
         <li
           key={item.id}
-          className="rounded-lg border border-border bg-surface p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+          className="rounded-lg border border-border bg-surface-secondary p-3"
         >
           <div className="flex items-start gap-3">
             <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-soft-foreground">
