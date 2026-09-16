@@ -67,6 +67,8 @@ export function MultiSelectPopover({
               <ListBox
                 aria-label={placeholder}
                 selectionMode="multiple"
+                // Por defecto Escape vacía la selección; aquí solo debe cerrar el popover.
+                escapeKeyBehavior="none"
                 selectedKeys={selectedIds}
                 onSelectionChange={handleSelectionChange}
                 className="max-h-60 overflow-y-auto"
