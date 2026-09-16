@@ -12,15 +12,63 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
-import { useQueryAttribute, useQueryCategories } from "@/app/api/queries";
+import { useQueryAllAttributes, useQueryAllCategories } from "@/app/api/queries";
+import type { Attribute } from "@/interfaces/attributes";
 import type { Products } from "@/interfaces/products";
 import { MultiSelectPopover } from "./multi-select-popover";
 import { ImagePickerModal } from "./image-picker-modal";
+import { normalizeAttributeType } from "./attribute-values";
+import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 
 interface Spec {
   key: string;
   value: string;
 }
+
+const parseJson = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * IDs de atributos con los que se abre el producto en edición, en orden.
+ *
+ * Prioriza `product_attributes` (columna ordenada). Para productos anteriores
+ * cae al campo `attributes`: un array de IDs (guardado por una versión previa
+ * de este panel) o el objeto legacy por tipo, del que se toma el primer
+ * atributo del catálogo con ese tipo.
+ */
+const getInitialAttributeIds = (product: Products, catalog: Attribute[]): string[] => {
+  if (Array.isArray(product.product_attributes)) {
+    return product.product_attributes.map((attr) => attr.id);
+  }
+
+  const legacy = parseJson(product.attributes);
+  if (Array.isArray(legacy)) {
+    return legacy.filter((id): id is string => typeof id === "string");
+  }
+
+  if (legacy && typeof legacy === "object") {
+    const ids: string[] = [];
+    for (const [type, values] of Object.entries(legacy as Record<string, unknown>)) {
+      if (!Array.isArray(values) || values.length === 0) continue;
+      const match = catalog.find(
+        (attr) =>
+          attr.id &&
+          !ids.includes(attr.id) &&
+          normalizeAttributeType(attr.attribute_type) === normalizeAttributeType(type),
+      );
+      if (match?.id) ids.push(match.id);
+    }
+    return ids;
+  }
+
+  return [];
+};
 
 interface ProductoFormModalProps {
   /** null = crear, con valor = editar */
@@ -52,15 +100,17 @@ export function ProductoFormModal({
   const [reference, setReference] = useState("");
   const [stock, setStock] = useState("");
   const [specs, setSpecs] = useState<Spec[]>([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<Set<string>>(new Set());
+  /** Ordenado: el índice es la posición en que el usuario agregó cada atributo. */
+  const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>([]);
+  const [areAttributesHydrated, setAreAttributesHydrated] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [productImages, setProductImages] = useState<string[]>([]);
 
   const [isMainImagePickerOpen, setIsMainImagePickerOpen] = useState(false);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
 
-  const { data: attrData } = useQueryAttribute(1, "");
-  const { data: catData } = useQueryCategories(1, "");
+  const { data: attrData } = useQueryAllAttributes(isOpen);
+  const { data: catData } = useQueryAllCategories(isOpen);
   const attributes = attrData?.attributes ?? [];
   const categories = catData?.categories ?? [];
 
@@ -77,11 +127,16 @@ export function ProductoFormModal({
       setReference("");
       setStock("");
       setSpecs([]);
-      setSelectedAttributes(new Set());
+      setSelectedAttributeIds([]);
+      setAreAttributesHydrated(true);
       setSelectedCategories(new Set());
       setProductImages([]);
       return;
     }
+
+    // Los atributos se precargan en el efecto de abajo: el formato legacy
+    // necesita el catálogo para resolver los IDs.
+    setAreAttributesHydrated(false);
 
     setImageProduct(product.image_product || "");
     setTitle(product.title || "");
@@ -103,20 +158,70 @@ export function ProductoFormModal({
       setSpecs([]);
     }
 
-    try {
-      const parsedAttr = product.attributes
-        ? typeof product.attributes === "string"
-          ? JSON.parse(product.attributes)
-          : product.attributes
-        : [];
-      setSelectedAttributes(new Set(Array.isArray(parsedAttr) ? parsedAttr.map(String) : []));
-    } catch {
-      setSelectedAttributes(new Set());
-    }
-
     const cats = Array.isArray(product.Categories) ? product.Categories.map((c) => c.id) : [];
     setSelectedCategories(new Set(cats));
   }, [isOpen, product]);
+
+  // Precarga de atributos en edición. Se ejecuta una sola vez por apertura y,
+  // si el producto guarda el formato legacy, espera a que cargue el catálogo.
+  useEffect(() => {
+    if (!isOpen || !product || areAttributesHydrated) return;
+
+    const legacy = parseJson(product.attributes);
+    const needsCatalog =
+      !Array.isArray(product.product_attributes) &&
+      legacy !== null &&
+      typeof legacy === "object" &&
+      !Array.isArray(legacy);
+    if (needsCatalog && !attrData) return;
+
+    setSelectedAttributeIds(getInitialAttributeIds(product, attributes));
+    setAreAttributesHydrated(true);
+  }, [isOpen, product, areAttributesHydrated, attrData, attributes]);
+
+  /**
+   * Mantiene el orden de agregación: conserva los que siguen marcados en su
+   * posición y añade los nuevos al final.
+   */
+  const handleAttributesChange = (ids: Set<string>) => {
+    setSelectedAttributeIds((prev) => {
+      const kept = prev.filter((id) => ids.has(id));
+      const added = Array.from(ids).filter((id) => !prev.includes(id));
+      return [...kept, ...added];
+    });
+  };
+
+  const handleRemoveAttribute = (id: string) => {
+    setSelectedAttributeIds((prev) => prev.filter((item) => item !== id));
+  };
+
+  // Valores frescos del catálogo; si el atributo se eliminó, se usa el
+  // snapshot guardado en el producto para no perder la información en pantalla.
+  const attributeItems: ProductAttributeItem[] = selectedAttributeIds.flatMap((id) => {
+    const live = attributes.find((attr) => attr.id === id);
+    if (live) {
+      return [
+        {
+          id,
+          name: live.attribute_name,
+          type: live.attribute_type,
+          values: live.value ?? [],
+        },
+      ];
+    }
+    const snapshot = product?.product_attributes?.find((attr) => attr.id === id);
+    if (!snapshot) return [];
+    return [
+      {
+        id,
+        name: snapshot.attribute_name,
+        type: snapshot.attribute_type,
+        values: snapshot.value ?? [],
+        // Mientras carga el catálogo no se puede saber si fue eliminado.
+        isMissing: Boolean(attrData),
+      },
+    ];
+  });
 
   const discountValue = parseInt(discount) || 0;
   const priceValue = parseFloat(price) || 0;
@@ -156,7 +261,7 @@ export function ProductoFormModal({
   const categoryOptions = categories.map((cat) => ({ id: cat.id, label: cat.name }));
   const attributeOptions = attributes
     .filter((attr): attr is typeof attr & { id: string } => Boolean(attr.id))
-    .map((attr) => ({ id: attr.id, label: attr.attribute_name }));
+    .map((attr) => ({ id: attr.id, label: attr.attribute_name, hint: attr.attribute_type }));
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -170,7 +275,7 @@ export function ProductoFormModal({
     formData.append("discount", discountValue.toString());
     formData.append("description", description.trim());
     formData.append("reference", reference.trim());
-    formData.append("attributes", JSON.stringify(Array.from(selectedAttributes)));
+    formData.append("attributes", JSON.stringify(selectedAttributeIds));
 
     const catArray = Array.from(selectedCategories).map((id) => {
       const category = categories.find((c) => c.id === id);
@@ -274,13 +379,27 @@ export function ProductoFormModal({
                       <Label>Atributos</Label>
                       <MultiSelectPopover
                         options={attributeOptions}
-                        selectedIds={selectedAttributes}
-                        onChange={setSelectedAttributes}
+                        selectedIds={new Set(selectedAttributeIds)}
+                        onChange={handleAttributesChange}
                         placeholder="Seleccionar atributos"
                         emptyMessage="No hay atributos"
                         itemNoun={{ singular: "atributo", plural: "atributos" }}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Atributos agregados</Label>
+                      {attributeItems.length > 0 && (
+                        <span className="text-xs text-muted">
+                          {attributeItems.length}{" "}
+                          {attributeItems.length === 1 ? "atributo" : "atributos"} · en orden de
+                          agregación
+                        </span>
+                      )}
+                    </div>
+                    <ProductAttributeList items={attributeItems} onRemove={handleRemoveAttribute} />
                   </div>
 
                   <TextField value={description} onChange={setDescription}>

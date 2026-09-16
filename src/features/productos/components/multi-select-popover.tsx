@@ -10,6 +10,8 @@ type Selection = Parameters<NonNullable<OnSelectionChange>>[0];
 interface MultiSelectOption {
   id: string;
   label: string;
+  /** Texto secundario a la derecha de la etiqueta (p. ej. el tipo de atributo). */
+  hint?: string;
 }
 
 interface MultiSelectPopoverProps {
@@ -23,7 +25,8 @@ interface MultiSelectPopoverProps {
 
 /**
  * Selector múltiple genérico (categorías, atributos): botón que muestra el
- * conteo y abre un popover con la lista seleccionable.
+ * conteo y abre un popover con la lista seleccionable. Cada opción marcada
+ * muestra un check para que el estado sea visible al reabrir la lista.
  */
 export function MultiSelectPopover({
   options,
@@ -62,8 +65,19 @@ export function MultiSelectPopover({
               className="max-h-60 overflow-y-auto"
             >
               {options.map((option) => (
-                <ListBoxItem key={option.id} id={option.id}>
-                  {option.label}
+                <ListBoxItem
+                  key={option.id}
+                  id={option.id}
+                  textValue={option.label}
+                  className="data-[selected=true]:font-medium"
+                >
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    <span className="truncate">{option.label}</span>
+                    {option.hint && (
+                      <span className="shrink-0 text-xs text-muted">{option.hint}</span>
+                    )}
+                  </span>
+                  <ListBoxItem.Indicator />
                 </ListBoxItem>
               ))}
             </ListBox>

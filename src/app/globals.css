@@ -127,3 +127,28 @@
 [data-theme="dark"] .modal__dialog {
   background-color: var(--overlay);
 }
+
+/*
+ * Estado seleccionado en las listas de opciones (Select, selectores múltiples).
+ * HeroUI no pinta la selección: solo dibuja el check si el ítem incluye un
+ * indicador. Aquí se distingue por el modo de selección del listbox.
+ */
+
+/* Selección única: todo el ítem se resalta en azul claro (acento suave). */
+[role="listbox"]:not([aria-multiselectable="true"]) .list-box-item[data-selected="true"] {
+  background-color: var(--accent-soft);
+  color: var(--accent-soft-foreground);
+  font-weight: 500;
+}
+
+@media (hover: hover) {
+  [role="listbox"]:not([aria-multiselectable="true"]) .list-box-item[data-selected="true"]:hover,
+  [role="listbox"]:not([aria-multiselectable="true"]) .list-box-item[data-selected="true"][data-hovered="true"] {
+    background-color: var(--accent-soft-hover);
+  }
+}
+
+/* Selección múltiple: el check del indicador toma el color de acento. */
+[role="listbox"][aria-multiselectable="true"] .list-box-item[data-selected="true"] .list-box-item__indicator {
+  color: var(--accent);
+}
