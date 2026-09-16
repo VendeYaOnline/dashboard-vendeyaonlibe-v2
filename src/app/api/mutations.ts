@@ -3,6 +3,7 @@ import {
   createAttribute,
   createCarousel,
   createCategory,
+  createCover,
   createFeaturedProduct,
   createProduct,
   createSale,
@@ -11,6 +12,7 @@ import {
   deleteAttribute,
   deleteCarousel,
   deleteCategory,
+  deleteCover,
   deleteContact,
   deleteFeaturedProduct,
   deleteImage,
@@ -20,6 +22,7 @@ import {
   updatedAttribute,
   updatedCarousel,
   updatedCategory,
+  updateCover,
   updatedProduct,
   updatedUser,
   uploadImages,
@@ -82,6 +85,38 @@ export const useMutationUpdatedCategory = () => {
     mutationFn: updatedCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+// * COVERS (portadas)
+
+export const useMutationCreateCover = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createCover,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["covers"] });
+    },
+  });
+};
+
+export const useMutationUpdateCover = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateCover,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["covers"] });
+    },
+  });
+};
+
+export const useMutationDeleteCover = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteCover,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["covers"] });
     },
   });
 };

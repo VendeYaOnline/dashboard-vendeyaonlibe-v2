@@ -4,6 +4,7 @@ import {
   getCarousels,
   getCategories,
   getContacts,
+  getCovers,
   getFeaturedProducts,
   getImages,
   getProducts,
@@ -38,6 +39,17 @@ export const useQueryAllAttributes = (enabled: boolean = true) =>
     staleTime: 1000 * 60 * 10,
     enabled,
   });
+
+export const useQueryCovers = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["covers", validPage, search],
+    queryFn: () => getCovers(validPage, search),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled: currentPage > 0,
+  });
+};
 
 export const useQueryCategories = (currentPage: number, search: string) => {
   const validPage = currentPage > 0 ? currentPage : 1;

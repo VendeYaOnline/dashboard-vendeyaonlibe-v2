@@ -20,7 +20,7 @@ import { useQueryAllAttributes, useQueryAllCategories } from "@/app/api/queries"
 import type { Attribute } from "@/interfaces/attributes";
 import type { ColorImageGroup, Products } from "@/interfaces/products";
 import { MultiSelectPopover } from "./multi-select-popover";
-import { ImagePickerModal } from "./image-picker-modal";
+import { ImagePickerModal } from "@/components/shared/image-picker-modal";
 import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute-values";
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 import { ColorImagesSection } from "./color-images-section";
