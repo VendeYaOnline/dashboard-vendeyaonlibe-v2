@@ -5,6 +5,7 @@ import { ImageIcon, Package, Plus, Trash2 } from "lucide-react";
 import {
   Button,
   Input,
+  InputGroup,
   Label,
   Modal,
   Switch,
@@ -23,8 +24,19 @@ import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 import { ColorImagesSection } from "./color-images-section";
 import { ColorSelectModal } from "./color-select-modal";
-import { MAX_IMAGES_PER_COLOR, MAX_PRODUCT_IMAGES, MAX_QUANTITY } from "./constants";
-import { FormSection } from "./form-section";
+import {
+  MAX_DESCRIPTION_LENGTH,
+  MAX_IMAGES_PER_COLOR,
+  MAX_PRICE,
+  MAX_PRODUCT_IMAGES,
+  MAX_QUANTITY,
+  MAX_REFERENCE_LENGTH,
+  MAX_SPEC_KEY_LENGTH,
+  MAX_SPEC_VALUE_LENGTH,
+  MAX_TITLE_LENGTH,
+} from "./constants";
+import { CharCounter, FormSection } from "./form-section";
+import { formatCOP, formatThousands, toDigits } from "../utils";
 
 interface Spec {
   key: string;
@@ -165,7 +177,8 @@ export function ProductoFormModal({
 
     setImageProduct(product.image_product || "");
     setTitle(product.title || "");
-    setPrice(product.price ? product.price.toString() : "");
+    // El precio se maneja como entero en pesos (sin decimales).
+    setPrice(product.price ? toDigits(String(Math.round(Number(product.price)))) : "");
     setDiscount(product.discount ? product.discount.toString() : "");
     setDescription(product.description || "");
     setReference(product.reference || "");
@@ -174,7 +187,11 @@ export function ProductoFormModal({
     setQuantity(product.quantity != null ? product.quantity.toString() : "");
     setInStock(Boolean(product.stock));
     setProductImages(product.images || []);
-    setColorImages(Array.isArray(product.color_images) ? product.color_images : []);
+    setColorImages(
+      Array.isArray(product.color_images)
+        ? [...product.color_images].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        : [],
+    );
     setPendingChange(null);
 
     try {
@@ -324,16 +341,43 @@ export function ProductoFormModal({
   const colorAttribute = attributeItems.find((item) => isColorType(item.type));
   const colorOptions = colorAttribute ? toColorOptions(colorAttribute.values) : [];
   const unassignedImages = productImages.filter((url) => !linkedImageUrls.includes(url));
-  const colorChoices = colorOptions.map((color) => ({
-    ...color,
-    count: colorImages.find((group) => group.color === color.hex)?.images.length ?? 0,
-  }));
+
+  /**
+   * Un grupo por color en el orden elegido por el usuario: primero los ya
+   * guardados (en su orden) y después los colores del atributo que aún no
+   * tienen grupo, en el orden del atributo.
+   */
+  const orderedGroups: ColorImageGroup[] = colorAttribute
+    ? [
+        ...colorImages.map((group) => ({
+          ...group,
+          name: colorOptions.find((color) => color.hex === group.color)?.name ?? group.name,
+        })),
+        ...colorOptions
+          .filter((color) => !colorImages.some((group) => group.color === color.hex))
+          .map((color) => ({ color: color.hex, name: color.name, images: [] })),
+      ]
+    : [];
+
+  const colorChoices = orderedGroups
+    .filter((group) => colorOptions.some((color) => color.hex === group.color))
+    .map((group) => ({ hex: group.color, name: group.name, count: group.images.length }));
   const allColorsFull =
     colorChoices.length > 0 &&
     colorChoices.every((color) => color.count >= MAX_IMAGES_PER_COLOR);
   const pickingGroup = pickingColorHex
-    ? colorImages.find((group) => group.color === pickingColorHex)
+    ? orderedGroups.find((group) => group.color === pickingColorHex)
     : undefined;
+
+  /** Mueve un color a otra posición; el primero es el que carga primero en la tienda. */
+  const handleMoveColor = (hex: string, toIndex: number) => {
+    const fromIndex = orderedGroups.findIndex((group) => group.color === hex);
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= orderedGroups.length) return;
+    const next = [...orderedGroups];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    setColorImages(next);
+  };
 
   const handleAddImagesPress = () => {
     if (colorAttribute) {
@@ -358,23 +402,14 @@ export function ProductoFormModal({
 
     const hex = pickingColorHex;
     const nextImages = urls.slice(0, MAX_IMAGES_PER_COLOR);
-    const previousImages = colorImages.find((group) => group.color === hex)?.images ?? [];
-    const name = colorOptions.find((color) => color.hex === hex)?.name ?? "";
+    const previousImages = pickingGroup?.images ?? [];
 
-    setColorImages((prev) => {
-      const rest = prev.filter((group) => group.color !== hex);
-      if (nextImages.length === 0) return rest;
-      // Se conserva la posición del color según el orden del atributo.
-      const ordered = colorOptions
-        .map((color) =>
-          color.hex === hex
-            ? { color: hex, name, images: nextImages }
-            : rest.find((group) => group.color === color.hex),
-        )
-        .filter((group): group is ColorImageGroup => Boolean(group));
-      const orphans = rest.filter((group) => !colorOptions.some((c) => c.hex === group.color));
-      return [...ordered, ...orphans];
-    });
+    // Se conserva el orden de las tarjetas; solo cambian las imágenes del color.
+    setColorImages(
+      orderedGroups.map((group) =>
+        group.color === hex ? { ...group, images: nextImages } : group,
+      ),
+    );
 
     // Toda imagen ligada a un color vive también en la galería del producto.
     setProductImages((prev) => {
@@ -389,21 +424,28 @@ export function ProductoFormModal({
 
   const handleRemoveImage = (url: string) => {
     setProductImages((prev) => prev.filter((item) => item !== url));
+    // Los grupos vacíos se conservan para no perder el orden elegido.
     setColorImages((prev) =>
-      prev
-        .map((group) => ({ ...group, images: group.images.filter((item) => item !== url) }))
-        .filter((group) => group.images.length > 0),
+      prev.map((group) => ({ ...group, images: group.images.filter((item) => item !== url) })),
     );
   };
 
   const discountValue = parseInt(discount) || 0;
-  const priceValue = parseFloat(price) || 0;
+  const priceValue = parseInt(price, 10) || 0;
+  // Redondeado al peso: en Colombia no se manejan centavos.
   const discountPrice =
-    discountValue > 0
-      ? (priceValue - (priceValue * discountValue) / 100).toFixed(2)
-      : priceValue > 0
-        ? priceValue.toFixed(2)
-        : "";
+    priceValue > 0
+      ? String(Math.round(priceValue - (priceValue * discountValue) / 100))
+      : "";
+
+  const handlePriceChange = (raw: string) => {
+    const digits = toDigits(raw);
+    if (digits === "") {
+      setPrice("");
+      return;
+    }
+    setPrice(String(Math.min(Number(digits), MAX_PRICE)));
+  };
 
   const handleDiscountChange = (value: string) => {
     if (value === "") {
@@ -476,10 +518,16 @@ export function ProductoFormModal({
 
     const validSpecs = specs.filter((s) => s.key.trim() && s.value.trim());
     formData.append("specs", JSON.stringify(validSpecs));
-    formData.append("images", JSON.stringify(productImages));
+    // Con atributo de color, la galería sigue el orden de los colores.
+    const orderedImages = colorAttribute
+      ? [...orderedGroups.flatMap((group) => group.images), ...unassignedImages]
+      : productImages;
+    formData.append("images", JSON.stringify(orderedImages));
     formData.append(
       "color_images",
-      JSON.stringify(colorAttribute ? colorImages.filter((g) => g.images.length > 0) : []),
+      JSON.stringify(
+        colorAttribute ? orderedGroups.map((group, index) => ({ ...group, order: index })) : [],
+      ),
     );
 
     onSubmit(product?.id ?? null, formData);
@@ -530,32 +578,54 @@ export function ProductoFormModal({
                       </div>
 
                       <div className="flex-1 space-y-4">
-                        <TextField value={title} onChange={setTitle} isRequired>
+                        <TextField
+                          value={title}
+                          onChange={(value) => setTitle(value.slice(0, MAX_TITLE_LENGTH))}
+                          isRequired
+                        >
                           <Label>Título del producto *</Label>
-                          <Input placeholder="Ej: Producto increíble" />
+                          <Input placeholder="Ej: Producto increíble" maxLength={MAX_TITLE_LENGTH} />
+                          <CharCounter length={title.length} max={MAX_TITLE_LENGTH} />
                         </TextField>
 
-                        <TextField value={reference} onChange={setReference}>
+                        <TextField
+                          value={reference}
+                          onChange={(value) => setReference(value.slice(0, MAX_REFERENCE_LENGTH))}
+                        >
                           <Label>Referencia</Label>
-                          <Input placeholder="SKU-123" />
+                          <Input placeholder="SKU-123" maxLength={MAX_REFERENCE_LENGTH} />
+                          <CharCounter length={reference.length} max={MAX_REFERENCE_LENGTH} />
                         </TextField>
                       </div>
                     </div>
 
-                    <TextField value={description} onChange={setDescription}>
+                    <TextField
+                      value={description}
+                      onChange={(value) => setDescription(value.slice(0, MAX_DESCRIPTION_LENGTH))}
+                    >
                       <Label>Descripción del producto</Label>
                       <TextArea
                         placeholder="Escribe la descripción del producto..."
                         className="min-h-24"
+                        maxLength={MAX_DESCRIPTION_LENGTH}
                       />
+                      <CharCounter length={description.length} max={MAX_DESCRIPTION_LENGTH} />
                     </TextField>
                   </FormSection>
 
-                  <FormSection title="Precio">
+                  <FormSection
+                    title="Precio"
+                    description={`En pesos colombianos, sin centavos. Máximo ${formatCOP(MAX_PRICE)}.`}
+                  >
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <TextField value={price} onChange={setPrice} type="number" isRequired>
+                      <TextField value={formatThousands(price)} onChange={handlePriceChange} isRequired>
                         <Label>Precio base *</Label>
-                        <Input placeholder="0.00" min={0} step="0.01" />
+                        <InputGroup>
+                          <InputGroup.Prefix>
+                            <span className="text-sm text-muted">$</span>
+                          </InputGroup.Prefix>
+                          <InputGroup.Input placeholder="0" inputMode="numeric" />
+                        </InputGroup>
                       </TextField>
 
                       <TextField value={discount} onChange={handleDiscountChange} type="number">
@@ -566,7 +636,7 @@ export function ProductoFormModal({
                       <div className="space-y-2">
                         <Label>Precio final</Label>
                         <div className="flex h-10 items-center rounded-lg border border-border bg-surface-secondary px-3 font-medium text-foreground">
-                          {discountPrice ? `$${discountPrice}` : "-"}
+                          {discountPrice ? formatCOP(discountPrice) : "-"}
                         </div>
                       </div>
                     </div>
@@ -674,26 +744,46 @@ export function ProductoFormModal({
                     ) : (
                       <div className="space-y-2">
                         {specs.map((spec, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Input
-                              aria-label="Nombre de la especificación"
-                              placeholder="Ej: Código"
-                              value={spec.key}
-                              onChange={(e) => handleSpecChange(index, "key", e.target.value)}
-                            />
-                            <Input
-                              aria-label="Valor de la especificación"
-                              placeholder="Ej: DH63"
-                              value={spec.value}
-                              onChange={(e) => handleSpecChange(index, "value", e.target.value)}
-                            />
+                          <div key={index} className="flex items-start gap-2">
+                            <div className="flex-1">
+                              <Input
+                                aria-label="Nombre de la especificación"
+                                placeholder="Ej: Código"
+                                value={spec.key}
+                                maxLength={MAX_SPEC_KEY_LENGTH}
+                                onChange={(e) =>
+                                  handleSpecChange(
+                                    index,
+                                    "key",
+                                    e.target.value.slice(0, MAX_SPEC_KEY_LENGTH),
+                                  )
+                                }
+                              />
+                              <CharCounter length={spec.key.length} max={MAX_SPEC_KEY_LENGTH} />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                aria-label="Valor de la especificación"
+                                placeholder="Ej: DH63"
+                                value={spec.value}
+                                maxLength={MAX_SPEC_VALUE_LENGTH}
+                                onChange={(e) =>
+                                  handleSpecChange(
+                                    index,
+                                    "value",
+                                    e.target.value.slice(0, MAX_SPEC_VALUE_LENGTH),
+                                  )
+                                }
+                              />
+                              <CharCounter length={spec.value.length} max={MAX_SPEC_VALUE_LENGTH} />
+                            </div>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               isIconOnly
                               aria-label="Quitar especificación"
-                              className="shrink-0 text-danger"
+                              className="mt-0.5 shrink-0 text-danger"
                               onPress={() => handleRemoveSpec(index)}
                             >
                               <Trash2 className="size-4" />
@@ -735,10 +825,11 @@ export function ProductoFormModal({
                     {colorAttribute ? (
                       <ColorImagesSection
                         colors={colorOptions}
-                        groups={colorImages}
+                        groups={orderedGroups}
                         unassignedImages={unassignedImages}
                         onPickForColor={handlePickForColor}
                         onRemoveImage={handleRemoveImage}
+                        onMove={handleMoveColor}
                       />
                     ) : productImages.length === 0 ? (
                       <p className="text-xs text-muted">Sin imágenes adicionales.</p>
@@ -813,7 +904,7 @@ export function ProductoFormModal({
           ...(imageProduct ? [imageProduct] : []),
           // Una imagen solo puede pertenecer a un color.
           ...(pickingColorHex
-            ? colorImages
+            ? orderedGroups
                 .filter((group) => group.color !== pickingColorHex)
                 .flatMap((group) => group.images)
             : []),
