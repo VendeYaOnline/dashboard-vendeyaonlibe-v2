@@ -25,6 +25,8 @@ export interface ColorImageGroup {
   color: string;
   name: string;
   images: string[];
+  /** Posición elegida por el usuario: el primer color es el que carga primero. */
+  order?: number;
 }
 
 export interface Products {

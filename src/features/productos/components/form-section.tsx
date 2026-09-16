@@ -26,3 +26,20 @@ export function FormSection({ title, description, action, children }: FormSectio
     </section>
   );
 }
+
+interface CharCounterProps {
+  length: number;
+  max: number;
+}
+
+/** Contador "n/máx" bajo un campo de texto con límite de caracteres. */
+export function CharCounter({ length, max }: CharCounterProps) {
+  return (
+    <span
+      aria-live="polite"
+      className={`mt-1 block text-right text-xs ${length >= max ? "text-warning" : "text-muted"}`}
+    >
+      {length}/{max}
+    </span>
+  );
+}
