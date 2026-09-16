@@ -21,6 +21,9 @@ interface MultiSelectPopoverProps {
   placeholder: string;
   emptyMessage: string;
   itemNoun: { singular: string; plural: string };
+  /** Opcional: control externo de apertura (p. ej. para cerrarlo antes de un diálogo). */
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
@@ -35,6 +38,8 @@ export function MultiSelectPopover({
   placeholder,
   emptyMessage,
   itemNoun,
+  isOpen,
+  onOpenChange,
 }: MultiSelectPopoverProps) {
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") {
@@ -47,7 +52,7 @@ export function MultiSelectPopover({
   return (
     // Contenedor en bloque: así el disparador ocupa todo el ancho bajo la etiqueta.
     <div className="w-full">
-      <Popover.Root>
+      <Popover.Root isOpen={isOpen} onOpenChange={onOpenChange}>
         <Popover.Trigger>
           <Button variant="outline" fullWidth className="justify-between">
             {selectedIds.size > 0
