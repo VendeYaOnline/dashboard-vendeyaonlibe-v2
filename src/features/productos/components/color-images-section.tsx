@@ -70,7 +70,13 @@ export function ColorImagesSection({
           key={url}
           className="group relative size-16 overflow-hidden rounded-md border border-border"
         >
-          <img src={url} alt="Imagen del producto" className="size-full object-cover" />
+          {/* Sin esto el navegador arrastra la imagen en lugar de la tarjeta. */}
+          <img
+            src={url}
+            alt="Imagen del producto"
+            draggable={false}
+            className="size-full object-cover"
+          />
           <button
             type="button"
             onClick={() => onRemoveImage(url)}
@@ -109,7 +115,7 @@ export function ColorImagesSection({
               onDrop={(event) => handleDrop(event, group.color)}
               onDragEnd={handleDragEnd}
               className={cn(
-                "flex items-start gap-2 rounded-lg border bg-surface-secondary p-3 transition-[opacity,box-shadow,border-color]",
+                "flex cursor-grab items-start gap-2 rounded-lg border bg-surface-secondary p-3 transition-[opacity,box-shadow,border-color] active:cursor-grabbing",
                 isOrphan ? "border-dashed border-border" : "border-border",
                 isDragging && "opacity-50",
                 isOver && "border-accent ring-2 ring-accent/30",
@@ -119,7 +125,7 @@ export function ColorImagesSection({
                 <span
                   aria-hidden="true"
                   title="Arrastra para reordenar"
-                  className="cursor-grab text-muted active:cursor-grabbing"
+                  className="text-muted"
                 >
                   <GripVertical className="size-4" />
                 </span>
