@@ -18,7 +18,7 @@ interface ColorImagesSectionProps {
 
 /**
  * Galería del producto agrupada por color. Cada color muestra sus imágenes
- * (máx. 3) y un botón para elegirlas directamente; las imágenes sin color
+ * (hasta MAX_IMAGES_PER_COLOR) y un botón para elegirlas; las imágenes sin color
  * (productos guardados antes de esta función) se listan aparte.
  */
 export function ColorImagesSection({
@@ -63,7 +63,7 @@ export function ColorImagesSection({
         return (
           <div
             key={color.hex}
-            className="flex items-start gap-3 rounded-lg border border-border bg-surface p-3"
+            className="flex items-start gap-3 rounded-lg border border-border bg-surface-secondary p-3"
           >
             <ColorSwatch hex={color.hex} className="mt-1 size-6" />
             <div className="min-w-0 flex-1 space-y-2">
