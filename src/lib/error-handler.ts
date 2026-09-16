@@ -22,6 +22,9 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   FEATURED_PRODUCT_DUPLICATED: "Este producto ya está destacado.",
   FEATURED_LIMIT_REACHED:
     "Has alcanzado el límite de productos destacados permitidos.",
+  PRODUCT_TITLE_DUPLICATED: "Ya existe un producto con ese título en tu tienda. Usa otro título.",
+  PRODUCT_NOT_FOUND: "El producto ya no existe.",
+  IMAGE_IN_USE: "La imagen está en uso por algún producto.",
 };
 
 export const handleAxiosError = (error: unknown, defaultMessage: string) => {
@@ -43,23 +46,24 @@ export const handleAxiosError = (error: unknown, defaultMessage: string) => {
     return;
   }
 
-  // Database errors (PostgreSQL codes coming from the backend)
-  const dbErrorCode = error.response?.data?.code;
-  if (dbErrorCode && DB_ERROR_MESSAGES[dbErrorCode]) {
-    toast.danger(DB_ERROR_MESSAGES[dbErrorCode]);
+  const code: string | undefined = error.response?.data?.code;
+  const serverMessage: string | undefined = error.response?.data?.message;
+
+  // Business rules with a fixed translation in the panel
+  if (code && API_ERROR_MESSAGES[code]) {
+    toast.danger(API_ERROR_MESSAGES[code]);
     return;
   }
 
-  // Business rules coming from the backend
-  if (dbErrorCode && API_ERROR_MESSAGES[dbErrorCode]) {
-    toast.danger(API_ERROR_MESSAGES[dbErrorCode]);
-    return;
-  }
-
-  // Server message (custom message from the backend)
-  const serverMessage = error.response?.data?.message;
+  // El backend ya responde con mensajes claros en español: se muestran tal cual.
   if (serverMessage) {
     toast.danger(serverMessage);
+    return;
+  }
+
+  // Database errors (PostgreSQL codes) without a message
+  if (code && DB_ERROR_MESSAGES[code]) {
+    toast.danger(DB_ERROR_MESSAGES[code]);
     return;
   }
 

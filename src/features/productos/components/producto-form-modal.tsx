@@ -536,7 +536,9 @@ export function ProductoFormModal({
     onSubmit(product?.id ?? null, formData);
   };
 
-  const isValid = title.trim() !== "" && price !== "";
+  // Mismos obligatorios que exige el backend, para no enviar y recibir un 400.
+  const isValid =
+    title.trim() !== "" && price !== "" && description.trim() !== "" && imageProduct !== "";
 
   return (
     <>
@@ -559,7 +561,7 @@ export function ProductoFormModal({
                   >
                     <div className="flex flex-col gap-4 sm:flex-row">
                       <div className="space-y-2">
-                        <Label>Imagen principal</Label>
+                        <Label>Imagen principal *</Label>
                         <button
                           type="button"
                           onClick={() => setIsMainImagePickerOpen(true)}
@@ -606,7 +608,7 @@ export function ProductoFormModal({
                       value={description}
                       onChange={(value) => setDescription(value.slice(0, MAX_DESCRIPTION_LENGTH))}
                     >
-                      <Label>Descripción del producto</Label>
+                      <Label>Descripción del producto *</Label>
                       <TextArea
                         placeholder="Escribe la descripción del producto..."
                         className="min-h-24"
