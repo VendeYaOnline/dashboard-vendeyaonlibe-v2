@@ -37,7 +37,7 @@ import {
   MAX_TITLE_LENGTH,
 } from "./constants";
 import { CharCounter, FormSection } from "./form-section";
-import { formatCOP, formatThousands, toDigits } from "../utils";
+import { formatCOP, formatThousands, priceToDigits, toDigits } from "../utils";
 
 interface Spec {
   key: string;
@@ -180,7 +180,7 @@ export function ProductoFormModal({
     setImageProduct(product.image_product || "");
     setTitle(product.title || "");
     // El precio se maneja como entero en pesos (sin decimales).
-    setPrice(product.price ? toDigits(String(Math.round(Number(product.price)))) : "");
+    setPrice(priceToDigits(product.price));
     setDiscount(product.discount ? product.discount.toString() : "");
     setDescription(product.description || "");
     setReference(product.reference || "");

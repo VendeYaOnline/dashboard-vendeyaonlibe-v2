@@ -14,6 +14,18 @@ export const formatCOP = (value: number | string) => {
   return copFormatter.format(Math.round(number));
 };
 
+/**
+ * Precio guardado → dígitos enteros para el formulario. Los productos viejos
+ * pueden traer decimales ("1234.5") o separadores ("1.234.567"); en ambos
+ * casos se conserva el valor sin perderlo.
+ */
+export const priceToDigits = (raw: string | number | null | undefined) => {
+  if (raw === null || raw === undefined || raw === "") return "";
+  const number = Number(raw);
+  if (Number.isFinite(number)) return toDigits(String(Math.round(number)));
+  return toDigits(String(raw));
+};
+
 export const formatThousands = (digits: string) =>
   digits === "" ? "" : groupFormatter.format(Number(digits));
 

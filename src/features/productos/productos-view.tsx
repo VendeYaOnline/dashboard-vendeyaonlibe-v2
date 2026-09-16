@@ -19,6 +19,7 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import type { Products } from "@/interfaces/products";
 import { ProductoFormModal } from "./components/producto-form-modal";
+import { formatCOP } from "./utils";
 
 export function ProductosView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -113,12 +114,14 @@ export function ProductosView() {
     {
       key: "price",
       label: "Precio",
-      render: (product) => <span>${product.price}</span>,
+      render: (product) => <span>{formatCOP(product.price) || product.price}</span>,
     },
     {
       key: "discount_price",
       label: "Precio descuento",
-      render: (product) => <span>${product.discount_price || "-"}</span>,
+      render: (product) => (
+        <span>{product.discount_price ? formatCOP(product.discount_price) || product.discount_price : "-"}</span>
+      ),
     },
     {
       key: "discount",
