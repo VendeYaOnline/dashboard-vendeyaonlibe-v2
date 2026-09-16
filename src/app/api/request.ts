@@ -1,3 +1,4 @@
+import type { CoverPayload, Covers } from "@/interfaces/covers";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories } from "@/interfaces/categories";
@@ -326,4 +327,25 @@ export const getSales = async (
 
 export const deleteSale = async (idElement: string) => {
   return axiosConfig.delete(`/delete-sale/${idElement}`);
+};
+
+
+// * COVERS (portadas)
+
+export const getCovers = async (page: number, search: string = "") => {
+  return (
+    await axiosConfig.get<Covers>(`/get-covers?page=${page}&search=${search}`)
+  ).data;
+};
+
+export const createCover = async (data: CoverPayload) => {
+  return axiosConfig.post("/create-cover", data);
+};
+
+export const updateCover = async ({ id, ...data }: CoverPayload & { id: string }) => {
+  return axiosConfig.put(`/update-cover/${id}`, data);
+};
+
+export const deleteCover = async (id: string) => {
+  return axiosConfig.delete(`/delete-cover/${id}`);
 };

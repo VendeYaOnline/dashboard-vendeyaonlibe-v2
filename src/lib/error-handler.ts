@@ -24,7 +24,10 @@ const API_ERROR_MESSAGES: Record<string, string> = {
     "Has alcanzado el límite de productos destacados permitidos.",
   PRODUCT_TITLE_DUPLICATED: "Ya existe un producto con ese título en tu tienda. Usa otro título.",
   PRODUCT_NOT_FOUND: "El producto ya no existe.",
-  IMAGE_IN_USE: "La imagen está en uso por algún producto.",
+  COVER_LIMIT_REACHED: "Solo puedes tener 5 portadas. Elimina una para crear otra.",
+  COVER_TITLE_DUPLICATED: "Ya existe una portada con ese título. Usa otro título.",
+  COVER_NOT_FOUND: "La portada ya no existe.",
+  IMAGE_IN_USE: "La imagen está en uso por algún producto o portada.",
 };
 
 export const handleAxiosError = (error: unknown, defaultMessage: string) => {
