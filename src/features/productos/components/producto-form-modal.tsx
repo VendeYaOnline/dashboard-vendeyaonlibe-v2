@@ -5,6 +5,7 @@ import { ImageIcon, Package, Plus, Trash2 } from "lucide-react";
 import {
   Button,
   Input,
+  InputGroup,
   Label,
   Modal,
   Switch,
@@ -619,12 +620,12 @@ export function ProductoFormModal({
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <TextField value={formatThousands(price)} onChange={handlePriceChange} isRequired>
                         <Label>Precio base *</Label>
-                        <div className="relative">
-                          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted">
-                            $
-                          </span>
-                          <Input placeholder="0" inputMode="numeric" className="pl-7" />
-                        </div>
+                        <InputGroup>
+                          <InputGroup.Prefix>
+                            <span className="text-sm text-muted">$</span>
+                          </InputGroup.Prefix>
+                          <InputGroup.Input placeholder="0" inputMode="numeric" />
+                        </InputGroup>
                       </TextField>
 
                       <TextField value={discount} onChange={handleDiscountChange} type="number">
