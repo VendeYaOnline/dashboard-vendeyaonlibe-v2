@@ -19,10 +19,19 @@ export interface ProductAttribute {
   value: AttributeValue[];
 }
 
+/** Imágenes relacionadas con un color del atributo de tipo Color del producto. */
+export interface ColorImageGroup {
+  /** Hex del color, tal como está en el valor del atributo. */
+  color: string;
+  name: string;
+  images: string[];
+}
+
 export interface Products {
   id: string;
   image_product: string;
-  quantity: number;
+  /** Unidades disponibles; null en productos guardados antes de esta columna. */
+  quantity: number | null;
   title: string;
   price: string;
   stock: boolean;
@@ -39,6 +48,8 @@ export interface Products {
   reference: string;
   discount: number;
   images: string[];
+  /** Imágenes agrupadas por color; null en productos anteriores a esta columna. */
+  color_images?: ColorImageGroup[] | null;
   specs: string;
   Categories: { id: string; name: string }[];
 }

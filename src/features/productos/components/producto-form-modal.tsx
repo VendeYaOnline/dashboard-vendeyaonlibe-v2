@@ -12,13 +12,17 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useQueryAllAttributes, useQueryAllCategories } from "@/app/api/queries";
 import type { Attribute } from "@/interfaces/attributes";
-import type { Products } from "@/interfaces/products";
+import type { ColorImageGroup, Products } from "@/interfaces/products";
 import { MultiSelectPopover } from "./multi-select-popover";
 import { ImagePickerModal } from "./image-picker-modal";
-import { normalizeAttributeType } from "./attribute-values";
+import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute-values";
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
+import { ColorImagesSection } from "./color-images-section";
+import { ColorSelectModal } from "./color-select-modal";
+import { MAX_IMAGES_PER_COLOR, MAX_PRODUCT_IMAGES } from "./constants";
 
 interface Spec {
   key: string;
@@ -80,7 +84,15 @@ interface ProductoFormModalProps {
 }
 
 const MAX_SPECS = 5;
-const MAX_PRODUCT_IMAGES = 5;
+
+/** Cambio de atributos que requiere confirmación porque afecta al atributo de color. */
+interface PendingAttributeChange {
+  kind: "replace" | "remove";
+  nextIds: string[];
+  currentColorName: string;
+  nextColorName?: string;
+  linkedImages: number;
+}
 
 export function ProductoFormModal({
   product,
@@ -105,9 +117,15 @@ export function ProductoFormModal({
   const [areAttributesHydrated, setAreAttributesHydrated] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [productImages, setProductImages] = useState<string[]>([]);
+  /** Imágenes relacionadas con cada color del atributo de color del producto. */
+  const [colorImages, setColorImages] = useState<ColorImageGroup[]>([]);
+  const [pendingChange, setPendingChange] = useState<PendingAttributeChange | null>(null);
 
   const [isMainImagePickerOpen, setIsMainImagePickerOpen] = useState(false);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
+  const [isColorSelectOpen, setIsColorSelectOpen] = useState(false);
+  /** Color al que se relacionarán las imágenes que se elijan en el selector. */
+  const [pickingColorHex, setPickingColorHex] = useState<string | null>(null);
 
   const { data: attrData } = useQueryAllAttributes(isOpen);
   const { data: catData } = useQueryAllCategories(isOpen);
@@ -131,6 +149,8 @@ export function ProductoFormModal({
       setAreAttributesHydrated(true);
       setSelectedCategories(new Set());
       setProductImages([]);
+      setColorImages([]);
+      setPendingChange(null);
       return;
     }
 
@@ -144,8 +164,12 @@ export function ProductoFormModal({
     setDiscount(product.discount ? product.discount.toString() : "");
     setDescription(product.description || "");
     setReference(product.reference || "");
-    setStock(product.quantity ? product.quantity.toString() : "0");
+    // Productos anteriores no tienen cantidad guardada: se pide al editar en
+    // vez de asumir 0 (que marcaría el producto como agotado al guardar).
+    setStock(product.quantity != null ? product.quantity.toString() : "");
     setProductImages(product.images || []);
+    setColorImages(Array.isArray(product.color_images) ? product.color_images : []);
+    setPendingChange(null);
 
     try {
       const parsedSpecs = product.specs
@@ -179,20 +203,88 @@ export function ProductoFormModal({
     setAreAttributesHydrated(true);
   }, [isOpen, product, areAttributesHydrated, attrData, attributes]);
 
+  /** Tipo de un atributo, desde el catálogo o desde el snapshot del producto. */
+  const getAttributeType = (id: string) =>
+    attributes.find((attr) => attr.id === id)?.attribute_type ??
+    product?.product_attributes?.find((attr) => attr.id === id)?.attribute_type ??
+    "";
+
+  const getAttributeName = (id: string) =>
+    attributes.find((attr) => attr.id === id)?.attribute_name ??
+    product?.product_attributes?.find((attr) => attr.id === id)?.attribute_name ??
+    "";
+
+  const currentColorId = selectedAttributeIds.find((id) => isColorType(getAttributeType(id)));
+  const linkedImageUrls = colorImages.flatMap((group) => group.images);
+
+  /** Quita las imágenes relacionadas con los colores del atributo anterior. */
+  const dropColorImages = () => {
+    setProductImages((prev) => prev.filter((url) => !linkedImageUrls.includes(url)));
+    setColorImages([]);
+  };
+
+  /**
+   * Aplica una nueva lista de atributos. Un producto solo admite un atributo
+   * de color: elegir otro (o quitar el actual con imágenes relacionadas)
+   * pide confirmación antes de descartar esas imágenes.
+   */
+  const requestAttributeIds = (nextIds: string[]) => {
+    const nextColorIds = nextIds.filter((id) => isColorType(getAttributeType(id)));
+    const newColorId = nextColorIds.find((id) => id !== currentColorId);
+
+    if (currentColorId && newColorId) {
+      // El nuevo reemplaza al anterior; se descarta cualquier otro color extra.
+      const ids = nextIds.filter((id) => !nextColorIds.includes(id) || id === newColorId);
+      setPendingChange({
+        kind: "replace",
+        nextIds: ids,
+        currentColorName: getAttributeName(currentColorId),
+        nextColorName: getAttributeName(newColorId),
+        linkedImages: linkedImageUrls.length,
+      });
+      return;
+    }
+
+    if (currentColorId && !nextIds.includes(currentColorId) && linkedImageUrls.length > 0) {
+      setPendingChange({
+        kind: "remove",
+        nextIds,
+        currentColorName: getAttributeName(currentColorId),
+        linkedImages: linkedImageUrls.length,
+      });
+      return;
+    }
+
+    if (!currentColorId && nextColorIds.length > 1) {
+      // Sin color previo solo se conserva el primero elegido.
+      const [first] = nextColorIds;
+      setSelectedAttributeIds(nextIds.filter((id) => !nextColorIds.includes(id) || id === first));
+      return;
+    }
+
+    if (currentColorId && !nextIds.includes(currentColorId)) setColorImages([]);
+    setSelectedAttributeIds(nextIds);
+  };
+
   /**
    * Mantiene el orden de agregación: conserva los que siguen marcados en su
    * posición y añade los nuevos al final.
    */
   const handleAttributesChange = (ids: Set<string>) => {
-    setSelectedAttributeIds((prev) => {
-      const kept = prev.filter((id) => ids.has(id));
-      const added = Array.from(ids).filter((id) => !prev.includes(id));
-      return [...kept, ...added];
-    });
+    const kept = selectedAttributeIds.filter((id) => ids.has(id));
+    const added = Array.from(ids).filter((id) => !selectedAttributeIds.includes(id));
+    requestAttributeIds([...kept, ...added]);
   };
 
   const handleRemoveAttribute = (id: string) => {
-    setSelectedAttributeIds((prev) => prev.filter((item) => item !== id));
+    requestAttributeIds(selectedAttributeIds.filter((item) => item !== id));
+  };
+
+  const handleConfirmPendingChange = () => {
+    if (!pendingChange) return;
+    dropColorImages();
+    setSelectedAttributeIds(pendingChange.nextIds);
+    setPendingChange(null);
   };
 
   // Valores frescos del catálogo; si el atributo se eliminó, se usa el
@@ -222,6 +314,81 @@ export function ProductoFormModal({
       },
     ];
   });
+
+  const colorAttribute = attributeItems.find((item) => isColorType(item.type));
+  const colorOptions = colorAttribute ? toColorOptions(colorAttribute.values) : [];
+  const unassignedImages = productImages.filter((url) => !linkedImageUrls.includes(url));
+  const colorChoices = colorOptions.map((color) => ({
+    ...color,
+    count: colorImages.find((group) => group.color === color.hex)?.images.length ?? 0,
+  }));
+  const allColorsFull =
+    colorChoices.length > 0 &&
+    colorChoices.every((color) => color.count >= MAX_IMAGES_PER_COLOR);
+  const pickingGroup = pickingColorHex
+    ? colorImages.find((group) => group.color === pickingColorHex)
+    : undefined;
+
+  const handleAddImagesPress = () => {
+    if (colorAttribute) {
+      setIsColorSelectOpen(true);
+      return;
+    }
+    setPickingColorHex(null);
+    setIsGalleryPickerOpen(true);
+  };
+
+  const handlePickForColor = (hex: string) => {
+    setPickingColorHex(hex);
+    setIsGalleryPickerOpen(true);
+  };
+
+  /** Resultado del selector de galería: para un color o para la galería plana. */
+  const handleGallerySelect = (urls: string[]) => {
+    if (!pickingColorHex) {
+      setProductImages(urls.slice(0, MAX_PRODUCT_IMAGES));
+      return;
+    }
+
+    const hex = pickingColorHex;
+    const nextImages = urls.slice(0, MAX_IMAGES_PER_COLOR);
+    const previousImages = colorImages.find((group) => group.color === hex)?.images ?? [];
+    const name = colorOptions.find((color) => color.hex === hex)?.name ?? "";
+
+    setColorImages((prev) => {
+      const rest = prev.filter((group) => group.color !== hex);
+      if (nextImages.length === 0) return rest;
+      // Se conserva la posición del color según el orden del atributo.
+      const ordered = colorOptions
+        .map((color) =>
+          color.hex === hex
+            ? { color: hex, name, images: nextImages }
+            : rest.find((group) => group.color === color.hex),
+        )
+        .filter((group): group is ColorImageGroup => Boolean(group));
+      const orphans = rest.filter((group) => !colorOptions.some((c) => c.hex === group.color));
+      return [...ordered, ...orphans];
+    });
+
+    // Toda imagen ligada a un color vive también en la galería del producto.
+    setProductImages((prev) => {
+      const withoutOld = prev.filter(
+        (url) => !previousImages.includes(url) || nextImages.includes(url),
+      );
+      const added = nextImages.filter((url) => !withoutOld.includes(url));
+      return [...withoutOld, ...added];
+    });
+    setPickingColorHex(null);
+  };
+
+  const handleRemoveImage = (url: string) => {
+    setProductImages((prev) => prev.filter((item) => item !== url));
+    setColorImages((prev) =>
+      prev
+        .map((group) => ({ ...group, images: group.images.filter((item) => item !== url) }))
+        .filter((group) => group.images.length > 0),
+    );
+  };
 
   const discountValue = parseInt(discount) || 0;
   const priceValue = parseFloat(price) || 0;
@@ -270,6 +437,7 @@ export function ProductoFormModal({
     formData.append("title", title.trim());
     formData.append("image_product", imageProduct);
     formData.append("quantity", stock);
+    formData.append("stock", String((parseInt(stock, 10) || 0) > 0));
     formData.append("price", price);
     formData.append("discount_price", discountPrice);
     formData.append("discount", discountValue.toString());
@@ -286,6 +454,10 @@ export function ProductoFormModal({
     const validSpecs = specs.filter((s) => s.key.trim() && s.value.trim());
     formData.append("specs", JSON.stringify(validSpecs));
     formData.append("images", JSON.stringify(productImages));
+    formData.append(
+      "color_images",
+      JSON.stringify(colorAttribute ? colorImages.filter((g) => g.images.length > 0) : []),
+    );
 
     onSubmit(product?.id ?? null, formData);
   };
@@ -457,40 +629,63 @@ export function ProductoFormModal({
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Imágenes del producto (máx. {MAX_PRODUCT_IMAGES})</Label>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <Label>
+                          {colorAttribute
+                            ? "Imágenes por color (máx. " + MAX_IMAGES_PER_COLOR + " por color)"
+                            : "Imágenes del producto (máx. " + MAX_PRODUCT_IMAGES + ")"}
+                        </Label>
+                        {colorAttribute && (
+                          <p className="text-xs text-muted">
+                            Cada imagen se relaciona con un color de «{colorAttribute.name}».
+                          </p>
+                        )}
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        isDisabled={productImages.length >= MAX_PRODUCT_IMAGES}
-                        onPress={() => setIsGalleryPickerOpen(true)}
+                        isDisabled={
+                          colorAttribute
+                            ? colorOptions.length === 0 || allColorsFull
+                            : productImages.length >= MAX_PRODUCT_IMAGES
+                        }
+                        onPress={handleAddImagesPress}
                       >
                         <Plus className="size-4" />
                         Agregar
                       </Button>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      {productImages.map((img, index) => (
-                        <div
-                          key={img}
-                          className="group relative size-20 overflow-hidden rounded-md border border-border"
-                        >
-                          <img src={img} alt="Imagen del producto" className="size-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setProductImages((prev) => prev.filter((_, i) => i !== index))
-                            }
-                            aria-label="Quitar imagen"
-                            className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    {colorAttribute ? (
+                      <ColorImagesSection
+                        colors={colorOptions}
+                        groups={colorImages}
+                        unassignedImages={unassignedImages}
+                        onPickForColor={handlePickForColor}
+                        onRemoveImage={handleRemoveImage}
+                      />
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {productImages.map((img) => (
+                          <div
+                            key={img}
+                            className="group relative size-20 overflow-hidden rounded-md border border-border"
                           >
-                            <Trash2 className="size-5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                            <img src={img} alt="Imagen del producto" className="size-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(img)}
+                              aria-label="Quitar imagen"
+                              className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                            >
+                              <Trash2 className="size-5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </Modal.Body>
 
@@ -531,12 +726,77 @@ export function ProductoFormModal({
 
       <ImagePickerModal
         isOpen={isGalleryPickerOpen}
-        onOpenChange={setIsGalleryPickerOpen}
+        onOpenChange={(open) => {
+          setIsGalleryPickerOpen(open);
+          if (!open) setPickingColorHex(null);
+        }}
         multiple
-        maxSelection={MAX_PRODUCT_IMAGES}
-        currentSelected={productImages}
-        disabledUrls={imageProduct ? [imageProduct] : []}
-        onSelect={(urls) => setProductImages(urls.slice(0, MAX_PRODUCT_IMAGES))}
+        maxSelection={pickingColorHex ? MAX_IMAGES_PER_COLOR : MAX_PRODUCT_IMAGES}
+        currentSelected={pickingColorHex ? (pickingGroup?.images ?? []) : productImages}
+        disabledUrls={[
+          ...(imageProduct ? [imageProduct] : []),
+          // Una imagen solo puede pertenecer a un color.
+          ...(pickingColorHex
+            ? colorImages
+                .filter((group) => group.color !== pickingColorHex)
+                .flatMap((group) => group.images)
+            : []),
+        ]}
+        onSelect={handleGallerySelect}
+      />
+
+      {colorAttribute && (
+        <ColorSelectModal
+          isOpen={isColorSelectOpen}
+          onOpenChange={setIsColorSelectOpen}
+          attributeName={colorAttribute.name}
+          colors={colorChoices}
+          onSelect={handlePickForColor}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={pendingChange !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingChange(null);
+        }}
+        onConfirm={handleConfirmPendingChange}
+        tone={pendingChange?.linkedImages ? "danger" : "accent"}
+        title={
+          pendingChange?.kind === "replace"
+            ? "Reemplazar el atributo de color"
+            : "Quitar el atributo de color"
+        }
+        confirmLabel={pendingChange?.kind === "replace" ? "Reemplazar" : "Quitar"}
+        description={
+          pendingChange ? (
+            <div className="space-y-2">
+              {pendingChange.kind === "replace" ? (
+                <p>
+                  Un producto solo puede tener un atributo de color.{" "}
+                  <strong>«{pendingChange.nextColorName}»</strong> reemplazará a{" "}
+                  <strong>«{pendingChange.currentColorName}»</strong>.
+                </p>
+              ) : (
+                <p>
+                  Vas a quitar el atributo <strong>«{pendingChange.currentColorName}»</strong>.
+                </p>
+              )}
+              {pendingChange.linkedImages > 0 && (
+                <p>
+                  Se eliminarán del producto las{" "}
+                  <strong>
+                    {pendingChange.linkedImages}{" "}
+                    {pendingChange.linkedImages === 1
+                      ? "imagen relacionada"
+                      : "imágenes relacionadas"}
+                  </strong>{" "}
+                  con sus colores.
+                </p>
+              )}
+            </div>
+          ) : null
+        }
       />
     </>
   );

@@ -45,47 +45,50 @@ export function MultiSelectPopover({
   };
 
   return (
-    <Popover.Root>
-      <Popover.Trigger>
-        <Button variant="outline" fullWidth className="justify-between">
-          {selectedIds.size > 0
-            ? `${selectedIds.size} ${selectedIds.size === 1 ? itemNoun.singular : itemNoun.plural} seleccionados`
-            : placeholder}
-          <ChevronDown className="size-4 opacity-50" />
-        </Button>
-      </Popover.Trigger>
-      <Popover.Content className="w-(--trigger-width)">
-        <Popover.Dialog>
-          {options.length > 0 ? (
-            <ListBox
-              aria-label={placeholder}
-              selectionMode="multiple"
-              selectedKeys={selectedIds}
-              onSelectionChange={handleSelectionChange}
-              className="max-h-60 overflow-y-auto"
-            >
-              {options.map((option) => (
-                <ListBoxItem
-                  key={option.id}
-                  id={option.id}
-                  textValue={option.label}
-                  className="data-[selected=true]:font-medium"
-                >
-                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                    <span className="truncate">{option.label}</span>
-                    {option.hint && (
-                      <span className="shrink-0 text-xs text-muted">{option.hint}</span>
-                    )}
-                  </span>
-                  <ListBoxItem.Indicator />
-                </ListBoxItem>
-              ))}
-            </ListBox>
-          ) : (
-            <p className="p-3 text-center text-sm text-muted">{emptyMessage}</p>
-          )}
-        </Popover.Dialog>
-      </Popover.Content>
-    </Popover.Root>
+    // Contenedor en bloque: así el disparador ocupa todo el ancho bajo la etiqueta.
+    <div className="w-full">
+      <Popover.Root>
+        <Popover.Trigger>
+          <Button variant="outline" fullWidth className="justify-between">
+            {selectedIds.size > 0
+              ? `${selectedIds.size} ${selectedIds.size === 1 ? itemNoun.singular : itemNoun.plural} seleccionados`
+              : placeholder}
+            <ChevronDown className="size-4 opacity-50" />
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content className="w-(--trigger-width)">
+          <Popover.Dialog>
+            {options.length > 0 ? (
+              <ListBox
+                aria-label={placeholder}
+                selectionMode="multiple"
+                selectedKeys={selectedIds}
+                onSelectionChange={handleSelectionChange}
+                className="max-h-60 overflow-y-auto"
+              >
+                {options.map((option) => (
+                  <ListBoxItem
+                    key={option.id}
+                    id={option.id}
+                    textValue={option.label}
+                    className="data-[selected=true]:font-medium"
+                  >
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                      <span className="truncate">{option.label}</span>
+                      {option.hint && (
+                        <span className="shrink-0 text-xs text-muted">{option.hint}</span>
+                      )}
+                    </span>
+                    <ListBoxItem.Indicator />
+                  </ListBoxItem>
+                ))}
+              </ListBox>
+            ) : (
+              <p className="p-3 text-center text-sm text-muted">{emptyMessage}</p>
+            )}
+          </Popover.Dialog>
+        </Popover.Content>
+      </Popover.Root>
+    </div>
   );
 }
