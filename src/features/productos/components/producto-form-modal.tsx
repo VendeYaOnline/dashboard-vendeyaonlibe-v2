@@ -11,6 +11,7 @@ import {
   Switch,
   TextArea,
   TextField,
+  toast,
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
@@ -101,7 +102,6 @@ const MAX_SPECS = 5;
 
 /** Cambio de atributos que requiere confirmación porque afecta al atributo de color. */
 interface PendingAttributeChange {
-  kind: "replace" | "remove";
   nextIds: string[];
   currentColorName: string;
   nextColorName?: string;
@@ -136,6 +136,8 @@ export function ProductoFormModal({
   /** Imágenes relacionadas con cada color del atributo de color del producto. */
   const [colorImages, setColorImages] = useState<ColorImageGroup[]>([]);
   const [pendingChange, setPendingChange] = useState<PendingAttributeChange | null>(null);
+  /** Controlado para poder cerrarlo antes de mostrar el diálogo de confirmación. */
+  const [isAttributesPopoverOpen, setIsAttributesPopoverOpen] = useState(false);
 
   const [isMainImagePickerOpen, setIsMainImagePickerOpen] = useState(false);
   const [isGalleryPickerOpen, setIsGalleryPickerOpen] = useState(false);
@@ -248,31 +250,23 @@ export function ProductoFormModal({
 
   /**
    * Aplica una nueva lista de atributos. Un producto solo admite un atributo
-   * de color: elegir otro (o quitar el actual con imágenes relacionadas)
-   * pide confirmación antes de descartar esas imágenes.
+   * de color: elegir uno *distinto* al actual pide confirmación antes de
+   * reemplazarlo y descartar sus imágenes. Quitar el actual se aplica
+   * directamente (se avisa con un toast si tenía imágenes relacionadas).
    */
   const requestAttributeIds = (nextIds: string[]) => {
     const nextColorIds = nextIds.filter((id) => isColorType(getAttributeType(id)));
     const newColorId = nextColorIds.find((id) => id !== currentColorId);
 
-    if (currentColorId && newColorId) {
+    if (currentColorId && newColorId && newColorId !== currentColorId) {
       // El nuevo reemplaza al anterior; se descarta cualquier otro color extra.
       const ids = nextIds.filter((id) => !nextColorIds.includes(id) || id === newColorId);
+      // El popover debe cerrarse: si no, queda por encima del diálogo.
+      setIsAttributesPopoverOpen(false);
       setPendingChange({
-        kind: "replace",
         nextIds: ids,
         currentColorName: getAttributeName(currentColorId),
         nextColorName: getAttributeName(newColorId),
-        linkedImages: linkedImageUrls.length,
-      });
-      return;
-    }
-
-    if (currentColorId && !nextIds.includes(currentColorId) && linkedImageUrls.length > 0) {
-      setPendingChange({
-        kind: "remove",
-        nextIds,
-        currentColorName: getAttributeName(currentColorId),
         linkedImages: linkedImageUrls.length,
       });
       return;
@@ -285,7 +279,16 @@ export function ProductoFormModal({
       return;
     }
 
-    if (currentColorId && !nextIds.includes(currentColorId)) setColorImages([]);
+    if (currentColorId && !nextIds.includes(currentColorId)) {
+      dropColorImages();
+      if (linkedImageUrls.length > 0) {
+        toast.warning(
+          `Se quitaron ${linkedImageUrls.length} ${
+            linkedImageUrls.length === 1 ? "imagen relacionada" : "imágenes relacionadas"
+          } con los colores de «${getAttributeName(currentColorId)}».`,
+        );
+      }
+    }
     setSelectedAttributeIds(nextIds);
   };
 
@@ -704,6 +707,8 @@ export function ProductoFormModal({
                           placeholder="Seleccionar atributos"
                           emptyMessage="No hay atributos"
                           itemNoun={{ singular: "atributo", plural: "atributos" }}
+                          isOpen={isAttributesPopoverOpen}
+                          onOpenChange={setIsAttributesPopoverOpen}
                         />
                       </div>
                     </div>
@@ -929,26 +934,16 @@ export function ProductoFormModal({
         }}
         onConfirm={handleConfirmPendingChange}
         tone={pendingChange?.linkedImages ? "danger" : "accent"}
-        title={
-          pendingChange?.kind === "replace"
-            ? "Reemplazar el atributo de color"
-            : "Quitar el atributo de color"
-        }
-        confirmLabel={pendingChange?.kind === "replace" ? "Reemplazar" : "Quitar"}
+        title="Reemplazar el atributo de color"
+        confirmLabel="Reemplazar"
         description={
           pendingChange ? (
             <div className="space-y-2">
-              {pendingChange.kind === "replace" ? (
-                <p>
-                  Un producto solo puede tener un atributo de color.{" "}
-                  <strong>«{pendingChange.nextColorName}»</strong> reemplazará a{" "}
-                  <strong>«{pendingChange.currentColorName}»</strong>.
-                </p>
-              ) : (
-                <p>
-                  Vas a quitar el atributo <strong>«{pendingChange.currentColorName}»</strong>.
-                </p>
-              )}
+              <p>
+                Un producto solo puede tener un atributo de color.{" "}
+                <strong>«{pendingChange.nextColorName}»</strong> reemplazará a{" "}
+                <strong>«{pendingChange.currentColorName}»</strong>.
+              </p>
               {pendingChange.linkedImages > 0 && (
                 <p>
                   Se eliminarán del producto las{" "}
