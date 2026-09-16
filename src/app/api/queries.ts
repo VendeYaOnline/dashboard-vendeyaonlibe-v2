@@ -23,6 +23,22 @@ export const useQueryAttribute = (currentPage: number, search: string) => {
   });
 };
 
+/**
+ * Tope del backend para `limit`. Los selectores del formulario de producto
+ * necesitan la lista completa, no la primera página de 10.
+ */
+const SELECTOR_LIMIT = 100;
+
+/** Todos los atributos de la empresa, para los selectores de formularios. */
+export const useQueryAllAttributes = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["attributes", "all"],
+    queryFn: () => getAttributes(1, "", SELECTOR_LIMIT),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled,
+  });
+
 export const useQueryCategories = (currentPage: number, search: string) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
@@ -33,6 +49,16 @@ export const useQueryCategories = (currentPage: number, search: string) => {
     enabled: currentPage > 0,
   });
 };
+
+/** Todas las categorías de la empresa, para los selectores de formularios. */
+export const useQueryAllCategories = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["categories", "all"],
+    queryFn: () => getCategories(1, "", SELECTOR_LIMIT),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 10,
+    enabled,
+  });
 
 export const useQueryImages = (
   currentPage: number,

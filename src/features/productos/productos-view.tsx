@@ -102,7 +102,13 @@ export function ProductosView() {
     {
       key: "stock",
       label: "Stock",
-      render: (product) => <span>{product.quantity}</span>,
+      render: (product) => (
+        <span>
+          {product.quantity ?? (
+            <span className="text-muted">{product.stock ? "Disponible" : "Agotado"}</span>
+          )}
+        </span>
+      ),
     },
     {
       key: "price",

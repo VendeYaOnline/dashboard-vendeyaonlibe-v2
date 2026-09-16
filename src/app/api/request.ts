@@ -19,10 +19,15 @@ export const loginUser = async (data: { email: string; password: string }) => {
 // ------------------------------------
 
 // ? Get Attributes
-export const getAttributes = async (page: number, search: string = "") => {
+export const getAttributes = async (
+  page: number,
+  search: string = "",
+  limit?: number,
+) => {
+  const limitParam = limit ? `&limit=${limit}` : "";
   return (
     await axiosConfig.get<Attributes>(
-      `/get-attributes?page=${page}&search=${search}`,
+      `/get-attributes?page=${page}&search=${search}${limitParam}`,
     )
   ).data;
 };
@@ -50,10 +55,15 @@ export const createCategory = async (name: string) => {
   return axiosConfig.post("/create-category", { name });
 };
 
-export const getCategories = async (page: number, search: string = "") => {
+export const getCategories = async (
+  page: number,
+  search: string = "",
+  limit?: number,
+) => {
+  const limitParam = limit ? `&limit=${limit}` : "";
   const result = (
     await axiosConfig.get<Categories>(
-      `/get-categories?page=${page}&search=${search}`,
+      `/get-categories?page=${page}&search=${search}${limitParam}`,
     )
   ).data;
 

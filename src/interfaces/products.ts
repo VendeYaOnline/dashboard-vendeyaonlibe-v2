@@ -1,3 +1,5 @@
+import type { AttributeValue } from "./attributes";
+
 export interface ProductRequest {
   products: Products[];
   total: number;
@@ -6,19 +8,48 @@ export interface ProductRequest {
   totalPages: number;
 }
 
+/**
+ * Atributo asignado a un producto, con snapshot de sus valores en el momento
+ * de guardarlo. El backend conserva el orden en que se agregaron.
+ */
+export interface ProductAttribute {
+  id: string;
+  attribute_name: string;
+  attribute_type: string;
+  value: AttributeValue[];
+}
+
+/** Imágenes relacionadas con un color del atributo de tipo Color del producto. */
+export interface ColorImageGroup {
+  /** Hex del color, tal como está en el valor del atributo. */
+  color: string;
+  name: string;
+  images: string[];
+}
+
 export interface Products {
   id: string;
   image_product: string;
-  quantity: number;
+  /** Unidades disponibles; null en productos guardados antes de esta columna. */
+  quantity: number | null;
   title: string;
   price: string;
   stock: boolean;
   discount_price: string;
-  attributes: string;
+  /**
+   * Formato legacy agrupado por tipo que consume la tienda pública. Puede
+   * llegar como string JSON, como objeto o (productos guardados por una
+   * versión anterior de este panel) como array de IDs.
+   */
+  attributes: string | Record<string, unknown> | string[] | null;
+  /** Lista ordenada de atributos; null en productos anteriores a esta columna. */
+  product_attributes?: ProductAttribute[] | null;
   description: string;
   reference: string;
   discount: number;
   images: string[];
+  /** Imágenes agrupadas por color; null en productos anteriores a esta columna. */
+  color_images?: ColorImageGroup[] | null;
   specs: string;
   Categories: { id: string; name: string }[];
 }
