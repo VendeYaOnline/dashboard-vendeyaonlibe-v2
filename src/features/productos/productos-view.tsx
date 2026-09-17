@@ -40,7 +40,7 @@ export function ProductosView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryProducts(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryProducts(page, debouncedSearch);
   const createMutation = useMutationProduct();
   const updateMutation = useMutationUpdatedProduct();
   const deleteMutation = useMutationDeleteProduct();
@@ -232,13 +232,17 @@ export function ProductosView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Al cambiar de página o filtro, la página anterior sigue visible (atenuada) hasta que llega la nueva. */}
+      <Card
+        className={`overflow-hidden transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Productos"
           items={products}
           columns={columns}
           getRowId={(product) => product.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando productos..."
           emptyMessage="No se encontraron productos"
         />

@@ -1,4 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+
+/**
+ * Opciones comunes de los listados paginados: la caché se considera fresca
+ * durante 10 minutos (las mutaciones la invalidan) y, al cambiar de página o
+ * de filtro, se conserva la página anterior en pantalla mientras llega la
+ * nueva en vez de vaciar la tabla.
+ */
+const LIST_QUERY_OPTIONS = {
+  refetchOnWindowFocus: false,
+  staleTime: 1000 * 60 * 10,
+  placeholderData: keepPreviousData,
+} as const;
+
+/**
+ * Las ventas llegan desde la tienda sin pasar por el panel: la caché se
+ * muestra al instante y, si tiene más de un minuto, se refresca en segundo
+ * plano sin vaciar la tabla.
+ */
+const SALES_QUERY_OPTIONS = {
+  ...LIST_QUERY_OPTIONS,
+  staleTime: 1000 * 60,
+} as const;
 import {
   getAttributes,
   getCarousels,
@@ -18,8 +40,7 @@ export const useQueryAttribute = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["attributes", validPage, search],
     queryFn: () => getAttributes(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -45,8 +66,7 @@ export const useQueryCovers = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["covers", validPage, search],
     queryFn: () => getCovers(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -56,8 +76,7 @@ export const useQueryCategories = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["categories", validPage, search],
     queryFn: () => getCategories(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -82,8 +101,7 @@ export const useQueryImages = (
   return useQuery({
     queryKey: ["images", validPage, search, categoryId],
     queryFn: () => getImages(validPage, search, limit, categoryId),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -93,8 +111,7 @@ export const useQueryUsers = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["users", validPage, search],
     queryFn: () => getUsers(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -104,8 +121,7 @@ export const useQueryContacts = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["contacts", validPage, search],
     queryFn: () => getContacts(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -119,8 +135,7 @@ export const useQueryProducts = (
   return useQuery({
     queryKey: ["products", validPage, search],
     queryFn: () => getProducts(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: enabled && currentPage > 0,
   });
 };
@@ -130,8 +145,7 @@ export const useQueryCarousels = (currentPage: number, search: string) => {
   return useQuery({
     queryKey: ["carousels", validPage, search],
     queryFn: () => getCarousels(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -152,6 +166,7 @@ export const useQueryAvailableProducts = (
     queryKey: ["available-products", validPage, search, categoryIds],
     queryFn: () => getProductsByCategory(validPage, search, categoryIds),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
     enabled: enabled && currentPage > 0,
   });
 };
@@ -161,8 +176,7 @@ export const useQueryFeaturedProducts = (currentPage: number, search: string) =>
   return useQuery({
     queryKey: ["featured-products", validPage, search],
     queryFn: () => getFeaturedProducts(validPage, search),
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 10,
+    ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };
@@ -173,7 +187,7 @@ export const useQuerySales = (currentPage: number, date: string, status: string)
   return useQuery({
     queryKey: ["sales", validPage, date, status],
     queryFn: () => getSales(validPage, { date, status }),
-    refetchOnWindowFocus: false,
+    ...SALES_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
 };

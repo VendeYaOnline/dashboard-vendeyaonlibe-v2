@@ -40,7 +40,7 @@ export function VentasView() {
 
   useEffect(() => setPage(1), [statusFilter, dateFilter]);
 
-  const { data, isLoading, isFetching } = useQuerySales(
+  const { data, isLoading, isPlaceholderData } = useQuerySales(
     page,
     toBackendDate(dateFilter),
     statusFilter === "todos" ? "" : statusFilter,
@@ -202,13 +202,17 @@ export function VentasView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Al cambiar de página o filtro, la página anterior sigue visible (atenuada) hasta que llega la nueva. */}
+      <Card
+        className={`overflow-hidden transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Ventas recibidas"
           items={sales}
           columns={columns}
           getRowId={(sale) => sale.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando ventas..."
           emptyMessage="No se encontraron ventas con los filtros seleccionados"
         />
