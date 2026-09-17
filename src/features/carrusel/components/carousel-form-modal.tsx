@@ -59,11 +59,14 @@ export function CarouselFormModal({
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isFetching } = useQueryAvailableProducts(
+  // Al editar, los productos del propio carrusel también aparecen en la lista
+  // (así se pueden quitar y volver a agregar); los de otros carruseles no.
+  const { data, isLoading, isPlaceholderData } = useQueryAvailableProducts(
     page,
     debouncedSearch,
     [],
     isOpen,
+    carousel?.id,
   );
 
   const handleSelectProduct = (product: Products) => {
@@ -162,9 +165,13 @@ export function CarouselFormModal({
                     currentPage={page}
                     totalPages={data?.totalPages ?? 1}
                     onPageChange={setPage}
-                    isLoading={isFetching}
+                    isLoading={isLoading}
+                    isRefreshing={isPlaceholderData}
                     emptyMessage="No hay productos disponibles para asignar"
                   />
+                  <p className="text-xs text-muted">
+                    Solo se listan productos que no pertenecen a otro carrusel.
+                  </p>
                 </div>
               </Modal.Body>
 

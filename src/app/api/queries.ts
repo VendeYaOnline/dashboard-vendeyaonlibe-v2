@@ -162,11 +162,12 @@ export const useQueryAvailableProducts = (
   search: string,
   categoryIds: string[],
   enabled: boolean = true,
+  carouselId?: string,
 ) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
-    queryKey: ["available-products", validPage, search, categoryIds],
-    queryFn: () => getProductsByCategory(validPage, search, categoryIds),
+    queryKey: ["available-products", validPage, search, categoryIds, carouselId ?? null],
+    queryFn: () => getProductsByCategory(validPage, search, categoryIds, carouselId),
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
     enabled: enabled && currentPage > 0,

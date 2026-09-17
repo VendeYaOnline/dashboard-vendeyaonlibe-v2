@@ -19,9 +19,13 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import {
   MAX_CAROUSELS,
+  MAX_PRODUCTS_CAROUSEL,
   type Carousel,
   type CarouselPayload,
 } from "@/interfaces/carousel";
+
+/** Miniaturas que se muestran en la tabla antes de resumir con "+N". */
+const MAX_PREVIEW_IMAGES = 5;
 import { CarouselFormModal } from "./components/carousel-form-modal";
 
 export function CarruselView() {
@@ -37,7 +41,7 @@ export function CarruselView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryCarousels(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryCarousels(page, debouncedSearch);
   const createMutation = useMutationCarousel();
   const updateMutation = useMutationUpdatedCarousel();
   const deleteMutation = useMutationDeleteCarousel();
@@ -97,17 +101,22 @@ export function CarruselView() {
           <span className="text-sm text-muted">Sin productos</span>
         ) : (
           <div className="flex items-center gap-2">
-            {carousel.products.map((product) => (
+            {carousel.products.slice(0, MAX_PREVIEW_IMAGES).map((product) => (
               <img
                 key={product.id}
                 src={product.image_product}
                 alt={product.title}
                 title={product.title}
-                className="size-10 rounded-md object-cover"
+                className="size-10 rounded-md border border-border object-cover"
               />
             ))}
+            {carousel.products.length > MAX_PREVIEW_IMAGES && (
+              <span className="flex size-10 items-center justify-center rounded-md bg-surface-secondary text-xs font-medium text-muted">
+                +{carousel.products.length - MAX_PREVIEW_IMAGES}
+              </span>
+            )}
             <span className="ml-1 text-xs text-muted">
-              ({carousel.products.length})
+              {carousel.products.length}/{MAX_PRODUCTS_CAROUSEL}
             </span>
           </div>
         ),
@@ -179,13 +188,16 @@ export function CarruselView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card
+        className={`overflow-hidden transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Carruseles"
           items={carousels}
           columns={columns}
           getRowId={(carousel) => carousel.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando carruseles..."
           emptyMessage="No se encontraron carruseles"
         />
