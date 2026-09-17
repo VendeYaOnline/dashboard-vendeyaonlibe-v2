@@ -18,6 +18,7 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import { MAX_FEATURED_PRODUCTS, type FeaturedProduct } from "@/interfaces/featured-products";
 import { FeaturedProductFormModal } from "./components/featured-product-form-modal";
+import { formatCOP } from "@/features/productos/utils";
 
 export function ProductosDestacadosView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -96,12 +97,17 @@ export function ProductosDestacadosView() {
     {
       key: "price",
       label: "Precio",
-      render: ({ product }) => <span>${product.price}</span>,
+      render: ({ product }) => <span>{formatCOP(product.price) || product.price}</span>,
     },
     {
       key: "discount_price",
       label: "Precio descuento",
-      render: ({ product }) => <span>${product.discount_price || "-"}</span>,
+      // Solo hay precio con descuento cuando el producto tiene un descuento aplicado.
+      render: ({ product }) => (
+        <span className={product.discount ? "" : "text-muted"}>
+          {product.discount ? formatCOP(product.discount_price) || product.discount_price : "-"}
+        </span>
+      ),
     },
     {
       key: "discount",

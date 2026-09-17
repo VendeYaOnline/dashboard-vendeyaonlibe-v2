@@ -148,7 +148,10 @@ export function ProductosView() {
       key: "discount_price",
       label: "Precio descuento",
       render: (product) => (
-        <span>{product.discount_price ? formatCOP(product.discount_price) || product.discount_price : "-"}</span>
+        // Sin descuento, discount_price es igual al precio: se muestra solo la raya.
+        <span className={product.discount ? "" : "text-muted"}>
+          {product.discount ? formatCOP(product.discount_price) || product.discount_price : "-"}
+        </span>
       ),
     },
     {
