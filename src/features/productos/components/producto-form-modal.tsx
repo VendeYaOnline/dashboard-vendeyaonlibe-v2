@@ -21,12 +21,15 @@ import type { Attribute } from "@/interfaces/attributes";
 import type { ColorImageGroup, Products } from "@/interfaces/products";
 import { MultiSelectPopover } from "./multi-select-popover";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
+import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute-values";
+import { VariantMatrix } from "./variant-matrix";
 import {
-  getValueKey,
-  isColorType,
-  normalizeAttributeType,
-  toColorOptions,
-} from "./attribute-values";
+  buildCombinations,
+  defaultInventoryForType,
+  getInventoryAttributes,
+  sumQuantities,
+  toVariantKey,
+} from "../variants";
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 import { ColorImagesSection } from "./color-images-section";
 import { ColorSelectModal } from "./color-select-modal";
@@ -120,8 +123,8 @@ interface PendingAttributeChange {
   affectedImages: number;
 }
 
-/** Clave de una fila de inventario por valor. */
-const stockKey = (attributeId: string, valueKey: string) => `${attributeId}::${valueKey}`;
+/** Atributos que pueden generar variantes a la vez (la matriz muestra hasta 3 niveles). */
+const MAX_INVENTORY_ATTRIBUTES = 3;
 
 export function ProductoFormModal({
   product,
@@ -151,8 +154,10 @@ export function ProductoFormModal({
   /** Imágenes relacionadas con cada color del atributo de color del producto. */
   const [colorImages, setColorImages] = useState<ColorImageGroup[]>([]);
   const [pendingChange, setPendingChange] = useState<PendingAttributeChange | null>(null);
-  /** Unidades por valor de atributo (clave attributeId::valueKey → texto). */
-  const [attributeStocks, setAttributeStocks] = useState<Record<string, string>>({});
+  /** Si cada atributo agregado controla inventario (por id). */
+  const [inventoryFlags, setInventoryFlags] = useState<Record<string, boolean>>({});
+  /** Unidades por variante (variant_key → texto, para permitir el campo vacío). */
+  const [variantQuantities, setVariantQuantities] = useState<Record<string, string>>({});
   /** Controlado para poder cerrarlo antes de mostrar el diálogo de confirmación. */
   const [isAttributesPopoverOpen, setIsAttributesPopoverOpen] = useState(false);
 
@@ -186,7 +191,8 @@ export function ProductoFormModal({
       setSelectedCategories(new Set());
       setProductImages([]);
       setColorImages([]);
-      setAttributeStocks({});
+      setInventoryFlags({});
+      setVariantQuantities({});
       setPendingChange(null);
       return;
     }
@@ -213,12 +219,16 @@ export function ProductoFormModal({
         : [],
     );
     setPendingChange(null);
-    setAttributeStocks(
+    setInventoryFlags(
       Object.fromEntries(
-        (product.stocks ?? []).map((row) => [
-          stockKey(row.attribute_id, row.value_key),
-          String(row.quantity),
-        ]),
+        (product.product_attributes ?? [])
+          .filter((attr) => typeof attr.inventory === "boolean")
+          .map((attr) => [attr.id, attr.inventory as boolean]),
+      ),
+    );
+    setVariantQuantities(
+      Object.fromEntries(
+        (product.variants ?? []).map((variant) => [variant.variant_key, String(variant.quantity)]),
       ),
     );
 
@@ -351,6 +361,8 @@ export function ProductoFormModal({
       setColorImages([]);
     } else {
       dropColorImages();
+      // Cambia el atributo padre: todas las combinaciones anteriores dejan de existir.
+      setVariantQuantities({});
     }
     setSelectedAttributeIds(pendingChange.nextIds);
     setPendingChange(null);
@@ -385,27 +397,49 @@ export function ProductoFormModal({
     ];
   });
 
-  // ---------- Inventario por valor de atributo ----------
-  const hasAttributeStock = attributeItems.length > 0;
+  // ---------- Inventario por variante ----------
+  const inventoryAttributes = getInventoryAttributes(attributeItems, inventoryFlags);
+  const combinations = buildCombinations(inventoryAttributes);
+  const variantKeys = combinations.map(toVariantKey);
+  const hasAttributeStock = variantKeys.length > 0;
+  const attributeStockTotal = sumQuantities(variantKeys, variantQuantities);
 
-  const getStock = (attributeId: string, valueKey: string) =>
-    attributeStocks[stockKey(attributeId, valueKey)] ?? "";
-
-  const handleStockChange = (attributeId: string, valueKey: string, raw: string) => {
-    const digits = toDigits(raw);
-    const next = digits === "" ? "" : String(Math.min(Number(digits), MAX_QUANTITY));
-    setAttributeStocks((prev) => ({ ...prev, [stockKey(attributeId, valueKey)]: next }));
+  const handleInventoryChange = (id: string, enabled: boolean) => {
+    const enabledCount = getInventoryAttributes(attributeItems, {
+      ...inventoryFlags,
+      [id]: enabled,
+    }).length;
+    if (enabled && enabledCount > MAX_INVENTORY_ATTRIBUTES) {
+      toast.warning(`Como máximo ${MAX_INVENTORY_ATTRIBUTES} atributos pueden controlar inventario.`);
+      return;
+    }
+    setInventoryFlags((prev) => ({ ...prev, [id]: enabled }));
   };
 
-  /** Suma de unidades por atributo, en el orden de agregación. */
-  const stockTotals = attributeItems.map((item) =>
-    item.values.reduce(
-      (sum, value) => sum + (parseInt(getStock(item.id, getValueKey(value)), 10) || 0),
-      0,
-    ),
-  );
-  // El total del producto lo define el primer atributo (misma regla que el backend).
-  const attributeStockTotal = stockTotals[0] ?? 0;
+  const handleVariantChange = (variantKey: string, raw: string) => {
+    const digits = toDigits(raw);
+    const next = digits === "" ? "" : String(Math.min(Number(digits), MAX_QUANTITY));
+    setVariantQuantities((prev) => ({ ...prev, [variantKey]: next }));
+  };
+
+  /** Copia las unidades de un valor del padre (p. ej. Rojo) a los demás valores del padre. */
+  const handleCopyParent = (parentValueKey: string) => {
+    const source = combinations.filter((combo) => combo[0].value_key === parentValueKey);
+    setVariantQuantities((prev) => {
+      const next = { ...prev };
+      for (const combo of source) {
+        const value = prev[toVariantKey(combo)] ?? "";
+        for (const target of combinations) {
+          if (target[0].value_key === parentValueKey) continue;
+          const sameChildren = target
+            .slice(1)
+            .every((part, index) => part.value_key === combo[index + 1]?.value_key);
+          if (sameChildren) next[toVariantKey(target)] = value;
+        }
+      }
+      return next;
+    });
+  };
 
   const colorAttribute = attributeItems.find((item) => isColorType(item.type));
   const colorOptions = colorAttribute ? toColorOptions(colorAttribute.values) : [];
@@ -568,6 +602,19 @@ export function ProductoFormModal({
     setSpecs((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Un atributo por tipo: los demás del mismo tipo quedan deshabilitados.
+  const selectedTypes = new Set(
+    selectedAttributeIds.map((id) => normalizeAttributeType(getAttributeType(id))),
+  );
+  const disabledAttributeIds = attributes
+    .filter(
+      (attr) =>
+        attr.id &&
+        !selectedAttributeIds.includes(attr.id) &&
+        selectedTypes.has(normalizeAttributeType(attr.attribute_type)),
+    )
+    .map((attr) => attr.id as string);
+
   const categoryOptions = categories.map((cat) => ({ id: cat.id, label: cat.name }));
   const attributeOptions = attributes
     .filter((attr): attr is typeof attr & { id: string } => Boolean(attr.id))
@@ -581,24 +628,30 @@ export function ProductoFormModal({
     formData.append("image_product", imageProduct);
     formData.append("quantity", hasAttributeStock ? String(attributeStockTotal) : quantity);
     formData.append("stock", String(effectiveInStock));
-    // Unidades por valor de cada atributo agregado (0 si el campo está vacío).
-    const stockPayload = attributeItems.flatMap((item) =>
-      item.values.map((value) => {
-        const valueKey = getValueKey(value);
-        return {
-          attribute_id: item.id,
-          value_key: valueKey,
-          quantity: parseInt(getStock(item.id, valueKey), 10) || 0,
-        };
-      }),
+    // Unidades por combinación (0 si el campo está vacío).
+    formData.append(
+      "variants",
+      JSON.stringify(
+        variantKeys.map((variant_key) => ({
+          variant_key,
+          quantity: parseInt(variantQuantities[variant_key] ?? "", 10) || 0,
+        })),
+      ),
     );
-    formData.append("attribute_stocks", JSON.stringify(stockPayload));
     formData.append("price", price);
     formData.append("discount_price", discountPrice);
     formData.append("discount", discountValue.toString());
     formData.append("description", description.trim());
     formData.append("reference", reference.trim());
-    formData.append("attributes", JSON.stringify(selectedAttributeIds));
+    formData.append(
+      "attributes",
+      JSON.stringify(
+        selectedAttributeIds.map((id) => ({
+          id,
+          inventory: inventoryFlags[id] ?? defaultInventoryForType(getAttributeType(id)),
+        })),
+      ),
+    );
 
     const catArray = Array.from(selectedCategories).map((id) => {
       const category = categories.find((c) => c.id === id);
@@ -738,7 +791,7 @@ export function ProductoFormModal({
                     title="Inventario"
                     description={
                       hasAttributeStock
-                        ? `Con atributos, las unidades se indican por cada valor (abajo, en "Atributos agregados"); la cantidad y el stock del producto se calculan solos.`
+                        ? "Las unidades se indican por combinación en la matriz de abajo; la cantidad y el stock del producto se calculan solos."
                         : `Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`
                     }
                   >
@@ -768,8 +821,8 @@ export function ProductoFormModal({
                               <Label>
                                 {hasAttributeStock
                                   ? effectiveInStock
-                                    ? "Disponible (según unidades por valor)"
-                                    : "Sin stock (0 unidades en los valores)"
+                                    ? "Disponible (según variantes)"
+                                    : "Sin stock (variantes en 0)"
                                   : isStockLocked
                                     ? "Sin stock (cantidad 0)"
                                     : effectiveInStock
@@ -781,6 +834,18 @@ export function ProductoFormModal({
                         </div>
                       </div>
                     </div>
+
+                    {hasAttributeStock && (
+                      <div className="space-y-2">
+                        <Label>Unidades por variante</Label>
+                        <VariantMatrix
+                          attributes={inventoryAttributes}
+                          quantities={variantQuantities}
+                          onChange={handleVariantChange}
+                          onCopyParent={handleCopyParent}
+                        />
+                      </div>
+                    )}
                   </FormSection>
 
                   <FormSection
@@ -811,7 +876,11 @@ export function ProductoFormModal({
                           itemNoun={{ singular: "atributo", plural: "atributos" }}
                           isOpen={isAttributesPopoverOpen}
                           onOpenChange={setIsAttributesPopoverOpen}
+                          disabledIds={disabledAttributeIds}
                         />
+                        <p className="text-xs text-muted">
+                          Solo un atributo por tipo (un Color, una Talla, etc.).
+                        </p>
                       </div>
                     </div>
 
@@ -829,9 +898,14 @@ export function ProductoFormModal({
                       <ProductAttributeList
                         items={attributeItems}
                         onRemove={handleRemoveAttribute}
-                        getStock={getStock}
-                        onStockChange={handleStockChange}
-                        totals={stockTotals}
+                        inventoryFlags={Object.fromEntries(
+                          attributeItems.map((item) => [
+                            item.id,
+                            inventoryFlags[item.id] ?? defaultInventoryForType(item.type),
+                          ]),
+                        )}
+                        onInventoryChange={handleInventoryChange}
+                        parentId={inventoryAttributes[0]?.id}
                       />
                     </div>
                   </FormSection>

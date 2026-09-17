@@ -16,7 +16,24 @@ export interface ProductAttribute {
   id: string;
   attribute_name: string;
   attribute_type: string;
+  /** Si genera variantes de inventario (por defecto sí, salvo Género). */
+  inventory?: boolean;
   value: AttributeValue[];
+}
+
+/** Un valor dentro de la combinación de una variante. */
+export interface VariantPart {
+  attribute_id: string;
+  attribute_name: string;
+  value_key: string;
+  value_label: string;
+}
+
+/** Variante (combinación de valores) con sus unidades: fila de `product_variants`. */
+export interface ProductVariant {
+  variant_key: string;
+  combination: VariantPart[];
+  quantity: number;
 }
 
 /** Imágenes relacionadas con un color del atributo de tipo Color del producto. */
@@ -27,15 +44,6 @@ export interface ColorImageGroup {
   images: string[];
   /** Posición elegida por el usuario: el primer color es el que carga primero. */
   order?: number;
-}
-
-/** Unidades disponibles de un valor de atributo (fila de `product_stocks`). */
-export interface ProductStockEntry {
-  attribute_id: string;
-  attribute_name: string;
-  value_key: string;
-  value_label: string;
-  quantity: number;
 }
 
 export interface Products {
@@ -61,8 +69,8 @@ export interface Products {
   images: string[];
   /** Imágenes agrupadas por color; null en productos anteriores a esta columna. */
   color_images?: ColorImageGroup[] | null;
-  /** Inventario por valor de atributo; vacío si el producto no tiene atributos. */
-  stocks?: ProductStockEntry[];
+  /** Inventario por combinación; vacío si ningún atributo controla inventario. */
+  variants?: ProductVariant[];
   specs: string;
   Categories: { id: string; name: string }[];
 }

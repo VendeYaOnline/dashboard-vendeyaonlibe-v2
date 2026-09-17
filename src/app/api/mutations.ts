@@ -24,6 +24,7 @@ import {
   updatedCategory,
   updateCover,
   updatedProduct,
+  updateProductStock,
   updatedUser,
   uploadImages,
 } from "./request";
@@ -221,6 +222,16 @@ export const useMutationUpdatedProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updatedProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+export const useMutationUpdateProductStock = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateProductStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
