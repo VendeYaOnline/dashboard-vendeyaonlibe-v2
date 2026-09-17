@@ -21,7 +21,12 @@ import type { Attribute } from "@/interfaces/attributes";
 import type { ColorImageGroup, Products } from "@/interfaces/products";
 import { MultiSelectPopover } from "./multi-select-popover";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
-import { isColorType, normalizeAttributeType, toColorOptions } from "./attribute-values";
+import {
+  getValueKey,
+  isColorType,
+  normalizeAttributeType,
+  toColorOptions,
+} from "./attribute-values";
 import { ProductAttributeList, type ProductAttributeItem } from "./product-attribute-list";
 import { ColorImagesSection } from "./color-images-section";
 import { ColorSelectModal } from "./color-select-modal";
@@ -100,13 +105,23 @@ interface ProductoFormModalProps {
 
 const MAX_SPECS = 5;
 
-/** Cambio de atributos que requiere confirmación porque afecta al atributo de color. */
+/**
+ * Cambio de atributos que requiere confirmación porque afecta a las imágenes:
+ * - replace: otro atributo de color sustituye al actual (se pierden sus imágenes).
+ * - add-color: se agrega el primer atributo de color y hay imágenes generales
+ *   cargadas, que se eliminan porque pasan a gestionarse por color.
+ */
 interface PendingAttributeChange {
+  kind: "replace" | "add-color";
   nextIds: string[];
-  currentColorName: string;
-  nextColorName?: string;
-  linkedImages: number;
+  currentColorName?: string;
+  nextColorName: string;
+  /** Imágenes que se eliminarán al confirmar. */
+  affectedImages: number;
 }
+
+/** Clave de una fila de inventario por valor. */
+const stockKey = (attributeId: string, valueKey: string) => `${attributeId}::${valueKey}`;
 
 export function ProductoFormModal({
   product,
@@ -136,6 +151,8 @@ export function ProductoFormModal({
   /** Imágenes relacionadas con cada color del atributo de color del producto. */
   const [colorImages, setColorImages] = useState<ColorImageGroup[]>([]);
   const [pendingChange, setPendingChange] = useState<PendingAttributeChange | null>(null);
+  /** Unidades por valor de atributo (clave attributeId::valueKey → texto). */
+  const [attributeStocks, setAttributeStocks] = useState<Record<string, string>>({});
   /** Controlado para poder cerrarlo antes de mostrar el diálogo de confirmación. */
   const [isAttributesPopoverOpen, setIsAttributesPopoverOpen] = useState(false);
 
@@ -169,6 +186,7 @@ export function ProductoFormModal({
       setSelectedCategories(new Set());
       setProductImages([]);
       setColorImages([]);
+      setAttributeStocks({});
       setPendingChange(null);
       return;
     }
@@ -195,6 +213,14 @@ export function ProductoFormModal({
         : [],
     );
     setPendingChange(null);
+    setAttributeStocks(
+      Object.fromEntries(
+        (product.stocks ?? []).map((row) => [
+          stockKey(row.attribute_id, row.value_key),
+          String(row.quantity),
+        ]),
+      ),
+    );
 
     try {
       const parsedSpecs = product.specs
@@ -264,18 +290,30 @@ export function ProductoFormModal({
       // El popover debe cerrarse: si no, queda por encima del diálogo.
       setIsAttributesPopoverOpen(false);
       setPendingChange({
+        kind: "replace",
         nextIds: ids,
         currentColorName: getAttributeName(currentColorId),
         nextColorName: getAttributeName(newColorId),
-        linkedImages: linkedImageUrls.length,
+        affectedImages: linkedImageUrls.length,
       });
       return;
     }
 
-    if (!currentColorId && nextColorIds.length > 1) {
+    if (!currentColorId && newColorId) {
       // Sin color previo solo se conserva el primero elegido.
-      const [first] = nextColorIds;
-      setSelectedAttributeIds(nextIds.filter((id) => !nextColorIds.includes(id) || id === first));
+      const ids = nextIds.filter((id) => !nextColorIds.includes(id) || id === newColorId);
+      // Las imágenes generales se eliminan: con color, se gestionan por color.
+      if (productImages.length > 0) {
+        setIsAttributesPopoverOpen(false);
+        setPendingChange({
+          kind: "add-color",
+          nextIds: ids,
+          nextColorName: getAttributeName(newColorId),
+          affectedImages: productImages.length,
+        });
+        return;
+      }
+      setSelectedAttributeIds(ids);
       return;
     }
 
@@ -308,10 +346,16 @@ export function ProductoFormModal({
 
   const handleConfirmPendingChange = () => {
     if (!pendingChange) return;
-    dropColorImages();
+    if (pendingChange.kind === "add-color") {
+      setProductImages([]);
+      setColorImages([]);
+    } else {
+      dropColorImages();
+    }
     setSelectedAttributeIds(pendingChange.nextIds);
     setPendingChange(null);
   };
+
 
   // Valores frescos del catálogo; si el atributo se eliminó, se usa el
   // snapshot guardado en el producto para no perder la información en pantalla.
@@ -340,6 +384,28 @@ export function ProductoFormModal({
       },
     ];
   });
+
+  // ---------- Inventario por valor de atributo ----------
+  const hasAttributeStock = attributeItems.length > 0;
+
+  const getStock = (attributeId: string, valueKey: string) =>
+    attributeStocks[stockKey(attributeId, valueKey)] ?? "";
+
+  const handleStockChange = (attributeId: string, valueKey: string, raw: string) => {
+    const digits = toDigits(raw);
+    const next = digits === "" ? "" : String(Math.min(Number(digits), MAX_QUANTITY));
+    setAttributeStocks((prev) => ({ ...prev, [stockKey(attributeId, valueKey)]: next }));
+  };
+
+  /** Suma de unidades por atributo, en el orden de agregación. */
+  const stockTotals = attributeItems.map((item) =>
+    item.values.reduce(
+      (sum, value) => sum + (parseInt(getStock(item.id, getValueKey(value)), 10) || 0),
+      0,
+    ),
+  );
+  // El total del producto lo define el primer atributo (misma regla que el backend).
+  const attributeStockTotal = stockTotals[0] ?? 0;
 
   const colorAttribute = attributeItems.find((item) => isColorType(item.type));
   const colorOptions = colorAttribute ? toColorOptions(colorAttribute.values) : [];
@@ -461,10 +527,19 @@ export function ProductoFormModal({
     }
   };
 
-  const quantityValue = quantity === "" ? null : parseInt(quantity, 10);
-  // Con cantidad 0 el producto no puede estar en stock; el interruptor se bloquea.
-  const isStockLocked = quantityValue === 0;
-  const effectiveInStock = isStockLocked ? false : inStock;
+  const quantityValue = hasAttributeStock
+    ? attributeStockTotal
+    : quantity === ""
+      ? null
+      : parseInt(quantity, 10);
+  // Con cantidad 0 el producto no puede estar en stock; el interruptor se
+  // bloquea. Con inventario por atributo, cantidad y stock se calculan.
+  const isStockLocked = hasAttributeStock || quantityValue === 0;
+  const effectiveInStock = hasAttributeStock
+    ? attributeStockTotal > 0
+    : quantityValue === 0
+      ? false
+      : inStock;
 
   const handleQuantityChange = (value: string) => {
     if (value === "") {
@@ -504,8 +579,20 @@ export function ProductoFormModal({
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("image_product", imageProduct);
-    formData.append("quantity", quantity);
+    formData.append("quantity", hasAttributeStock ? String(attributeStockTotal) : quantity);
     formData.append("stock", String(effectiveInStock));
+    // Unidades por valor de cada atributo agregado (0 si el campo está vacío).
+    const stockPayload = attributeItems.flatMap((item) =>
+      item.values.map((value) => {
+        const valueKey = getValueKey(value);
+        return {
+          attribute_id: item.id,
+          value_key: valueKey,
+          quantity: parseInt(getStock(item.id, valueKey), 10) || 0,
+        };
+      }),
+    );
+    formData.append("attribute_stocks", JSON.stringify(stockPayload));
     formData.append("price", price);
     formData.append("discount_price", discountPrice);
     formData.append("discount", discountValue.toString());
@@ -649,11 +736,20 @@ export function ProductoFormModal({
 
                   <FormSection
                     title="Inventario"
-                    description={`Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`}
+                    description={
+                      hasAttributeStock
+                        ? `Con atributos, las unidades se indican por cada valor (abajo, en "Atributos agregados"); la cantidad y el stock del producto se calculan solos.`
+                        : `Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`
+                    }
                   >
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <TextField value={quantity} onChange={handleQuantityChange} type="number">
-                        <Label>Cantidad</Label>
+                      <TextField
+                        value={hasAttributeStock ? String(attributeStockTotal) : quantity}
+                        onChange={handleQuantityChange}
+                        type="number"
+                        isReadOnly={hasAttributeStock}
+                      >
+                        <Label>{hasAttributeStock ? "Cantidad total (calculada)" : "Cantidad"}</Label>
                         <Input placeholder="Ej: 25" min={0} max={MAX_QUANTITY} />
                       </TextField>
 
@@ -670,11 +766,15 @@ export function ProductoFormModal({
                                 <Switch.Thumb />
                               </Switch.Control>
                               <Label>
-                                {isStockLocked
-                                  ? "Sin stock (cantidad 0)"
-                                  : effectiveInStock
-                                    ? "Disponible en la tienda"
-                                    : "Agotado"}
+                                {hasAttributeStock
+                                  ? effectiveInStock
+                                    ? "Disponible (según unidades por valor)"
+                                    : "Sin stock (0 unidades en los valores)"
+                                  : isStockLocked
+                                    ? "Sin stock (cantidad 0)"
+                                    : effectiveInStock
+                                      ? "Disponible en la tienda"
+                                      : "Agotado"}
                               </Label>
                             </Switch.Content>
                           </Switch>
@@ -726,7 +826,13 @@ export function ProductoFormModal({
                           </span>
                         )}
                       </div>
-                      <ProductAttributeList items={attributeItems} onRemove={handleRemoveAttribute} />
+                      <ProductAttributeList
+                        items={attributeItems}
+                        onRemove={handleRemoveAttribute}
+                        getStock={getStock}
+                        onStockChange={handleStockChange}
+                        totals={stockTotals}
+                      />
                     </div>
                   </FormSection>
 
@@ -935,28 +1041,46 @@ export function ProductoFormModal({
           if (!open) setPendingChange(null);
         }}
         onConfirm={handleConfirmPendingChange}
-        tone={pendingChange?.linkedImages ? "danger" : "accent"}
-        title="Reemplazar el atributo de color"
-        confirmLabel="Reemplazar"
+        tone={pendingChange?.affectedImages ? "danger" : "accent"}
+        title={
+          pendingChange?.kind === "add-color"
+            ? "Las imágenes generales se eliminarán"
+            : "Reemplazar el atributo de color"
+        }
+        confirmLabel={pendingChange?.kind === "add-color" ? "Continuar" : "Reemplazar"}
         description={
           pendingChange ? (
             <div className="space-y-2">
-              <p>
-                Un producto solo puede tener un atributo de color.{" "}
-                <strong>«{pendingChange.nextColorName}»</strong> reemplazará a{" "}
-                <strong>«{pendingChange.currentColorName}»</strong>.
-              </p>
-              {pendingChange.linkedImages > 0 && (
+              {pendingChange.kind === "add-color" ? (
                 <p>
-                  Se eliminarán del producto las{" "}
+                  Al agregar el atributo de color <strong>«{pendingChange.nextColorName}»</strong>{" "}
+                  las imágenes del producto pasan a relacionarse con cada color. Se eliminarán las{" "}
                   <strong>
-                    {pendingChange.linkedImages}{" "}
-                    {pendingChange.linkedImages === 1
-                      ? "imagen relacionada"
-                      : "imágenes relacionadas"}
+                    {pendingChange.affectedImages}{" "}
+                    {pendingChange.affectedImages === 1 ? "imagen general" : "imágenes generales"}
                   </strong>{" "}
-                  con sus colores.
+                  que ya habías cargado.
                 </p>
+              ) : (
+                <>
+                  <p>
+                    Un producto solo puede tener un atributo de color.{" "}
+                    <strong>«{pendingChange.nextColorName}»</strong> reemplazará a{" "}
+                    <strong>«{pendingChange.currentColorName}»</strong>.
+                  </p>
+                  {pendingChange.affectedImages > 0 && (
+                    <p>
+                      Se eliminarán del producto las{" "}
+                      <strong>
+                        {pendingChange.affectedImages}{" "}
+                        {pendingChange.affectedImages === 1
+                          ? "imagen relacionada"
+                          : "imágenes relacionadas"}
+                      </strong>{" "}
+                      con sus colores.
+                    </p>
+                  )}
+                </>
               )}
             </div>
           ) : null

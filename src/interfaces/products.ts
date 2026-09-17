@@ -29,6 +29,15 @@ export interface ColorImageGroup {
   order?: number;
 }
 
+/** Unidades disponibles de un valor de atributo (fila de `product_stocks`). */
+export interface ProductStockEntry {
+  attribute_id: string;
+  attribute_name: string;
+  value_key: string;
+  value_label: string;
+  quantity: number;
+}
+
 export interface Products {
   id: string;
   image_product: string;
@@ -52,6 +61,8 @@ export interface Products {
   images: string[];
   /** Imágenes agrupadas por color; null en productos anteriores a esta columna. */
   color_images?: ColorImageGroup[] | null;
+  /** Inventario por valor de atributo; vacío si el producto no tiene atributos. */
+  stocks?: ProductStockEntry[];
   specs: string;
   Categories: { id: string; name: string }[];
 }

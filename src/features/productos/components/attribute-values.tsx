@@ -1,6 +1,6 @@
 "use client";
 
-import { Chip, cn } from "@heroui/react";
+import { Chip, Input, cn } from "@heroui/react";
 import type { AttributeValue } from "@/interfaces/attributes";
 
 /** Quita acentos para comparar tipos ("Género" y "Genero" son el mismo). */
@@ -90,6 +90,65 @@ export function AttributeValues({ type, values }: AttributeValuesProps) {
             <Chip size="sm" variant="soft">
               {label}
             </Chip>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Clave estable de un valor: el hex para colores, el texto para el resto. */
+export const getValueKey = (value: AttributeValue) =>
+  typeof value === "object" && value !== null ? getColorHex(value) : String(value);
+
+interface AttributeStockInputsProps {
+  attributeId: string;
+  type: string;
+  values: AttributeValue[];
+  /** Unidades actuales por clave de valor (texto para permitir el campo vacío). */
+  getQuantity: (attributeId: string, valueKey: string) => string;
+  onChange: (attributeId: string, valueKey: string, quantity: string) => void;
+  max: number;
+}
+
+/**
+ * Un campo de unidades por cada valor del atributo (p. ej. Rojo: 5, Azul: 2).
+ * Los colores muestran su swatch para identificarlos rápido.
+ */
+export function AttributeStockInputs({
+  attributeId,
+  type,
+  values,
+  getQuantity,
+  onChange,
+  max,
+}: AttributeStockInputsProps) {
+  const isColor = isColorType(type);
+
+  return (
+    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label={`Unidades por ${type}`}>
+      {values.map((value, index) => {
+        const key = getValueKey(value);
+        const label = getValueLabel(value);
+        const quantity = getQuantity(attributeId, key);
+        return (
+          <li
+            key={`${key}-${index}`}
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2 py-1.5"
+          >
+            {isColor && <ColorSwatch hex={key} />}
+            <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
+            <Input
+              aria-label={`Unidades de ${label}`}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={max}
+              placeholder="0"
+              value={quantity}
+              onChange={(event) => onChange(attributeId, key, event.target.value)}
+              className="w-24 text-right"
+            />
           </li>
         );
       })}
