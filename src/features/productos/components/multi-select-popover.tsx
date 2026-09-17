@@ -24,6 +24,8 @@ interface MultiSelectPopoverProps {
   /** Opcional: control externo de apertura (p. ej. para cerrarlo antes de un diálogo). */
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** Opciones que no se pueden elegir (siguen visibles, atenuadas). */
+  disabledIds?: string[];
 }
 
 /**
@@ -40,6 +42,7 @@ export function MultiSelectPopover({
   itemNoun,
   isOpen,
   onOpenChange,
+  disabledIds = [],
 }: MultiSelectPopoverProps) {
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") {
@@ -69,6 +72,7 @@ export function MultiSelectPopover({
                 selectionMode="multiple"
                 // Por defecto Escape vacía la selección; aquí solo debe cerrar el popover.
                 escapeKeyBehavior="none"
+                disabledKeys={new Set(disabledIds)}
                 selectedKeys={selectedIds}
                 onSelectionChange={handleSelectionChange}
                 className="max-h-60 overflow-y-auto"

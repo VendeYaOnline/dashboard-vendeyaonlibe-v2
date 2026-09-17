@@ -252,6 +252,21 @@ export const updatedProduct = async ({
   return axiosConfig.put(`/updated-product/${id}`, data);
 };
 
+/** Actualización rápida de inventario: por variante o cantidad general. */
+export const updateProductStock = async ({
+  id,
+  ...data
+}: {
+  id: string;
+  variants?: { variant_key: string; quantity: number }[];
+  quantity?: number;
+}) => {
+  return axiosConfig.patch<{ message: string; quantity: number; stock: boolean }>(
+    `/update-product-stock/${id}`,
+    data,
+  );
+};
+
 export const deleteProduct = async (idElement: string) => {
   return axiosConfig.delete(`/delete-product/${idElement}`);
 };

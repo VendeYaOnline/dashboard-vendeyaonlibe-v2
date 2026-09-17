@@ -1,10 +1,9 @@
 "use client";
 
-import { Button, Chip } from "@heroui/react";
+import { Button, Chip, Label, Switch } from "@heroui/react";
 import { X } from "lucide-react";
 import type { AttributeValue } from "@/interfaces/attributes";
-import { AttributeStockInputs, AttributeValues } from "./attribute-values";
-import { MAX_QUANTITY } from "./constants";
+import { AttributeValues } from "./attribute-values";
 
 export interface ProductAttributeItem {
   id: string;
@@ -18,24 +17,24 @@ export interface ProductAttributeItem {
 interface ProductAttributeListProps {
   items: ProductAttributeItem[];
   onRemove: (id: string) => void;
-  /** Unidades por valor; si se pasa, cada valor muestra su campo de cantidad. */
-  getStock?: (attributeId: string, valueKey: string) => string;
-  onStockChange?: (attributeId: string, valueKey: string, quantity: string) => void;
-  /** Suma de unidades por atributo (mismo orden que `items`). */
-  totals?: number[];
+  /** Si el atributo genera variantes de inventario (por id). */
+  inventoryFlags?: Record<string, boolean>;
+  onInventoryChange?: (id: string, enabled: boolean) => void;
+  /** Ids de los atributos que actúan como padre en la matriz (normalmente el color). */
+  parentId?: string;
 }
 
 /**
  * Atributos agregados al producto, numerados en el orden en que se eligieron.
- * Cada tarjeta muestra el nombre, el tipo, sus valores y, si el producto lleva
- * inventario por atributo, las unidades de cada valor.
+ * Cada tarjeta muestra el nombre, el tipo, sus valores y el interruptor
+ * "Controla inventario" que decide si el atributo genera variantes.
  */
 export function ProductAttributeList({
   items,
   onRemove,
-  getStock,
-  onStockChange,
-  totals,
+  inventoryFlags,
+  onInventoryChange,
+  parentId,
 }: ProductAttributeListProps) {
   if (items.length === 0) {
     return (
@@ -45,14 +44,10 @@ export function ProductAttributeList({
     );
   }
 
-  const withStock = Boolean(getStock && onStockChange);
-  const referenceTotal = totals?.[0] ?? 0;
-
   return (
     <ol className="space-y-2">
       {items.map((item, index) => {
-        const total = totals?.[index] ?? 0;
-        const mismatch = withStock && index > 0 && total !== referenceTotal;
+        const controlsInventory = inventoryFlags?.[item.id] ?? true;
         return (
           <li key={item.id} className="rounded-lg border border-border bg-surface-secondary p-3">
             <div className="flex items-start gap-3">
@@ -71,40 +66,35 @@ export function ProductAttributeList({
                       Ya no existe en el catálogo
                     </Chip>
                   )}
+                  {controlsInventory && parentId === item.id && items.length > 1 && (
+                    <Chip size="sm" variant="soft" color="accent">
+                      Atributo padre
+                    </Chip>
+                  )}
                   <span className="text-xs text-muted">
                     {item.values.length} {item.values.length === 1 ? "valor" : "valores"}
                   </span>
-                  {withStock && (
-                    <Chip size="sm" variant="soft" color={mismatch ? "warning" : "accent"}>
-                      {total} {total === 1 ? "unidad" : "unidades"}
-                    </Chip>
-                  )}
                 </div>
 
-                {withStock ? (
-                  <>
-                    <p className="text-xs text-muted">
-                      Indica cuántas unidades tienes de cada valor.
-                      {index === 0 && items.length > 1 && " Este atributo define el total del producto."}
-                    </p>
-                    <AttributeStockInputs
-                      attributeId={item.id}
-                      type={item.type}
-                      values={item.values}
-                      getQuantity={getStock!}
-                      onChange={onStockChange!}
-                      max={MAX_QUANTITY}
-                    />
-                    {mismatch && (
-                      <p className="text-xs text-warning">
-                        Las unidades de «{item.name}» ({total}) no coinciden con las de «
-                        {items[0].name}» ({referenceTotal}). El total del producto usa el primer
-                        atributo.
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <AttributeValues type={item.type} values={item.values} />
+                <AttributeValues type={item.type} values={item.values} />
+
+                {onInventoryChange && (
+                  <Switch
+                    size="sm"
+                    isSelected={controlsInventory}
+                    onChange={(enabled) => onInventoryChange(item.id, enabled)}
+                  >
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <Label className="text-xs">
+                        {controlsInventory
+                          ? "Controla inventario: se indican unidades por cada valor"
+                          : "Solo descriptivo: no genera variantes de inventario"}
+                      </Label>
+                    </Switch.Content>
+                  </Switch>
                 )}
               </div>
 

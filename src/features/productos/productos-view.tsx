@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
-import { Edit2, Package, Plus, Trash2 } from "lucide-react";
+import { Boxes, Edit2, Package, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -19,6 +19,7 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import type { Products } from "@/interfaces/products";
 import { ProductoFormModal } from "./components/producto-form-modal";
+import { StockQuickModal } from "./components/stock-quick-modal";
 import { formatCOP } from "./utils";
 
 export function ProductosView() {
@@ -31,6 +32,7 @@ export function ProductosView() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<Products | null>(null);
   const [toDelete, setToDelete] = useState<Products | null>(null);
+  const [stockTarget, setStockTarget] = useState<Products | null>(null);
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
@@ -103,13 +105,25 @@ export function ProductosView() {
     {
       key: "stock",
       label: "Stock",
-      render: (product) => (
-        <span>
-          {product.quantity ?? (
-            <span className="text-muted">{product.stock ? "Disponible" : "Agotado"}</span>
-          )}
-        </span>
-      ),
+      render: (product) => {
+        const variants = product.variants ?? [];
+        const soldOut = variants.filter((variant) => variant.quantity === 0).length;
+        return (
+          <div className="flex flex-col">
+            <span>
+              {product.quantity ?? (
+                <span className="text-muted">{product.stock ? "Disponible" : "Agotado"}</span>
+              )}
+            </span>
+            {variants.length > 0 && (
+              <span className={`text-xs ${soldOut > 0 ? "text-warning" : "text-muted"}`}>
+                {variants.length} variantes
+                {soldOut > 0 ? ` · ${soldOut} agotada${soldOut === 1 ? "" : "s"}` : ""}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "price",
@@ -143,6 +157,16 @@ export function ProductosView() {
       align: "end",
       render: (product) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label={`Inventario de ${product.title}`}
+            isDisabled={!canManage}
+            onPress={() => setStockTarget(product)}
+          >
+            <Boxes className="size-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -233,6 +257,12 @@ export function ProductosView() {
         }}
         onSubmit={handleSubmit}
         isPending={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <StockQuickModal
+        product={stockTarget}
+        isOpen={stockTarget !== null}
+        onOpenChange={(open) => !open && setStockTarget(null)}
       />
 
       <ConfirmDialog
