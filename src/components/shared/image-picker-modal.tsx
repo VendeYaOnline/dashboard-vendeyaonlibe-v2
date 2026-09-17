@@ -56,7 +56,8 @@ export function ImagePickerModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const { data, isLoading } = useQueryImages(page, debouncedSearch, LIMIT, undefined);
+  // El modal está montado aunque esté cerrado: la galería solo se pide al abrirlo.
+  const { data, isLoading } = useQueryImages(page, debouncedSearch, LIMIT, undefined, isOpen);
   const images = data?.images ?? [];
   const totalPages = data?.totalPages ?? 0;
 

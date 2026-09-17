@@ -96,13 +96,15 @@ export const useQueryImages = (
   search: string,
   limit: number,
   categoryId: string | undefined = undefined,
+  /** false = no pedir aún (p. ej. selector de imágenes cerrado). */
+  enabled: boolean = true,
 ) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
     queryKey: ["images", validPage, search, categoryId],
     queryFn: () => getImages(validPage, search, limit, categoryId),
     ...LIST_QUERY_OPTIONS,
-    enabled: currentPage > 0,
+    enabled: enabled && currentPage > 0,
   });
 };
 
