@@ -13,6 +13,8 @@ interface ProductSelectGridProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   isLoading?: boolean;
+  /** Cambio de página/búsqueda: se atenúa la grilla actual mientras llega la nueva. */
+  isRefreshing?: boolean;
   emptyMessage?: string;
   /** Ids que no se pueden elegir (p. ej. productos ya destacados). */
   disabledIds?: string[];
@@ -31,6 +33,7 @@ export function ProductSelectGrid({
   totalPages,
   onPageChange,
   isLoading,
+  isRefreshing = false,
   emptyMessage = "No se encontraron productos",
   disabledIds = [],
   disabledLabel = "No disponible",
@@ -49,7 +52,7 @@ export function ProductSelectGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4 transition-opacity", isRefreshing && "opacity-60")} aria-busy={isRefreshing}>
       {/* p-1.5: el anillo de selección (ring) sobresale 2 px y el contenedor recorta lo que se desborda. */}
       <div className="grid max-h-80 grid-cols-1 gap-3 overflow-y-auto p-1.5 md:grid-cols-2">
         {products.map((product) => {

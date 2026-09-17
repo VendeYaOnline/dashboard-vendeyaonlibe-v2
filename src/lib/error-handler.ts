@@ -17,6 +17,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
     "Alguno de los productos seleccionados ya no está disponible.",
   CAROUSEL_LIMIT_REACHED: "Has alcanzado el límite de carruseles permitidos.",
   CAROUSEL_NOT_FOUND: "El carrusel ya no existe.",
+  CAROUSEL_PRODUCTS_ASSIGNED: "Alguno de los productos ya pertenece a otro carrusel.",
   FEATURED_PRODUCT_REQUIRED: "Debes seleccionar un producto.",
   FEATURED_PRODUCT_NOT_FOUND: "El producto ya no existe.",
   FEATURED_PRODUCT_DUPLICATED: "Este producto ya está destacado.",

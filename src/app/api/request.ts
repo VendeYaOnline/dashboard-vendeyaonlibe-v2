@@ -221,9 +221,12 @@ export const getProductsByCategory = async (
   page: number,
   search: string = "",
   categoryIds: string[] = [],
+  /** Al editar un carrusel, incluye también sus propios productos. */
+  carouselId?: string,
 ) => {
   const params = new URLSearchParams({ page: String(page), search });
   categoryIds.forEach((id) => params.append("categoryId", id));
+  if (carouselId) params.append("carouselId", carouselId);
 
   const result = (
     await axiosConfig.get<ProductRequest>(
