@@ -788,67 +788,6 @@ export function ProductoFormModal({
                   </FormSection>
 
                   <FormSection
-                    title="Inventario"
-                    description={
-                      hasAttributeStock
-                        ? "Las unidades se indican por combinación en la matriz de abajo; la cantidad y el stock del producto se calculan solos."
-                        : `Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`
-                    }
-                  >
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <TextField
-                        value={hasAttributeStock ? String(attributeStockTotal) : quantity}
-                        onChange={handleQuantityChange}
-                        type="number"
-                        isReadOnly={hasAttributeStock}
-                      >
-                        <Label>{hasAttributeStock ? "Cantidad total (calculada)" : "Cantidad"}</Label>
-                        <Input placeholder="Ej: 25" min={0} max={MAX_QUANTITY} />
-                      </TextField>
-
-                      <div className="space-y-2">
-                        <Label>Stock</Label>
-                        <div className="flex h-10 items-center rounded-lg border border-border bg-surface px-3">
-                          <Switch
-                            isSelected={effectiveInStock}
-                            onChange={setInStock}
-                            isDisabled={isStockLocked}
-                          >
-                            <Switch.Content>
-                              <Switch.Control>
-                                <Switch.Thumb />
-                              </Switch.Control>
-                              <Label>
-                                {hasAttributeStock
-                                  ? effectiveInStock
-                                    ? "Disponible (según variantes)"
-                                    : "Sin stock (variantes en 0)"
-                                  : isStockLocked
-                                    ? "Sin stock (cantidad 0)"
-                                    : effectiveInStock
-                                      ? "Disponible en la tienda"
-                                      : "Agotado"}
-                              </Label>
-                            </Switch.Content>
-                          </Switch>
-                        </div>
-                      </div>
-                    </div>
-
-                    {hasAttributeStock && (
-                      <div className="space-y-2">
-                        <Label>Unidades por variante</Label>
-                        <VariantMatrix
-                          attributes={inventoryAttributes}
-                          quantities={variantQuantities}
-                          onChange={handleVariantChange}
-                          onCopyParent={handleCopyParent}
-                        />
-                      </div>
-                    )}
-                  </FormSection>
-
-                  <FormSection
                     title="Clasificación"
                     description="Categorías donde aparece y atributos (color, talla...) con los que se vende."
                   >
@@ -908,6 +847,67 @@ export function ProductoFormModal({
                         parentId={inventoryAttributes[0]?.id}
                       />
                     </div>
+                  </FormSection>
+
+                  <FormSection
+                    title="Inventario"
+                    description={
+                      hasAttributeStock
+                        ? "Las unidades se indican por combinación en la matriz; la cantidad y el stock del producto se calculan solos."
+                        : `Cantidad de 0 a ${MAX_QUANTITY}. Con 0 unidades el producto queda sin stock automáticamente.`
+                    }
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <TextField
+                        value={hasAttributeStock ? String(attributeStockTotal) : quantity}
+                        onChange={handleQuantityChange}
+                        type="number"
+                        isReadOnly={hasAttributeStock}
+                      >
+                        <Label>{hasAttributeStock ? "Cantidad total (calculada)" : "Cantidad"}</Label>
+                        <Input placeholder="Ej: 25" min={0} max={MAX_QUANTITY} />
+                      </TextField>
+
+                      <div className="space-y-2">
+                        <Label>Stock</Label>
+                        <div className="flex h-10 items-center rounded-lg border border-border bg-surface px-3">
+                          <Switch
+                            isSelected={effectiveInStock}
+                            onChange={setInStock}
+                            isDisabled={isStockLocked}
+                          >
+                            <Switch.Content>
+                              <Switch.Control>
+                                <Switch.Thumb />
+                              </Switch.Control>
+                              <Label>
+                                {hasAttributeStock
+                                  ? effectiveInStock
+                                    ? "Disponible (según variantes)"
+                                    : "Sin stock (variantes en 0)"
+                                  : isStockLocked
+                                    ? "Sin stock (cantidad 0)"
+                                    : effectiveInStock
+                                      ? "Disponible en la tienda"
+                                      : "Agotado"}
+                              </Label>
+                            </Switch.Content>
+                          </Switch>
+                        </div>
+                      </div>
+                    </div>
+
+                    {hasAttributeStock && (
+                      <div className="space-y-2">
+                        <Label>Unidades por variante</Label>
+                        <VariantMatrix
+                          attributes={inventoryAttributes}
+                          quantities={variantQuantities}
+                          onChange={handleVariantChange}
+                          onCopyParent={handleCopyParent}
+                        />
+                      </div>
+                    )}
                   </FormSection>
 
                   <FormSection
