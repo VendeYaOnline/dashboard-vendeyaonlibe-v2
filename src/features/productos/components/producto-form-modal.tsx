@@ -677,8 +677,15 @@ export function ProductoFormModal({
   };
 
   // Mismos obligatorios que exige el backend, para no enviar y recibir un 400.
+  // Con atributo de color, al menos un color debe tener imagen.
+  const hasColorImage = orderedGroups.some((group) => group.images.length > 0);
+  const missingColorImage = Boolean(colorAttribute) && !hasColorImage;
   const isValid =
-    title.trim() !== "" && price !== "" && description.trim() !== "" && imageProduct !== "";
+    title.trim() !== "" &&
+    price !== "" &&
+    description.trim() !== "" &&
+    imageProduct !== "" &&
+    !missingColorImage;
 
   return (
     <>
@@ -1009,6 +1016,11 @@ export function ProductoFormModal({
                       </Button>
                     }
                   >
+                    {missingColorImage && (
+                      <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+                        Agrega al menos una imagen a alguno de los colores para poder guardar el producto.
+                      </p>
+                    )}
                     {colorAttribute ? (
                       <ColorImagesSection
                         colors={colorOptions}
@@ -1052,6 +1064,11 @@ export function ProductoFormModal({
                   >
                     Cancelar
                   </Button>
+                  {missingColorImage && (
+                    <span className="mr-auto self-center text-xs text-warning">
+                      Falta una imagen de color
+                    </span>
+                  )}
                   <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
                     {isPending
                       ? isEdit

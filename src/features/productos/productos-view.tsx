@@ -22,6 +22,10 @@ import { ProductoFormModal } from "./components/producto-form-modal";
 import { StockQuickModal } from "./components/stock-quick-modal";
 import { formatCOP } from "./utils";
 
+/** Color del número de unidades: verde > 10, naranja 5–10, rojo 0–4. */
+const stockTone = (quantity: number) =>
+  quantity > 10 ? "text-success" : quantity >= 5 ? "text-warning" : "text-danger";
+
 export function ProductosView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
 
@@ -110,7 +114,7 @@ export function ProductosView() {
         const soldOut = variants.filter((variant) => variant.quantity === 0).length;
         return (
           <div className="flex flex-col">
-            <span>
+            <span className={product.quantity != null ? `font-semibold ${stockTone(product.quantity)}` : ""}>
               {product.quantity ?? (
                 <span className="text-muted">{product.stock ? "Disponible" : "Agotado"}</span>
               )}
