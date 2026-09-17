@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button, Spinner, cn } from "@heroui/react";
+import { Check, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { Button, Chip, Spinner, cn } from "@heroui/react";
 import type { Products } from "@/interfaces/products";
+import { formatCOP } from "@/features/productos/utils";
 
 interface ProductSelectGridProps {
   products: Products[];
@@ -13,6 +14,9 @@ interface ProductSelectGridProps {
   onPageChange: (page: number) => void;
   isLoading?: boolean;
   emptyMessage?: string;
+  /** Ids que no se pueden elegir (p. ej. productos ya destacados). */
+  disabledIds?: string[];
+  disabledLabel?: string;
 }
 
 /**
@@ -28,6 +32,8 @@ export function ProductSelectGrid({
   onPageChange,
   isLoading,
   emptyMessage = "No se encontraron productos",
+  disabledIds = [],
+  disabledLabel = "No disponible",
 }: ProductSelectGridProps) {
   if (isLoading) {
     return (
@@ -44,20 +50,25 @@ export function ProductSelectGrid({
 
   return (
     <div className="space-y-4">
-      <div className="grid max-h-80 grid-cols-1 gap-3 overflow-y-auto pr-1 md:grid-cols-2">
+      {/* p-1.5: el anillo de selección (ring) sobresale 2 px y el contenedor recorta lo que se desborda. */}
+      <div className="grid max-h-80 grid-cols-1 gap-3 overflow-y-auto p-1.5 md:grid-cols-2">
         {products.map((product) => {
           const isSelected = selectedIds.includes(product.id);
+          const isDisabled = disabledIds.includes(product.id);
 
           return (
             <button
               key={product.id}
               type="button"
+              disabled={isDisabled}
               onClick={() => onSelect(product)}
               className={cn(
                 "flex gap-3 rounded-lg border border-border p-3 text-left transition-all",
                 isSelected
                   ? "border-accent bg-accent-soft ring-2 ring-accent"
-                  : "hover:border-accent/50 hover:bg-surface-secondary",
+                  : isDisabled
+                    ? "cursor-not-allowed opacity-60"
+                    : "hover:border-accent/50 hover:bg-surface-secondary",
               )}
             >
               {product.image_product ? (
@@ -75,11 +86,21 @@ export function ProductSelectGrid({
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 text-sm font-medium">{product.title}</p>
                 <p className="mt-1 text-sm font-semibold text-accent">
-                  ${product.discount_price || product.price}
+                  {formatCOP(product.discount_price || product.price) ||
+                    product.discount_price ||
+                    product.price}
                 </p>
-                <p className="text-xs text-muted">
-                  {product.stock ? "Con stock" : "Sin stock"}
-                </p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-muted">
+                    {product.stock ? "Con stock" : "Sin stock"}
+                  </span>
+                  {isDisabled && (
+                    <Chip size="sm" variant="soft" color="warning">
+                      <Star className="mr-1 size-3 fill-current" />
+                      {disabledLabel}
+                    </Chip>
+                  )}
+                </div>
               </div>
 
               {isSelected && <Check className="size-4 shrink-0 text-accent" />}

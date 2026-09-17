@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
-import { Boxes, Edit2, Package, Plus, Trash2 } from "lucide-react";
+import { Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -104,7 +104,17 @@ export function ProductosView() {
       key: "title",
       label: "Título",
       isRowHeader: true,
-      render: (product) => <span className="font-medium">{product.title}</span>,
+      render: (product) => (
+        <span className="inline-flex items-center gap-2">
+          <span className="font-medium">{product.title}</span>
+          {product.featuredProduct && (
+            <Chip size="sm" variant="soft" color="warning" title="Producto destacado">
+              <Star className="mr-1 size-3 fill-current" />
+              Star
+            </Chip>
+          )}
+        </span>
+      ),
     },
     {
       key: "stock",
