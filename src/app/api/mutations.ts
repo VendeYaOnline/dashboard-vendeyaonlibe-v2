@@ -288,6 +288,8 @@ export const useMutationFeaturedProduct = () => {
     mutationFn: createFeaturedProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+      // La tabla de productos muestra la marca "star".
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };
@@ -298,6 +300,7 @@ export const useMutationDeleteFeaturedProduct = () => {
     mutationFn: deleteFeaturedProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };

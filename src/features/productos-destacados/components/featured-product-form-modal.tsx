@@ -72,6 +72,10 @@ export function FeaturedProductFormModal({
                 <ProductSelectGrid
                   products={data?.products ?? []}
                   selectedIds={selectedProduct ? [selectedProduct.id] : []}
+                  disabledIds={(data?.products ?? [])
+                    .filter((product) => product.featuredProduct)
+                    .map((product) => product.id)}
+                  disabledLabel="Ya destacado"
                   onSelect={handleSelectProduct}
                   currentPage={page}
                   totalPages={data?.totalPages ?? 1}

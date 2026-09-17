@@ -71,6 +71,8 @@ export interface Products {
   color_images?: ColorImageGroup[] | null;
   /** Inventario por combinación; vacío si ningún atributo controla inventario. */
   variants?: ProductVariant[];
+  /** Presente cuando el producto está destacado ("star"); null si no. */
+  featuredProduct?: { id: string } | null;
   specs: string;
   Categories: { id: string; name: string }[];
 }
