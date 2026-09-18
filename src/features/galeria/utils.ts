@@ -6,6 +6,9 @@ export const MAX_SELECTION = 10;
 /** Imágenes por página que pide la galería. */
 export const IMAGES_PER_PAGE = 60;
 
+/** Imágenes que se pueden subir en una sola vez (mismo tope que el backend). */
+export const MAX_UPLOAD_IMAGES = 10;
+
 export function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
