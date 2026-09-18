@@ -16,6 +16,7 @@ import {
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { ROLE_LABELS } from "@/config/navigation";
 import type { Users } from "@/interfaces/users";
+import { PendingButton } from "@/components/shared/pending-button";
 
 export interface UsuarioFormValues {
   username: string;
@@ -144,9 +145,9 @@ export function UsuarioFormModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear usuario"}
-                </Button>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {isEdit ? "Guardar cambios" : "Crear usuario"}
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

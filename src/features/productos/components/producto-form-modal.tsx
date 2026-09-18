@@ -51,6 +51,7 @@ import {
 } from "./constants";
 import { CharCounter, FormSection } from "./form-section";
 import { formatCOP, formatThousands, priceToDigits, toDigits } from "../utils";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface Spec {
   key: string;
@@ -1150,15 +1151,14 @@ export function ProductoFormModal({
                       Falta una imagen de color
                     </span>
                   )}
-                  <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                    {isPending
-                      ? isEdit
-                        ? "Actualizando..."
-                        : "Creando..."
-                      : isEdit
-                        ? "Actualizar producto"
-                        : "Crear producto"}
-                  </Button>
+                  <PendingButton
+                    variant="primary"
+                    type="submit"
+                    isDisabled={!isValid}
+                    isPending={isPending}
+                  >
+                    {isEdit ? "Actualizar producto" : "Crear producto"}
+                  </PendingButton>
                 </Modal.Footer>
               </form>
             </Modal.Dialog>

@@ -22,6 +22,7 @@ import {
   type Carousel,
   type CarouselPayload,
 } from "@/interfaces/carousel";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface CarouselFormModalProps {
   /** null = crear, con valor = editar */
@@ -184,13 +185,11 @@ export function CarouselFormModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending
-                    ? "Guardando..."
-                    : carousel
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {carousel
                       ? "Guardar cambios"
                       : "Crear carrusel"}
-                </Button>
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

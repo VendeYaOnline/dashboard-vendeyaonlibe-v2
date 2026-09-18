@@ -21,6 +21,7 @@ import {
   MAX_COVER_TITLE_LENGTH,
   isValidCoverLink,
 } from "../constants";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface PortadaFormModalProps {
   /** null = crear, con valor = editar */
@@ -159,9 +160,9 @@ export function PortadaFormModal({
                   >
                     Cancelar
                   </Button>
-                  <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                    {isPending ? "Guardando..." : cover ? "Guardar cambios" : "Crear portada"}
-                  </Button>
+                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                    {cover ? "Guardar cambios" : "Crear portada"}
+                  </PendingButton>
                 </Modal.Footer>
               </form>
             </Modal.Dialog>

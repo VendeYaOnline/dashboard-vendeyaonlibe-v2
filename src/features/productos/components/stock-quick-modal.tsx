@@ -11,6 +11,7 @@ import { VariantMatrix } from "./variant-matrix";
 import { MAX_QUANTITY } from "./constants";
 import { toDigits } from "../utils";
 import { buildCombinations, getInventoryAttributes, sumQuantities, toVariantKey } from "../variants";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface StockQuickModalProps {
   product: Products | null;
@@ -168,9 +169,9 @@ export function StockQuickModal({ product, isOpen, onOpenChange }: StockQuickMod
               >
                 Cancelar
               </Button>
-              <Button variant="primary" isDisabled={mutation.isPending} onPress={handleSave}>
-                {mutation.isPending ? "Guardando..." : "Guardar inventario"}
-              </Button>
+              <PendingButton variant="primary" isPending={mutation.isPending} onPress={handleSave}>
+                {"Guardar inventario"}
+              </PendingButton>
             </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>

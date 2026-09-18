@@ -29,6 +29,7 @@ import {
   type ColorValue,
 } from "../constants";
 import { CharCounter } from "@/features/productos/components/form-section";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface AtributoFormModalProps {
   /** null = crear, con valor = editar */
@@ -358,13 +359,11 @@ export function AtributoFormModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending
-                    ? "Guardando..."
-                    : attribute
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {attribute
                       ? "Guardar cambios"
                       : "Crear atributo"}
-                </Button>
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

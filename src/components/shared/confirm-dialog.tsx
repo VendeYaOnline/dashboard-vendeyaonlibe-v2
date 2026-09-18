@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -11,7 +12,6 @@ interface ConfirmDialogProps {
   title?: string;
   description: ReactNode;
   confirmLabel?: string;
-  pendingLabel?: string;
   isPending?: boolean;
   /** `danger` para acciones destructivas. */
   tone?: "danger" | "accent";
@@ -28,7 +28,6 @@ export function ConfirmDialog({
   title = "Confirmar acción",
   description,
   confirmLabel = "Eliminar",
-  pendingLabel = "Eliminando...",
   isPending = false,
   tone = "danger",
 }: ConfirmDialogProps) {
@@ -58,13 +57,13 @@ export function ConfirmDialog({
               >
                 Cancelar
               </Button>
-              <Button
+              <PendingButton
                 variant={tone === "danger" ? "danger" : "primary"}
-                isDisabled={isPending}
+                isPending={isPending}
                 onPress={onConfirm}
               >
-                {isPending ? pendingLabel : confirmLabel}
-              </Button>
+                {confirmLabel}
+              </PendingButton>
             </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>
