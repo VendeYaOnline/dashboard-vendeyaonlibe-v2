@@ -49,7 +49,6 @@ export function MensajesView() {
   const grandTotal = data?.grandTotal ?? 0;
 
   const setRead = (contact: Contacts, isRead: boolean) => {
-    if (Boolean(contact.is_read) === isRead) return;
     readMutation.mutate(
       { id: contact.id, isRead },
       { onError: (error) => handleAxiosError(error, "No se pudo actualizar el mensaje") },
@@ -59,7 +58,7 @@ export function MensajesView() {
   // Abrir el detalle marca el mensaje como leído.
   const openContact = (contact: Contacts) => {
     setSelected(contact);
-    setRead(contact, true);
+    if (!contact.is_read) setRead(contact, true);
   };
 
   const handleConfirmDelete = () => {
