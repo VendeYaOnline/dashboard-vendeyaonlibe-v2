@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Download, Trash2 } from "lucide-react";
+import { Check, Copy, Eye, Trash2 } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
 import type { ImageItem } from "@/lib/types";
 import { formatDateLong, formatFileSize, getFileName } from "../utils";
@@ -35,9 +35,11 @@ export function ImagenPreviewModal({
         <Modal.Container size="lg" scroll="inside">
           <Modal.Dialog>
             <Modal.Header>
-              <Modal.Heading className="wrap-break-word">
+              <Modal.Heading className="wrap-break-word pr-8">
                 {image ? getFileName(image.Key) : ""}
               </Modal.Heading>
+              {/* X de cierre en la esquina superior derecha (HeroUI la posiciona). */}
+              <Modal.CloseTrigger aria-label="Cerrar" />
             </Modal.Header>
 
             <Modal.Body className="space-y-6">
@@ -88,10 +90,10 @@ export function ImagenPreviewModal({
             <Modal.Footer>
               <Button
                 variant="outline"
-                onPress={() => image && window.open(image.Url, "_blank")}
+                onPress={() => image && window.open(image.Url, "_blank", "noopener")}
               >
-                <Download className="size-4" />
-                Descargar
+                <Eye className="size-4" />
+                Visualizar
               </Button>
               <Button
                 variant="danger"
