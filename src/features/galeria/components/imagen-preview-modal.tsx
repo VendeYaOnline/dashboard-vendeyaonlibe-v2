@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Copy, Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
 import type { ImageItem } from "@/lib/types";
 import { formatDateLong, formatFileSize, getFileName } from "../utils";
@@ -20,14 +19,6 @@ export function ImagenPreviewModal({
   onDelete,
 }: ImagenPreviewModalProps) {
   const state = useOverlayState({ isOpen, onOpenChange });
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyUrl = async () => {
-    if (!image) return;
-    await navigator.clipboard.writeText(image.Url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <Modal state={state}>
@@ -62,26 +53,6 @@ export function ImagenPreviewModal({
                       <p className="text-xs text-muted">Última modificación</p>
                       <p className="font-medium">{formatDateLong(image.LastModified)}</p>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted">URL</p>
-                    <code className="block max-h-20 overflow-y-auto rounded-lg bg-surface-secondary px-3 py-2 text-xs break-all text-muted">
-                      {image.Url}
-                    </code>
-                    <Button variant="secondary" size="sm" fullWidth onPress={handleCopyUrl}>
-                      {copied ? (
-                        <>
-                          <Check className="size-4 text-success" />
-                          Copiado
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="size-4" />
-                          Copiar URL
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </>
               )}

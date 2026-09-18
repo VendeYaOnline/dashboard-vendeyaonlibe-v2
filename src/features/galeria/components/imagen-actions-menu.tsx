@@ -32,7 +32,12 @@ export function ImagenActionsMenu({
     <Dropdown.Root>
       <Dropdown.Trigger
         aria-label={`Acciones para ${image.Key}`}
-        className={cn(buttonVariants({ variant: "secondary", size: "sm", isIconOnly: true }), className)}
+        className={cn(
+          buttonVariants({ variant: "secondary", size: "sm", isIconOnly: true }),
+          // El trigger no hereda el centrado del Button: se fuerza aquí.
+          "inline-flex items-center justify-center p-0 leading-none",
+          className,
+        )}
       >
         <MoreHorizontal className="size-4" />
       </Dropdown.Trigger>
