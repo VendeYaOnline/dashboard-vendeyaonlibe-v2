@@ -113,6 +113,11 @@ export function ProductosView() {
               Star
             </Chip>
           )}
+          {(product.bundle_size ?? 0) > 1 && (
+            <Chip size="sm" variant="soft" color="accent" title="Se vende como set">
+              Set x{product.bundle_size}
+            </Chip>
+          )}
         </span>
       ),
     },

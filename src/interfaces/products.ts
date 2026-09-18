@@ -73,6 +73,10 @@ export interface Products {
   variants?: ProductVariant[];
   /** Presente cuando el producto está destacado ("star"); null si no. */
   featuredProduct?: { id: string } | null;
+  /** Piezas por set cuando se vende como "Set x N"; null = por unidad. */
+  bundle_size?: number | null;
+  /** Nombre de cada pieza del set ("esqueleto"). */
+  bundle_item_label?: string | null;
   specs: string;
   Categories: { id: string; name: string }[];
 }
