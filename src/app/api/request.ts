@@ -4,7 +4,7 @@ import { axiosConfig } from "./config";
 import { Categories } from "@/interfaces/categories";
 import { Images } from "@/interfaces/images";
 import { UserRequest } from "@/interfaces/users";
-import { ContactRequest } from "@/interfaces/contacts";
+import { ContactRequest, ContactStatusFilter, Contacts } from "@/interfaces/contacts";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
@@ -196,14 +196,21 @@ export const deleteUser = async (idElement: string) => {
 
 // * Contacts
 
-export const getContacts = async (page: number, search: string = "") => {
-  const result = (
-    await axiosConfig.get<ContactRequest>(
-      `/get-contacts?page=${page}&search=${search}`,
-    )
-  ).data;
+export const getContacts = async (
+  page: number,
+  search: string = "",
+  status: ContactStatusFilter = "all",
+) => {
+  const params = new URLSearchParams({ page: String(page), search, status });
+  return (await axiosConfig.get<ContactRequest>(`/get-contacts?${params}`)).data;
+};
 
-  return result;
+/** Marca un mensaje como leído / no leído. */
+export const updateContactRead = async ({ id, isRead }: { id: string; isRead: boolean }) => {
+  return axiosConfig.patch<{ message: string; contact: Contacts }>(
+    `/update-contact-read/${id}`,
+    { is_read: isRead },
+  );
 };
 
 export const deleteContact = async (idElement: string) => {

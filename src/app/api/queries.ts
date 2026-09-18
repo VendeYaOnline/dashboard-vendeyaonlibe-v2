@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { ContactStatusFilter } from "@/interfaces/contacts";
 
 /**
  * Opciones comunes de los listados paginados: la caché se considera fresca
@@ -118,11 +119,15 @@ export const useQueryUsers = (currentPage: number, search: string) => {
   });
 };
 
-export const useQueryContacts = (currentPage: number, search: string) => {
+export const useQueryContacts = (
+  currentPage: number,
+  search: string,
+  status: ContactStatusFilter = "all",
+) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
-    queryKey: ["contacts", validPage, search],
-    queryFn: () => getContacts(validPage, search),
+    queryKey: ["contacts", validPage, search, status],
+    queryFn: () => getContacts(validPage, search, status),
     ...LIST_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });
