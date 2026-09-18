@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, toast } from "@heroui/react";
+import { Button, Card, Chip, toast } from "@heroui/react";
 import { Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -33,7 +33,7 @@ export function CategoriasView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryCategories(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryCategories(page, debouncedSearch);
   const createMutation = useMutationCreateCategory();
   const updateMutation = useMutationUpdatedCategory();
   const deleteMutation = useMutationDeleteCategory();
@@ -83,6 +83,18 @@ export function CategoriasView() {
       label: "Nombre de la categoría",
       isRowHeader: true,
       render: (category) => <span className="font-medium">{category.name}</span>,
+    },
+    {
+      key: "products",
+      label: "Productos",
+      render: (category) => {
+        const count = category.productCount ?? 0;
+        return (
+          <Chip size="sm" variant="soft" color={count > 0 ? "accent" : "default"}>
+            {count} {count === 1 ? "producto" : "productos"}
+          </Chip>
+        );
+      },
     },
     {
       key: "actions",
@@ -151,13 +163,16 @@ export function CategoriasView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card
+        className={`overflow-hidden transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Categorías"
           items={categories}
           columns={columns}
           getRowId={(category) => category.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando categorías..."
           emptyMessage="No se encontraron categorías"
         />
@@ -194,6 +209,13 @@ export function CategoriasView() {
               &quot;{toDelete?.name}&quot;
             </span>
             ? Esta acción no se puede deshacer.
+            {(toDelete?.productCount ?? 0) > 0 && (
+              <span className="mt-2 block text-warning">
+                Tiene {toDelete?.productCount}{" "}
+                {toDelete?.productCount === 1 ? "producto asignado" : "productos asignados"}: no
+                se podrá eliminar hasta que los cambies de categoría.
+              </span>
+            )}
           </>
         }
         isPending={deleteMutation.isPending}
