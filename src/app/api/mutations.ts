@@ -23,6 +23,7 @@ import {
   updatedAttribute,
   updatedCarousel,
   updatedCategory,
+  updateContactRead,
   updateCover,
   updatedProduct,
   updateProductStock,
@@ -211,6 +212,16 @@ export const useMutationDeleteUser = () => {
 };
 
 // * Contacts
+
+export const useMutationContactRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateContactRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+};
 
 export const useMutationDeleteContact = () => {
   const queryClient = useQueryClient();

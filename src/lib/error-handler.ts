@@ -46,6 +46,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   IMAGES_REQUIRED: "Selecciona al menos una imagen.",
   MOVE_LIMIT: "Puedes mover como máximo 10 imágenes a la vez.",
   CATEGORY_REQUIRED: "Selecciona la categoría de destino.",
+  CONTACT_NOT_FOUND: "El mensaje ya no existe.",
   IMAGE_IN_USE: "La imagen está en uso por algún producto o portada.",
 };
 
