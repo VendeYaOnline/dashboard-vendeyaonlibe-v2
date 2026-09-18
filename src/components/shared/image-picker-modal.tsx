@@ -6,14 +6,17 @@ import {
   Button,
   Input,
   Label,
+  ListBox,
+  ListBoxItem,
   Modal,
+  Select,
   Spinner,
   TextField,
   cn,
   useOverlayState,
 } from "@heroui/react";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryImages } from "@/app/api/queries";
+import { useQueryAllCategories, useQueryImages } from "@/app/api/queries";
 import type { ImageItem } from "@/lib/types";
 
 interface ImagePickerModalProps {
@@ -45,9 +48,11 @@ export function ImagePickerModal({
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
+  /** "all" = sin filtro; si no, id de la categoría de la galería. */
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  useEffect(() => setPage(1), [debouncedSearch]);
+  useEffect(() => setPage(1), [debouncedSearch, categoryFilter]);
 
   useEffect(() => {
     if (isOpen) setSelected(new Set(currentSelected));
@@ -56,8 +61,17 @@ export function ImagePickerModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // El modal está montado aunque esté cerrado: la galería solo se pide al abrirlo.
-  const { data, isLoading } = useQueryImages(page, debouncedSearch, LIMIT, undefined, isOpen);
+  // El modal está montado aunque esté cerrado: la galería y las categorías
+  // solo se piden al abrirlo.
+  const { data: categoriesData } = useQueryAllCategories(isOpen);
+  const categories = categoriesData?.categories ?? [];
+  const { data, isLoading } = useQueryImages(
+    page,
+    debouncedSearch,
+    LIMIT,
+    categoryFilter === "all" ? undefined : categoryFilter,
+    isOpen,
+  );
   const images = data?.images ?? [];
   const totalPages = data?.totalPages ?? 0;
 
@@ -98,10 +112,35 @@ export function ImagePickerModal({
             </Modal.Header>
 
             <Modal.Body className="space-y-4">
-              <TextField value={search} onChange={setSearch}>
-                <Label className="sr-only">Buscar imágenes</Label>
-                <Input placeholder="Buscar imágenes..." />
-              </TextField>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <TextField value={search} onChange={setSearch} className="flex-1">
+                  <Label className="sr-only">Buscar imágenes</Label>
+                  <Input placeholder="Buscar imágenes..." />
+                </TextField>
+
+                <Select
+                  aria-label="Filtrar por categoría"
+                  selectedKey={categoryFilter}
+                  onSelectionChange={(key) => setCategoryFilter(String(key))}
+                  className="sm:w-48"
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    {/* Lista acotada: con muchas categorías se desplaza en vez de crecer. */}
+                    <ListBox className="max-h-56 overflow-y-auto">
+                      <ListBoxItem id="all">Todas las categorías</ListBoxItem>
+                      {categories.map((category) => (
+                        <ListBoxItem key={category.id} id={category.id}>
+                          {category.name}
+                        </ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
 
               {isLoading ? (
                 <div className="flex flex-col items-center gap-3 py-16">
@@ -152,6 +191,11 @@ export function ImagePickerModal({
                 <div className="flex flex-col items-center gap-3 py-16 text-center">
                   <ImageIcon className="size-10 text-muted" />
                   <p className="text-sm font-medium">No se encontraron imágenes</p>
+                  {categoryFilter !== "all" && (
+                    <p className="text-xs text-muted">
+                      Prueba con otra categoría o quita el filtro.
+                    </p>
+                  )}
                 </div>
               )}
 
