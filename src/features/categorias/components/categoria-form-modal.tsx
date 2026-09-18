@@ -11,7 +11,8 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
-import type { Category } from "@/interfaces/categories";
+import { MAX_CATEGORY_NAME_LENGTH, type Category } from "@/interfaces/categories";
+import { CharCounter } from "@/features/productos/components/form-section";
 
 interface CategoriaFormModalProps {
   /** null = crear, con valor = editar */
@@ -56,9 +57,18 @@ export function CategoriaFormModal({
                 description="Organiza tus productos para que sean más fáciles de encontrar en la tienda."
               />
               <Modal.Body>
-                <TextField value={name} onChange={setName} isRequired autoFocus>
+                <TextField
+                  value={name}
+                  onChange={(value) => setName(value.slice(0, MAX_CATEGORY_NAME_LENGTH))}
+                  isRequired
+                  autoFocus
+                >
                   <Label>Nombre de la categoría</Label>
-                  <Input placeholder="Ej: Electrónica, Ropa, Hogar..." />
+                  <Input
+                    placeholder="Ej: Electrónica, Ropa, Hogar..."
+                    maxLength={MAX_CATEGORY_NAME_LENGTH}
+                  />
+                  <CharCounter length={name.length} max={MAX_CATEGORY_NAME_LENGTH} />
                 </TextField>
               </Modal.Body>
               <Modal.Footer>
