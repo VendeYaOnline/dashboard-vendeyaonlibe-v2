@@ -19,7 +19,7 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import type { Attribute } from "@/interfaces/attributes";
 import { AtributoFormModal } from "./components/atributo-form-modal";
-import { isColorValue } from "./constants";
+import { isColorValue, toColorValue } from "./constants";
 
 export function AtributosView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -34,7 +34,7 @@ export function AtributosView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryAttribute(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryAttribute(page, debouncedSearch);
   const createMutation = useMutationAttribute();
   const updateMutation = useMutationUpdatedAttribute();
   const deleteMutation = useMutationDeleteAttribute();
@@ -110,7 +110,7 @@ export function AtributosView() {
                 <span
                   key={`${value.name}-${index}`}
                   title={value.name}
-                  style={{ backgroundColor: value.value }}
+                  style={{ backgroundColor: toColorValue(value).value }}
                   className="size-5 rounded-full border border-border"
                 />
               ) : (
@@ -123,6 +123,18 @@ export function AtributosView() {
               <span className="text-xs text-muted">+{values.length - 6}</span>
             )}
           </div>
+        );
+      },
+    },
+    {
+      key: "products",
+      label: "Productos",
+      render: (attribute) => {
+        const count = attribute.productCount ?? 0;
+        return (
+          <Chip size="sm" variant="soft" color={count > 0 ? "accent" : "default"}>
+            {count} {count === 1 ? "producto" : "productos"}
+          </Chip>
         );
       },
     },
@@ -193,13 +205,16 @@ export function AtributosView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card
+        className={`overflow-hidden transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Atributos"
           items={attributes}
           columns={columns}
           getRowId={(attribute) => attribute.id ?? attribute.attribute_name}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando atributos..."
           emptyMessage="No se encontraron atributos"
         />
@@ -236,6 +251,13 @@ export function AtributosView() {
               &quot;{toDelete?.attribute_name}&quot;
             </span>
             ? Esta acción no se puede deshacer.
+            {(toDelete?.productCount ?? 0) > 0 && (
+              <span className="mt-2 block text-warning">
+                Lo usan {toDelete?.productCount}{" "}
+                {toDelete?.productCount === 1 ? "producto" : "productos"}: no se podrá eliminar
+                hasta que lo quites de ellos.
+              </span>
+            )}
           </>
         }
         isPending={deleteMutation.isPending}

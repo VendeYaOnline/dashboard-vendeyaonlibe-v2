@@ -20,11 +20,15 @@ import type { Attribute } from "@/interfaces/attributes";
 import {
   ATTRIBUTE_TYPES,
   GENDER_OPTIONS,
+  MAX_ATTRIBUTE_NAME_LENGTH,
   MAX_ATTRIBUTE_VALUES,
+  MAX_ATTRIBUTE_VALUE_LENGTH,
   PRESET_COLORS,
   isColorValue,
+  toColorValue,
   type ColorValue,
 } from "../constants";
+import { CharCounter } from "@/features/productos/components/form-section";
 
 interface AtributoFormModalProps {
   /** null = crear, con valor = editar */
@@ -75,7 +79,8 @@ export function AtributoFormModal({
     const values = attribute.value ?? [];
 
     if (attribute.attribute_type === "Color") {
-      setColors(values.filter(isColorValue));
+      // Los colores del panel anterior vienen como { name, color }: se normalizan.
+      setColors(values.filter(isColorValue).map(toColorValue));
     } else if (attribute.attribute_type === "Genero") {
       setGenders(values.filter((v): v is string => typeof v === "string"));
     } else {
@@ -148,9 +153,18 @@ export function AtributoFormModal({
 
               <Modal.Body className="space-y-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <TextField value={name} onChange={setName} isRequired autoFocus>
+                  <TextField
+                    value={name}
+                    onChange={(value) => setName(value.slice(0, MAX_ATTRIBUTE_NAME_LENGTH))}
+                    isRequired
+                    autoFocus
+                  >
                     <Label>Nombre del atributo</Label>
-                    <Input placeholder="Ej: Color principal, Talla..." />
+                    <Input
+                      placeholder="Ej: Color principal, Talla..."
+                      maxLength={MAX_ATTRIBUTE_NAME_LENGTH}
+                    />
+                    <CharCounter length={name.length} max={MAX_ATTRIBUTE_NAME_LENGTH} />
                   </TextField>
 
                   <Select
@@ -209,7 +223,7 @@ export function AtributoFormModal({
                           aria-label="Nombre del color"
                           isInvalid={colorName.trim() !== "" && colorNameTaken}
                         >
-                          <Input placeholder="Nombre del color" />
+                          <Input placeholder="Nombre del color" maxLength={MAX_ATTRIBUTE_VALUE_LENGTH} />
                         </TextField>
                         <input
                           type="color"
@@ -295,7 +309,10 @@ export function AtributoFormModal({
                           className="flex-1"
                           aria-label="Nuevo valor"
                         >
-                          <Input placeholder={`Ej: valor de ${type.toLowerCase()}`} />
+                          <Input
+                            placeholder={`Ej: valor de ${type.toLowerCase()}`}
+                            maxLength={MAX_ATTRIBUTE_VALUE_LENGTH}
+                          />
                         </TextField>
                         <Button
                           type="button"

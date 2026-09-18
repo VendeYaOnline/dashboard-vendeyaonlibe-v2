@@ -17,4 +17,6 @@ export interface Attribute {
   attribute_name: string;
   attribute_type: string;
   value: AttributeValue[];
+  /** Productos que usan el atributo; solo lo devuelve el listado del panel. */
+  productCount?: number;
 }
