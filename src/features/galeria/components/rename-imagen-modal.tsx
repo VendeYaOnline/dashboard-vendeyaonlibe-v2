@@ -87,7 +87,7 @@ export function RenameImagenModal({
                 <PendingButton
                   variant="primary"
                   type="submit"
-                   isDisabled={!isValid || isUnchanged} isPending={isPending}
+                   isDisabled={!isValid || isUnchanged} isPending={isPending} pendingLabel="Guardando"
                 >
                   {"Guardar cambios"}
                 </PendingButton>

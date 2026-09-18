@@ -169,7 +169,7 @@ export function StockQuickModal({ product, isOpen, onOpenChange }: StockQuickMod
               >
                 Cancelar
               </Button>
-              <PendingButton variant="primary" isPending={mutation.isPending} onPress={handleSave}>
+              <PendingButton variant="primary" isPending={mutation.isPending} pendingLabel="Guardando" onPress={handleSave}>
                 {"Guardar inventario"}
               </PendingButton>
             </Modal.Footer>

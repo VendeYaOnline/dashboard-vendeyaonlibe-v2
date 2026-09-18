@@ -107,6 +107,7 @@ export function LoginForm() {
           size="lg"
           fullWidth
           isPending={isLoading}
+          pendingLabel="Iniciando sesión"
           className="group"
         >
           Iniciar sesión

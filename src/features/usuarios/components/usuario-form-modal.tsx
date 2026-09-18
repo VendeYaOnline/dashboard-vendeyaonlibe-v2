@@ -145,7 +145,7 @@ export function UsuarioFormModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Guardando">
                   {isEdit ? "Guardar cambios" : "Crear usuario"}
                 </PendingButton>
               </Modal.Footer>

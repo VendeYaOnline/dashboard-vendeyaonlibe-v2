@@ -359,7 +359,7 @@ export function AtributoFormModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Guardando">
                   {attribute
                       ? "Guardar cambios"
                       : "Crear atributo"}

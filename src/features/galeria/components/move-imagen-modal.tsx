@@ -124,7 +124,7 @@ export function MoveImagenModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Moviendo">
                   {keys.length > 1 ? "Mover imágenes" : "Mover imagen"}
                 </PendingButton>
               </Modal.Footer>
