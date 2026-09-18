@@ -11,6 +11,8 @@ import {
   Switch,
   TextArea,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   toast,
   useOverlayState,
 } from "@heroui/react";
@@ -34,8 +36,11 @@ import { ProductAttributeList, type ProductAttributeItem } from "./product-attri
 import { ColorImagesSection } from "./color-images-section";
 import { ColorSelectModal } from "./color-select-modal";
 import {
+  MAX_BUNDLE_LABEL_LENGTH,
+  MAX_BUNDLE_SIZE,
   MAX_DESCRIPTION_LENGTH,
   MAX_IMAGES_PER_COLOR,
+  MIN_BUNDLE_SIZE,
   MAX_PRICE,
   MAX_PRODUCT_IMAGES,
   MAX_QUANTITY,
@@ -145,6 +150,10 @@ export function ProductoFormModal({
   /** Unidades disponibles (0 a MAX_QUANTITY); vacío = no especificado. */
   const [quantity, setQuantity] = useState("");
   const [inStock, setInStock] = useState(true);
+  /** "unit" = se vende por unidad; "bundle" = set de N piezas elegidas una a una. */
+  const [saleMode, setSaleMode] = useState<"unit" | "bundle">("unit");
+  const [bundleSize, setBundleSize] = useState("3");
+  const [bundleLabel, setBundleLabel] = useState("");
   const [specs, setSpecs] = useState<Spec[]>([]);
   /** Ordenado: el índice es la posición en que el usuario agregó cada atributo. */
   const [selectedAttributeIds, setSelectedAttributeIds] = useState<string[]>([]);
@@ -185,6 +194,9 @@ export function ProductoFormModal({
       setReference("");
       setQuantity("");
       setInStock(true);
+      setSaleMode("unit");
+      setBundleSize("3");
+      setBundleLabel("");
       setSpecs([]);
       setSelectedAttributeIds([]);
       setAreAttributesHydrated(true);
@@ -212,6 +224,9 @@ export function ProductoFormModal({
     // el interruptor de stock, que sí existe desde siempre.
     setQuantity(product.quantity != null ? product.quantity.toString() : "");
     setInStock(Boolean(product.stock));
+    setSaleMode((product.bundle_size ?? 0) > 1 ? "bundle" : "unit");
+    setBundleSize(String(product.bundle_size ?? 3));
+    setBundleLabel(product.bundle_item_label ?? "");
     setProductImages(product.images || []);
     setColorImages(
       Array.isArray(product.color_images)
@@ -627,6 +642,8 @@ export function ProductoFormModal({
     formData.append("title", title.trim());
     formData.append("image_product", imageProduct);
     formData.append("quantity", hasAttributeStock ? String(attributeStockTotal) : quantity);
+    formData.append("bundle_size", isBundle ? String(bundleSizeValue) : "");
+    formData.append("bundle_item_label", isBundle ? bundleLabel.trim() : "");
     formData.append("stock", String(effectiveInStock));
     // Unidades por combinación (0 si el campo está vacío).
     formData.append(
@@ -680,12 +697,20 @@ export function ProductoFormModal({
   // Con atributo de color, al menos un color debe tener imagen.
   const hasColorImage = orderedGroups.some((group) => group.images.length > 0);
   const missingColorImage = Boolean(colorAttribute) && !hasColorImage;
+  // Un set necesita variantes: el comprador elige color/talla de cada pieza.
+  const bundleSizeValue = parseInt(bundleSize, 10) || 0;
+  const isBundle = saleMode === "bundle";
+  const bundleNeedsVariants = isBundle && !hasAttributeStock;
+  const isBundleSizeValid =
+    !isBundle || (bundleSizeValue >= MIN_BUNDLE_SIZE && bundleSizeValue <= MAX_BUNDLE_SIZE);
   const isValid =
     title.trim() !== "" &&
     price !== "" &&
     description.trim() !== "" &&
     imageProduct !== "" &&
-    !missingColorImage;
+    !missingColorImage &&
+    !bundleNeedsVariants &&
+    isBundleSizeValid;
 
   return (
     <>
@@ -792,6 +817,62 @@ export function ProductoFormModal({
                         </div>
                       </div>
                     </div>
+                  </FormSection>
+
+                  <FormSection
+                    title="Tipo de venta"
+                    description="Por unidad, o como set de varias piezas del mismo producto que el comprador arma eligiendo color/talla de cada una. El precio es el del set completo."
+                  >
+                    <ToggleButtonGroup
+                      selectionMode="single"
+                      disallowEmptySelection
+                      selectedKeys={new Set([saleMode])}
+                      onSelectionChange={(keys) => {
+                        const [next] = Array.from(keys, String);
+                        if (next === "unit" || next === "bundle") setSaleMode(next);
+                      }}
+                    >
+                      <ToggleButton id="unit">Por unidad</ToggleButton>
+                      <ToggleButton id="bundle">Set de varias piezas</ToggleButton>
+                    </ToggleButtonGroup>
+
+                    {isBundle && (
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <TextField
+                          value={bundleSize}
+                          onChange={(value) => {
+                            const digits = toDigits(value);
+                            setBundleSize(digits === "" ? "" : String(Math.min(Number(digits), MAX_BUNDLE_SIZE)));
+                          }}
+                          type="number"
+                          isInvalid={!isBundleSizeValid}
+                        >
+                          <Label>Piezas por set *</Label>
+                          <Input placeholder="3" min={MIN_BUNDLE_SIZE} max={MAX_BUNDLE_SIZE} />
+                          <p className="mt-1 text-xs text-muted">
+                            Entre {MIN_BUNDLE_SIZE} y {MAX_BUNDLE_SIZE}. Ej.: "Set x 3".
+                          </p>
+                        </TextField>
+
+                        <TextField
+                          value={bundleLabel}
+                          onChange={(value) => setBundleLabel(value.slice(0, MAX_BUNDLE_LABEL_LENGTH))}
+                        >
+                          <Label>Nombre de cada pieza</Label>
+                          <Input placeholder="Ej: esqueleto, camiseta" maxLength={MAX_BUNDLE_LABEL_LENGTH} />
+                          <p className="mt-1 text-xs text-muted">
+                            La tienda mostrará "{bundleLabel.trim() || "Unidad"} 1", "{bundleLabel.trim() || "Unidad"} 2"...
+                          </p>
+                        </TextField>
+                      </div>
+                    )}
+
+                    {bundleNeedsVariants && (
+                      <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+                        Un set necesita al menos un atributo que controle inventario (color, talla...):
+                        agrégalo en "Clasificación" para que el comprador pueda elegir cada pieza.
+                      </p>
+                    )}
                   </FormSection>
 
                   <FormSection
