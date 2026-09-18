@@ -14,6 +14,7 @@ interface ImagenListItemProps {
   onSelect: (key: string) => void;
   onView: (image: ImageItem) => void;
   onEdit: (image: ImageItem) => void;
+  onMove: (image: ImageItem) => void;
   onDelete: (key: string) => void;
 }
 
@@ -24,6 +25,7 @@ export function ImagenListItem({
   onSelect,
   onView,
   onEdit,
+  onMove,
   onDelete,
 }: ImagenListItemProps) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -96,6 +98,7 @@ export function ImagenListItem({
         image={image}
         onView={onView}
         onEdit={onEdit}
+        onMove={onMove}
         onDelete={onDelete}
         className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
       />

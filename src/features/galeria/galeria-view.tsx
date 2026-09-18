@@ -12,6 +12,7 @@ import { useQueryAllCategories, useQueryImages } from "@/app/api/queries";
 import {
   useMutationDeleteImage,
   useMutationImages,
+  useMutationMoveImages,
   useMutationRenameImage,
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
@@ -21,6 +22,7 @@ import { GaleriaToolbar, type ViewMode } from "./components/galeria-toolbar";
 import { ImagenCard } from "./components/imagen-card";
 import { ImagenListItem } from "./components/imagen-list-item";
 import { ImagenPreviewModal } from "./components/imagen-preview-modal";
+import { MoveImagenModal } from "./components/move-imagen-modal";
 import { RenameImagenModal } from "./components/rename-imagen-modal";
 import { UploadImagenModal } from "./components/upload-imagen-modal";
 import { IMAGES_PER_PAGE, MAX_SELECTION, getFileName } from "./utils";
@@ -37,6 +39,8 @@ export function GaleriaView() {
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [previewImage, setPreviewImage] = useState<ImageItem | null>(null);
   const [imageToRename, setImageToRename] = useState<ImageItem | null>(null);
+  /** Claves a mover (una desde el menú, varias desde la selección). */
+  const [keysToMove, setKeysToMove] = useState<string[] | null>(null);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
@@ -56,6 +60,7 @@ export function GaleriaView() {
 
   const uploadMutation = useMutationImages();
   const renameMutation = useMutationRenameImage();
+  const moveMutation = useMutationMoveImages();
   const deleteMutation = useMutationDeleteImage();
 
   const images = data?.images ?? [];
@@ -113,6 +118,47 @@ export function GaleriaView() {
           setImageToRename(null);
         },
         onError: (error) => handleAxiosError(error, "Hubo un error al renombrar la imagen"),
+      },
+    );
+  };
+
+  const handleMove = (keys: string[], categoryId: string) => {
+    moveMutation.mutate(
+      { keys, categoryId },
+      {
+        onSuccess: (response) => {
+          const { moved, failed, updatedProducts, category } = response.data;
+          const movedCount = moved.filter((item) => !item.unchanged).length;
+
+          if (movedCount > 0) {
+            const products =
+              updatedProducts > 0
+                ? `; se ${updatedProducts === 1 ? "actualizó" : "actualizaron"} ${updatedProducts} ${
+                    updatedProducts === 1 ? "producto" : "productos"
+                  }`
+                : "";
+            toast.success(
+              movedCount > 1
+                ? `${movedCount} imágenes movidas a ${category.name}${products}`
+                : `Imagen movida a ${category.name}${products}`,
+            );
+          }
+
+          if (failed.length > 0) {
+            // Con una sola falla se muestra el motivo exacto del backend.
+            toast.danger(
+              failed.length === 1
+                ? failed[0].message
+                : `No se pudieron mover ${failed.length} imágenes (nombre repetido en destino o ya no existen)`,
+            );
+          }
+
+          // Las movidas cambiaron de clave: dejan de estar seleccionadas.
+          const movedKeys = new Set(moved.map((item) => item.key));
+          setSelectedKeys((prev) => new Set(Array.from(prev).filter((key) => !movedKeys.has(key))));
+          if (failed.length === 0) setKeysToMove(null);
+        },
+        onError: (error) => handleAxiosError(error, "Hubo un error al mover las imágenes"),
       },
     );
   };
@@ -220,6 +266,7 @@ export function GaleriaView() {
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             selectedCount={selectedKeys.size}
+            onMoveSelected={() => setKeysToMove(Array.from(selectedKeys))}
             onDeleteSelected={() => setIsBulkDeleteOpen(true)}
             isDisabled={isBusy}
           />
@@ -247,6 +294,7 @@ export function GaleriaView() {
                   onSelect={handleSelect}
                   onView={setPreviewImage}
                   onEdit={setImageToRename}
+                  onMove={(image) => setKeysToMove([image.Key])}
                   onDelete={setKeyToDelete}
                 />
               ))}
@@ -262,6 +310,7 @@ export function GaleriaView() {
                   onSelect={handleSelect}
                   onView={setPreviewImage}
                   onEdit={setImageToRename}
+                  onMove={(image) => setKeysToMove([image.Key])}
                   onDelete={setKeyToDelete}
                 />
               ))}
@@ -321,6 +370,15 @@ export function GaleriaView() {
         onOpenChange={(open) => !open && setImageToRename(null)}
         onRename={handleRename}
         isPending={renameMutation.isPending}
+      />
+
+      <MoveImagenModal
+        keys={keysToMove ?? []}
+        categories={categories}
+        isOpen={keysToMove !== null}
+        onOpenChange={(open) => !open && setKeysToMove(null)}
+        onMove={handleMove}
+        isPending={moveMutation.isPending}
       />
 
       <ConfirmDialog

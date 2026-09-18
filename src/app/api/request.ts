@@ -124,6 +124,19 @@ export const uploadImages = async ({
 };
 
 /** Sólo cambia el nombre del archivo; la categoría (carpeta) la conserva el backend. */
+export interface MoveImagesResponse {
+  message: string;
+  category: { id: string; name: string };
+  moved: { key: string; newKey: string; url: string; unchanged?: boolean }[];
+  failed: { key: string; code: string; message: string }[];
+  updatedProducts: number;
+}
+
+/** Mueve una o varias imágenes a la carpeta de otra categoría. */
+export const moveImages = async ({ keys, categoryId }: { keys: string[]; categoryId: string }) => {
+  return axiosConfig.put<MoveImagesResponse>("/move-images", { keys, categoryId });
+};
+
 export const renameImage = async ({
   key,
   newName,

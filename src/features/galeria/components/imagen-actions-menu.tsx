@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Dropdown, buttonVariants, cn } from "@heroui/react";
 import type { ImageItem } from "@/lib/types";
 
@@ -8,12 +8,13 @@ interface ImagenActionsMenuProps {
   image: ImageItem;
   onView: (image: ImageItem) => void;
   onEdit: (image: ImageItem) => void;
+  onMove: (image: ImageItem) => void;
   onDelete: (key: string) => void;
   className?: string;
 }
 
 /**
- * Menú de acciones (ver / renombrar / eliminar) usado en la vista grilla y lista.
+ * Menú de acciones (ver / renombrar / mover / eliminar) usado en la vista grilla y lista.
  *
  * `Dropdown.Trigger` ya renderiza un <button>, así que se le aplican las
  * clases del botón en lugar de anidar un <Button> (HTML no permite un botón
@@ -23,6 +24,7 @@ export function ImagenActionsMenu({
   image,
   onView,
   onEdit,
+  onMove,
   onDelete,
   className,
 }: ImagenActionsMenuProps) {
@@ -43,6 +45,10 @@ export function ImagenActionsMenu({
           <Dropdown.Item onAction={() => onEdit(image)}>
             <Pencil className="size-4" />
             Renombrar
+          </Dropdown.Item>
+          <Dropdown.Item onAction={() => onMove(image)}>
+            <FolderInput className="size-4" />
+            Mover a categoría
           </Dropdown.Item>
           <Dropdown.Item onAction={() => onDelete(image.Key)} className="text-danger">
             <Trash2 className="size-4" />

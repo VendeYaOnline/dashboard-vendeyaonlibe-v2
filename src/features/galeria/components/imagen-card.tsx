@@ -15,6 +15,7 @@ interface ImagenCardProps {
   onSelect: (key: string) => void;
   onView: (image: ImageItem) => void;
   onEdit: (image: ImageItem) => void;
+  onMove: (image: ImageItem) => void;
   onDelete: (key: string) => void;
 }
 
@@ -25,6 +26,7 @@ export function ImagenCard({
   onSelect,
   onView,
   onEdit,
+  onMove,
   onDelete,
 }: ImagenCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -58,6 +60,7 @@ export function ImagenCard({
           image={image}
           onView={onView}
           onEdit={onEdit}
+          onMove={onMove}
           onDelete={onDelete}
           className="bg-background/80 backdrop-blur-sm"
         />
