@@ -97,7 +97,7 @@ export function FeaturedProductFormModal({
                 <PendingButton
                   variant="primary"
                   type="submit"
-                   isDisabled={!selectedProduct} isPending={isPending}
+                   isDisabled={!selectedProduct} isPending={isPending} pendingLabel="Destacando"
                 >
                   {"Destacar producto"}
                 </PendingButton>

@@ -81,7 +81,7 @@ export function CategoriaFormModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Guardando">
                   {category
                       ? "Guardar cambios"
                       : "Crear categoría"}

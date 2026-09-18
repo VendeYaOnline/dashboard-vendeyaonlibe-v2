@@ -160,7 +160,7 @@ export function PortadaFormModal({
                   >
                     Cancelar
                   </Button>
-                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Guardando">
                     {cover ? "Guardar cambios" : "Crear portada"}
                   </PendingButton>
                 </Modal.Footer>

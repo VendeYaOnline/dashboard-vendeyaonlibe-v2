@@ -1156,6 +1156,7 @@ export function ProductoFormModal({
                     type="submit"
                     isDisabled={!isValid}
                     isPending={isPending}
+                    pendingLabel={isEdit ? "Actualizando" : "Creando"}
                   >
                     {isEdit ? "Actualizar producto" : "Crear producto"}
                   </PendingButton>

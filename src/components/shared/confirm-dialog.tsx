@@ -12,6 +12,8 @@ interface ConfirmDialogProps {
   title?: string;
   description: ReactNode;
   confirmLabel?: string;
+  /** Texto junto al loader mientras se ejecuta ("Eliminando"). */
+  pendingLabel?: string;
   isPending?: boolean;
   /** `danger` para acciones destructivas. */
   tone?: "danger" | "accent";
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   title = "Confirmar acción",
   description,
   confirmLabel = "Eliminar",
+  pendingLabel = "Eliminando",
   isPending = false,
   tone = "danger",
 }: ConfirmDialogProps) {
@@ -60,6 +63,7 @@ export function ConfirmDialog({
               <PendingButton
                 variant={tone === "danger" ? "danger" : "primary"}
                 isPending={isPending}
+                pendingLabel={pendingLabel}
                 onPress={onConfirm}
               >
                 {confirmLabel}

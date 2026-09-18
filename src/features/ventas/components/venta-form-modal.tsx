@@ -419,7 +419,7 @@ export function VentaFormModal({
                   >
                     Cancelar
                   </Button>
-                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Creando">
                     {"Crear venta"}
                   </PendingButton>
                 </Modal.Footer>

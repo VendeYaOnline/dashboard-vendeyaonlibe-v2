@@ -185,7 +185,7 @@ export function CarouselFormModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Guardando">
                   {carousel
                       ? "Guardar cambios"
                       : "Crear carrusel"}

@@ -343,7 +343,7 @@ export function UploadImagenModal({
                 >
                   Cancelar
                 </Button>
-                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending} pendingLabel="Subiendo">
                   {files.length > 1
                       ? `Subir ${files.length} imágenes`
                       : "Subir imagen"}
