@@ -8,6 +8,7 @@ import { ProductSelectGrid } from "@/components/shared/product-select-grid";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useQueryProducts } from "@/app/api/queries";
 import type { Products } from "@/interfaces/products";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface FeaturedProductFormModalProps {
   isOpen: boolean;
@@ -93,13 +94,13 @@ export function FeaturedProductFormModal({
                 >
                   Cancelar
                 </Button>
-                <Button
+                <PendingButton
                   variant="primary"
                   type="submit"
-                  isDisabled={!selectedProduct || isPending}
+                   isDisabled={!selectedProduct} isPending={isPending}
                 >
-                  {isPending ? "Creando..." : "Destacar producto"}
-                </Button>
+                  {"Destacar producto"}
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

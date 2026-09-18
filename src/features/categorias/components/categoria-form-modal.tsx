@@ -13,6 +13,7 @@ import {
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { MAX_CATEGORY_NAME_LENGTH, type Category } from "@/interfaces/categories";
 import { CharCounter } from "@/features/productos/components/form-section";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface CategoriaFormModalProps {
   /** null = crear, con valor = editar */
@@ -80,13 +81,11 @@ export function CategoriaFormModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending
-                    ? "Guardando..."
-                    : category
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {category
                       ? "Guardar cambios"
                       : "Crear categoría"}
-                </Button>
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

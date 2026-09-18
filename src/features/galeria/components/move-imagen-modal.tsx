@@ -13,6 +13,7 @@ import {
 } from "@heroui/react";
 import type { Category } from "@/interfaces/categories";
 import { getCategoryId, getCategoryName, getFileName } from "../utils";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface MoveImagenModalProps {
   /** Claves de S3 de las imágenes a mover (una o varias). */
@@ -123,9 +124,9 @@ export function MoveImagenModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending ? "Moviendo..." : keys.length > 1 ? "Mover imágenes" : "Mover imagen"}
-                </Button>
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {keys.length > 1 ? "Mover imágenes" : "Mover imagen"}
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

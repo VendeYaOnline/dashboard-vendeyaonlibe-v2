@@ -9,7 +9,6 @@ import {
   Input,
   InputGroup,
   Label,
-  Spinner,
   TextField,
   toast,
 } from "@heroui/react";
@@ -17,6 +16,7 @@ import { loginUser } from "@/app/api/request";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import { DEFAULT_ROUTE } from "@/config/navigation";
+import { PendingButton } from "@/components/shared/pending-button";
 
 export function LoginForm() {
   const router = useRouter();
@@ -101,26 +101,17 @@ export function LoginForm() {
           </Checkbox.Content>
         </Checkbox>
 
-        <Button
+        <PendingButton
           type="submit"
           variant="primary"
           size="lg"
           fullWidth
-          isDisabled={isLoading}
+          isPending={isLoading}
           className="group"
         >
-          {isLoading ? (
-            <>
-              <Spinner size="sm" />
-              Iniciando sesión...
-            </>
-          ) : (
-            <>
-              Iniciar sesión
-              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
-            </>
-          )}
-        </Button>
+          Iniciar sesión
+          <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+        </PendingButton>
       </form>
 
       <div className="space-y-3 rounded-xl bg-surface-secondary p-5">

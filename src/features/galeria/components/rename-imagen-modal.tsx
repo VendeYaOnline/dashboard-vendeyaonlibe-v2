@@ -11,6 +11,7 @@ import {
 } from "@heroui/react";
 import type { ImageItem } from "@/lib/types";
 import { getFileName } from "../utils";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface RenameImagenModalProps {
   image: ImageItem | null;
@@ -83,13 +84,13 @@ export function RenameImagenModal({
                 >
                   Cancelar
                 </Button>
-                <Button
+                <PendingButton
                   variant="primary"
                   type="submit"
-                  isDisabled={!isValid || isUnchanged || isPending}
+                   isDisabled={!isValid || isUnchanged} isPending={isPending}
                 >
-                  {isPending ? "Guardando..." : "Guardar cambios"}
-                </Button>
+                  {"Guardar cambios"}
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>

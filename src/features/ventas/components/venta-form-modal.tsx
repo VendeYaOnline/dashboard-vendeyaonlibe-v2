@@ -26,6 +26,7 @@ import {
 } from "../types";
 import { DEPARTMENTS_AND_CITIES } from "../colombia";
 import { SelectCatalogProductModal } from "./select-catalog-product-modal";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface VentaFormModalProps {
   isOpen: boolean;
@@ -418,9 +419,9 @@ export function VentaFormModal({
                   >
                     Cancelar
                   </Button>
-                  <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                    {isPending ? "Creando..." : "Crear venta"}
-                  </Button>
+                  <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                    {"Crear venta"}
+                  </PendingButton>
                 </Modal.Footer>
               </form>
             </Modal.Dialog>

@@ -18,6 +18,7 @@ import {
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import type { Category } from "@/interfaces/categories";
 import { MAX_UPLOAD_IMAGES, formatFileSize } from "../utils";
+import { PendingButton } from "@/components/shared/pending-button";
 
 interface UploadImagenModalProps {
   isOpen: boolean;
@@ -342,13 +343,11 @@ export function UploadImagenModal({
                 >
                   Cancelar
                 </Button>
-                <Button variant="primary" type="submit" isDisabled={!isValid || isPending}>
-                  {isPending
-                    ? "Subiendo..."
-                    : files.length > 1
+                <PendingButton variant="primary" type="submit" isDisabled={!isValid} isPending={isPending}>
+                  {files.length > 1
                       ? `Subir ${files.length} imágenes`
                       : "Subir imagen"}
-                </Button>
+                </PendingButton>
               </Modal.Footer>
             </form>
           </Modal.Dialog>
