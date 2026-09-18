@@ -65,7 +65,8 @@ export function GaleriaToolbar({
             <Select.Indicator />
           </Select.Trigger>
           <Select.Popover>
-            <ListBox>
+            {/* Lista acotada: con muchas categorías se desplaza en vez de crecer. */}
+            <ListBox className="max-h-56 overflow-y-auto">
               <ListBoxItem id="all">Todas</ListBoxItem>
               {categories.map((category) => (
                 <ListBoxItem key={category.id} id={category.id}>
