@@ -43,6 +43,9 @@ const API_ERROR_MESSAGES: Record<string, string> = {
     "Un set necesita al menos un atributo que controle inventario (color, talla...).",
   VARIANT_LIMIT:
     "El producto genera demasiadas combinaciones. Desactiva «Controla inventario» en algún atributo.",
+  IMAGES_REQUIRED: "Selecciona al menos una imagen.",
+  MOVE_LIMIT: "Puedes mover como máximo 10 imágenes a la vez.",
+  CATEGORY_REQUIRED: "Selecciona la categoría de destino.",
   IMAGE_IN_USE: "La imagen está en uso por algún producto o portada.",
 };
 

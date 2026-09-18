@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid3X3, LayoutList, Trash2 } from "lucide-react";
+import { FolderInput, Grid3X3, LayoutList, Trash2 } from "lucide-react";
 import {
   Button,
   Chip,
@@ -25,6 +25,7 @@ interface GaleriaToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   selectedCount: number;
+  onMoveSelected: () => void;
   onDeleteSelected: () => void;
   isDisabled?: boolean;
 }
@@ -38,6 +39,7 @@ export function GaleriaToolbar({
   viewMode,
   onViewModeChange,
   selectedCount,
+  onMoveSelected,
   onDeleteSelected,
   isDisabled,
 }: GaleriaToolbarProps) {
@@ -90,6 +92,13 @@ export function GaleriaToolbar({
             <LayoutList className="size-4" />
           </ToggleButton>
         </ToggleButtonGroup>
+
+        {selectedCount > 0 && (
+          <Button variant="secondary" onPress={onMoveSelected} isDisabled={isDisabled}>
+            <FolderInput className="size-4" />
+            Mover
+          </Button>
+        )}
 
         {selectedCount > 0 && (
           <Button variant="danger" onPress={onDeleteSelected} isDisabled={isDisabled}>

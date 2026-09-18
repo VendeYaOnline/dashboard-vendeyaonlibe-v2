@@ -18,6 +18,7 @@ import {
   deleteImage,
   deleteProduct,
   deleteUser,
+  moveImages,
   renameImage,
   updatedAttribute,
   updatedCarousel,
@@ -142,6 +143,21 @@ export const useMutationRenameImage = () => {
       queryClient.invalidateQueries({ queryKey: ["images"] });
       // La imagen renombrada puede ser la de algún producto: su URL cambió
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["carousels"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
+    },
+  });
+};
+
+export const useMutationMoveImages = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: moveImages,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["images"] });
+      // Las URLs cambian de carpeta: productos, portadas y carruseles las referencian.
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["covers"] });
       queryClient.invalidateQueries({ queryKey: ["carousels"] });
       queryClient.invalidateQueries({ queryKey: ["featured-products"] });
     },
