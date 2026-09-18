@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button, Dropdown } from "@heroui/react";
+import { Dropdown, buttonVariants, cn } from "@heroui/react";
 import type { ImageItem } from "@/lib/types";
 
 interface ImagenActionsMenuProps {
@@ -12,7 +12,13 @@ interface ImagenActionsMenuProps {
   className?: string;
 }
 
-/** Menú de acciones (ver / renombrar / eliminar) usado en la vista grilla y lista. */
+/**
+ * Menú de acciones (ver / renombrar / eliminar) usado en la vista grilla y lista.
+ *
+ * `Dropdown.Trigger` ya renderiza un <button>, así que se le aplican las
+ * clases del botón en lugar de anidar un <Button> (HTML no permite un botón
+ * dentro de otro y React lanzaba un error de hidratación).
+ */
 export function ImagenActionsMenu({
   image,
   onView,
@@ -22,16 +28,11 @@ export function ImagenActionsMenu({
 }: ImagenActionsMenuProps) {
   return (
     <Dropdown.Root>
-      <Dropdown.Trigger>
-        <Button
-          variant="secondary"
-          size="sm"
-          isIconOnly
-          aria-label={`Acciones para ${image.Key}`}
-          className={className}
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
+      <Dropdown.Trigger
+        aria-label={`Acciones para ${image.Key}`}
+        className={cn(buttonVariants({ variant: "secondary", size: "sm", isIconOnly: true }), className)}
+      >
+        <MoreHorizontal className="size-4" />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu aria-label="Acciones de la imagen">

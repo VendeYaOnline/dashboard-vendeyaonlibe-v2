@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { ImageIcon, Plus } from "lucide-react";
-import { Button, Card, Spinner, toast } from "@heroui/react";
+import { Button, Card, Spinner, cn, toast } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryCategories, useQueryImages } from "@/app/api/queries";
+import { useQueryAllCategories, useQueryImages } from "@/app/api/queries";
 import {
   useMutationDeleteImage,
   useMutationImages,
@@ -44,13 +44,14 @@ export function GaleriaView() {
 
   useEffect(() => setPage(1), [debouncedSearch, categoryFilter]);
 
-  const { data, isLoading, isFetching } = useQueryImages(
+  const { data, isLoading, isPlaceholderData } = useQueryImages(
     page,
     debouncedSearch,
     IMAGES_PER_PAGE,
     categoryFilter === "all" ? undefined : categoryFilter,
   );
-  const { data: categoriesData } = useQueryCategories(1, "");
+  // Lista completa: el filtro y el modal de subida necesitan todas las categorías.
+  const { data: categoriesData } = useQueryAllCategories();
   const categories = categoriesData?.categories ?? [];
 
   const uploadMutation = useMutationImages();
@@ -72,14 +73,21 @@ export function GaleriaView() {
     });
   }, []);
 
-  const handleUpload = (payload: { categoryId: string; formData: FormData }) => {
+  const handleUpload = ({
+    count,
+    ...payload
+  }: {
+    categoryId: string;
+    formData: FormData;
+    count: number;
+  }) => {
     uploadMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success("Imagen subida");
+        toast.success(count > 1 ? `${count} imágenes subidas` : "Imagen subida");
         setIsUploadOpen(false);
         setPage(1);
       },
-      onError: (error) => handleAxiosError(error, "Hubo un error al subir la imagen"),
+      onError: (error) => handleAxiosError(error, "Hubo un error al subir las imágenes"),
     });
   };
 
@@ -178,7 +186,8 @@ export function GaleriaView() {
     setIsBulkDeleteOpen(false);
   };
 
-  const isBusy = isLoading || isFetching;
+  // Solo bloquea la primera carga; al paginar o filtrar se atenúa la galería actual.
+  const isBusy = isLoading;
 
   return (
     <div className="space-y-6">
@@ -195,7 +204,7 @@ export function GaleriaView() {
             onPress={() => setIsUploadOpen(true)}
           >
             <Plus className="size-4" />
-            Subir imagen
+            Subir imágenes
           </Button>
         }
       />
@@ -223,9 +232,12 @@ export function GaleriaView() {
           <p className="text-sm text-muted">Cargando imágenes...</p>
         </div>
       ) : images.length > 0 ? (
-        <>
+        <div
+          className={cn("space-y-6 transition-opacity", isPlaceholderData && "opacity-60")}
+          aria-busy={isPlaceholderData}
+        >
           {viewMode === "grid" ? (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {images.map((image) => (
                 <ImagenCard
                   key={image.Key}
@@ -267,7 +279,7 @@ export function GaleriaView() {
               onPageChange={setPage}
             />
           </Card>
-        </>
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-3 py-20 text-center">
           <div className="flex size-20 items-center justify-center rounded-full bg-surface-secondary">
@@ -282,7 +294,7 @@ export function GaleriaView() {
           {!debouncedSearch && canManage && (
             <Button variant="secondary" onPress={() => setIsUploadOpen(true)}>
               <Plus className="size-4" />
-              Subir imagen
+              Subir imágenes
             </Button>
           )}
         </div>
