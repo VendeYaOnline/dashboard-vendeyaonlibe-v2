@@ -15,7 +15,7 @@ import {
 import { loginUser } from "@/app/api/request";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { DEFAULT_ROUTE } from "@/config/navigation";
+import { getHomeRoute } from "@/config/navigation";
 import { PendingButton } from "@/components/shared/pending-button";
 
 export function LoginForm() {
@@ -35,7 +35,7 @@ export function LoginForm() {
       const response = await loginUser({ email, password });
       setAuth(response.data.user);
       toast.success("Inicio de sesión exitoso");
-      router.push(DEFAULT_ROUTE);
+      router.push(getHomeRoute(response.data.user?.role));
     } catch (error) {
       handleAxiosError(error, "Credenciales incorrectas");
     } finally {

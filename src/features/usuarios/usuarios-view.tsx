@@ -17,7 +17,7 @@ import {
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { ROLE_LABELS, isAdminRole } from "@/config/navigation";
+import { ROLE_LABELS } from "@/config/navigation";
 import type { Users } from "@/interfaces/users";
 import {
   UsuarioFormModal,
@@ -33,7 +33,7 @@ const ROLE_COLOR = {
 
 export function UsuariosView() {
   const authUser = useAuthStore((s) => s.user);
-  const isAdmin = isAdminRole(authUser?.role);
+  const isAdmin = authUser?.role === "admin";
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
