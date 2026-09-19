@@ -171,11 +171,8 @@ export function UsuarioFormModal({
                     <Select.Popover>
                       <ListBox>
                         {ROLES.map((value) => (
-                          <ListBoxItem key={value} id={value} textValue={ROLE_LABELS[value]}>
-                            <div className="flex flex-col">
-                              <span>{ROLE_LABELS[value]}</span>
-                              <span className="text-xs text-muted">{ROLE_DESCRIPTIONS[value]}</span>
-                            </div>
+                          <ListBoxItem key={value} id={value}>
+                            {ROLE_LABELS[value]}
                           </ListBoxItem>
                         ))}
                       </ListBox>
