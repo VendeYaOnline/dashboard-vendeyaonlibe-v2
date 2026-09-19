@@ -21,7 +21,7 @@ import {
   ATTRIBUTE_TYPES,
   GENDER_OPTIONS,
   MAX_ATTRIBUTE_NAME_LENGTH,
-  MAX_ATTRIBUTE_VALUES,
+  maxValuesFor,
   MAX_ATTRIBUTE_VALUE_LENGTH,
   PRESET_COLORS,
   isColorValue,
@@ -94,9 +94,10 @@ export function AtributoFormModal({
     resetValues();
   };
 
+  const maxValues = maxValuesFor(type);
   const isFull =
     (type === "Color" ? colors.length : type === "Genero" ? genders.length : texts.length) >=
-    MAX_ATTRIBUTE_VALUES;
+    maxValues;
 
   const colorNameTaken = colors.some(
     (c) => c.name.toLowerCase() === colorName.trim().toLowerCase(),
@@ -121,7 +122,7 @@ export function AtributoFormModal({
     setGenders((prev) =>
       prev.includes(gender)
         ? prev.filter((g) => g !== gender)
-        : prev.length >= MAX_ATTRIBUTE_VALUES
+        : prev.length >= maxValues
           ? prev
           : [...prev, gender],
     );
@@ -194,7 +195,7 @@ export function AtributoFormModal({
                   <div className="flex items-center justify-between">
                     <Label>Valores</Label>
                     <span className="text-xs text-muted">
-                      {values.length}/{MAX_ATTRIBUTE_VALUES}
+                      {values.length}/{maxValues}
                     </span>
                   </div>
 
