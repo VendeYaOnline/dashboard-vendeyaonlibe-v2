@@ -33,7 +33,7 @@ export function StatTile({
 
   return (
     <Card>
-      <Card.Content className="flex items-start justify-between gap-3 p-5">
+      <Card.Content className="flex w-full flex-row items-start justify-between gap-3 p-5">
         <div className="min-w-0 space-y-1">
           <p className="text-sm text-muted">{label}</p>
           <p className="truncate text-2xl font-semibold tracking-tight">{value}</p>

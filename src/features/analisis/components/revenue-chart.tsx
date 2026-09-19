@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@heroui/react";
 import type { AnalyticsPoint } from "@/interfaces/analytics";
 import {
@@ -17,8 +17,24 @@ interface RevenueChartProps {
   granularity: "day" | "month";
 }
 
-const WIDTH = 800;
 const HEIGHT = 260;
+const MIN_WIDTH = 320;
+
+/** Ancho real del contenedor: el SVG se dibuja en píxeles, sin escalar texto. */
+function useElementWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => setWidth(node.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width] as const;
+}
 const PAD = { top: 12, right: 12, bottom: 28, left: 56 };
 const MAX_BAR = 24;
 const RADIUS = 4;
@@ -44,6 +60,8 @@ const columnPath = (x: number, y: number, w: number, h: number) => {
  */
 export function RevenueChart({ series, granularity }: RevenueChartProps) {
   const [active, setActive] = useState<number | null>(null);
+  const [containerRef, measured] = useElementWidth<HTMLDivElement>();
+  const WIDTH = Math.max(MIN_WIDTH, measured);
 
   const { ticks, bars, labelEvery, plotBottom } = useMemo(() => {
     const max = Math.max(0, ...series.map((p) => p.revenue));
@@ -69,17 +87,19 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
     // Etiquetas del eje X espaciadas para que no choquen.
     const labelEvery = Math.max(1, Math.ceil(series.length / 8));
     return { ticks, bars, labelEvery, plotBottom: PAD.top + plotH };
-  }, [series]);
+  }, [series, WIDTH]);
 
   const hasData = series.some((p) => p.revenue > 0 || p.orders > 0);
   const activeBar = active !== null ? bars[active] : null;
   const top = ticks[ticks.length - 1] || 1;
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative w-full">
       <svg
+        width={WIDTH}
+        height={HEIGHT}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-        className="h-auto w-full"
+        className="block max-w-full"
         role="img"
         aria-label="Ingresos por periodo"
         onMouseLeave={() => setActive(null)}
