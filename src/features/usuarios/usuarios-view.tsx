@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Chip, toast } from "@heroui/react";
+import { Button, Card, Chip, cn, toast } from "@heroui/react";
 import { Edit2, Plus, ShieldOff, Trash2, Users as UsersIcon } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -44,21 +44,30 @@ export function UsuariosView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryUsers(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryUsers(page, debouncedSearch);
   const createMutation = useMutationUser();
   const updateMutation = useMutationUpdatedUser();
   const deleteMutation = useMutationDeleteUser();
 
   const users = data?.users ?? [];
+  const grandTotal = data?.grandTotal ?? 0;
+  const isSelfUser = (user: Users | null) => Boolean(user && user.email === authUser?.email);
 
   const handleSubmit = (values: UsuarioFormValues) => {
     if (selected) {
-      const { username, email, role } = values;
+      const { username, email, role, password } = values;
       updateMutation.mutate(
-        { id: selected.id, data: { username, email, role } },
+        {
+          id: selected.id,
+          data: { username, email, role, ...(password ? { password } : {}) },
+        },
         {
           onSuccess: () => {
-            toast.success("Usuario actualizado correctamente");
+            toast.success(
+              password
+                ? "Usuario actualizado y contraseña cambiada"
+                : "Usuario actualizado correctamente",
+            );
             setIsFormOpen(false);
             setSelected(null);
           },
@@ -108,7 +117,19 @@ export function UsuariosView() {
       key: "username",
       label: "Usuario",
       isRowHeader: true,
-      render: (user) => <span className="font-medium">{user.username}</span>,
+      render: (user) => (
+        <span className="flex items-center gap-2">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent">
+            {user.username.slice(0, 2)}
+          </span>
+          <span className="font-medium">{user.username}</span>
+          {isSelfUser(user) && (
+            <Chip size="sm" variant="soft" color="accent">
+              Tú
+            </Chip>
+          )}
+        </span>
+      ),
     },
     {
       key: "email",
@@ -129,8 +150,8 @@ export function UsuariosView() {
       label: "Acciones",
       align: "end",
       render: (user) => {
-        // No se permite que un admin se elimine a sí mismo.
-        const isSelf = user.email === authUser?.email;
+        // Nadie se elimina a sí mismo (el backend también lo bloquea).
+        const isSelf = isSelfUser(user);
 
         return (
           <div className="flex justify-end gap-1">
@@ -168,7 +189,11 @@ export function UsuariosView() {
       <PageHeader
         icon={UsersIcon}
         title="Usuarios"
-        description="Gestiona los usuarios del sistema"
+        description={
+          grandTotal === 0
+            ? "Gestiona quién accede al panel"
+            : `${grandTotal} ${grandTotal === 1 ? "usuario con acceso" : "usuarios con acceso"} al panel`
+        }
         actions={
           <Button
             variant="primary"
@@ -194,15 +219,21 @@ export function UsuariosView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Al paginar o buscar, la página anterior sigue visible (atenuada) hasta que llega la nueva. */}
+      <Card
+        className={cn("overflow-hidden transition-opacity", isPlaceholderData && "opacity-60")}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Usuarios"
           items={users}
           columns={columns}
           getRowId={(user) => user.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando usuarios..."
-          emptyMessage="No se encontraron usuarios"
+          emptyMessage={
+            debouncedSearch ? "Ningún usuario coincide con la búsqueda" : "Aún no hay usuarios"
+          }
         />
         <TablePagination
           currentPage={page}
@@ -216,6 +247,7 @@ export function UsuariosView() {
 
       <UsuarioFormModal
         user={selected}
+        isSelf={isSelfUser(selected)}
         isOpen={isFormOpen}
         onOpenChange={(open) => {
           setIsFormOpen(open);
