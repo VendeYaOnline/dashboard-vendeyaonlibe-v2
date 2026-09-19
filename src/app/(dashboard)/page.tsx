@@ -9,10 +9,12 @@ import { getHomeRoute } from "@/config/navigation";
 export default function DashboardIndexPage() {
   const router = useRouter();
   const role = useAuthStore((s) => s.user?.role);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     router.replace(getHomeRoute(role));
-  }, [router, role]);
+  }, [hasHydrated, router, role]);
 
   return null;
 }
