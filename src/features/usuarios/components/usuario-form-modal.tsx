@@ -12,6 +12,7 @@ import {
   Modal,
   Select,
   TextField,
+  cn,
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
@@ -94,11 +95,12 @@ export function UsuarioFormModal({
       type={showPassword ? "text" : "password"}
       isRequired={!isEdit}
       isInvalid={password !== "" && password.length < MIN_PASSWORD_LENGTH}
-      className={isEdit ? "sm:col-span-2" : undefined}
+      className={cn("min-w-0", isEdit && "sm:col-span-2")}
     >
       <Label>{isEdit ? "Nueva contraseña" : "Contraseña"}</Label>
-      <InputGroup>
+      <InputGroup className="w-full min-w-0">
         <InputGroup.Input
+          className="min-w-0"
           placeholder={isEdit ? "Déjala vacía para no cambiarla" : `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
           autoComplete="new-password"
           maxLength={72}
