@@ -48,8 +48,13 @@ export const formatBucket = (key: string, granularity: "day" | "month") => {
   });
 };
 
-/** Etiqueta larga para el tooltip: "jueves, 18 de septiembre de 2026". */
-export const formatBucketLong = (key: string, granularity: "day" | "month") => {
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** Etiqueta larga para el tooltip: "Jueves, 18 de septiembre". */
+export const formatBucketLong = (key: string, granularity: "day" | "month") =>
+  capitalize(formatBucketLongRaw(key, granularity));
+
+const formatBucketLongRaw = (key: string, granularity: "day" | "month") => {
   if (granularity === "month") {
     const [year, month] = key.split("-").map(Number);
     return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("es-CO", {

@@ -186,7 +186,7 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
             top: 0,
           }}
         >
-          <p className="font-medium capitalize">
+          <p className="font-medium">
             {formatBucketLong(activeBar.point.date, granularity)}
           </p>
           <p className="text-muted">
