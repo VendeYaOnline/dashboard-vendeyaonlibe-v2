@@ -34,15 +34,16 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/galeria", label: "Galería", icon: ImageIcon },
   { href: "/mensajes", label: "Mensajes", icon: MessageSquare },
   { href: "/analisis", label: "Análisis", icon: BarChart3 },
-  { href: "/usuarios", label: "Usuarios", icon: Users, roles: ["admin", "superadmin"] },
+  { href: "/usuarios", label: "Usuarios", icon: Users, roles: ["admin"] },
   // Administración de la plataforma (empresas, planes): solo el superadministrador.
   { href: "/plataforma", label: "Plataforma", icon: ShieldCheck, roles: ["superadmin"] },
 ];
 
-/** Rol de quien administra la plataforma (todas las empresas). Hereda lo de admin. */
+/**
+ * Rol de quien administra la plataforma. No pertenece a ninguna empresa, así
+ * que solo ve las secciones que lo nombran explícitamente (Plataforma).
+ */
 export const SUPERADMIN_ROLE = "superadmin";
-
-export const isAdminRole = (role?: string) => role === "admin" || role === SUPERADMIN_ROLE;
 
 /** Ruta a la que se entra tras iniciar sesión. */
 export const DEFAULT_ROUTE = "/ventas";
@@ -55,4 +56,16 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 export const getNavItemsForRole = (role?: string): NavItem[] =>
-  NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)));
+  role === SUPERADMIN_ROLE
+    ? NAV_ITEMS.filter((item) => item.roles?.includes(SUPERADMIN_ROLE))
+    : NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)));
+
+/** Ruta inicial tras iniciar sesión según el rol. */
+export const getHomeRoute = (role?: string) =>
+  role === SUPERADMIN_ROLE ? "/plataforma" : DEFAULT_ROUTE;
+
+/** true si el rol puede ver la ruta (para redirigir si entra por URL). */
+export const canAccessRoute = (role: string | undefined, pathname: string) =>
+  getNavItemsForRole(role).some(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
