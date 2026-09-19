@@ -33,6 +33,13 @@ export function LoginForm() {
 
     try {
       const response = await loginUser({ email, password });
+      const token =
+        response.data.access_token ??
+        response.data.accessToken ??
+        response.data.token;
+
+      if (token) localStorage.setItem("access_token", token);
+
       setAuth(response.data.user);
       toast.success("Inicio de sesión exitoso");
       router.push(getHomeRoute(response.data.user?.role));
