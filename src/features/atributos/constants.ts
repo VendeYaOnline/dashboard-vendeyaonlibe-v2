@@ -34,8 +34,14 @@ export const PRESET_COLORS = [
   "#ffffff",
 ] as const;
 
-/** Tope de valores por atributo. */
+/** Tope de valores por atributo (talla, material, etc.). */
 export const MAX_ATTRIBUTE_VALUES = 10;
+/** Un atributo de color admite menos valores: cada color lleva hasta 2 imágenes propias. */
+export const MAX_COLOR_VALUES = 5;
+
+/** Tope según el tipo: el color tiene su propio límite. */
+export const maxValuesFor = (type: string) =>
+  type === "Color" ? MAX_COLOR_VALUES : MAX_ATTRIBUTE_VALUES;
 /** Longitudes máximas (mismos topes que el backend). */
 export const MAX_ATTRIBUTE_NAME_LENGTH = 30;
 export const MAX_ATTRIBUTE_VALUE_LENGTH = 30;

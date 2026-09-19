@@ -38,6 +38,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
     "La categoría contiene imágenes en la galería. Elimínalas o muévelas antes de eliminarla.",
   CATEGORY_DUPLICATED: "Ya existe una categoría con ese nombre.",
   CATEGORY_NOT_FOUND: "La categoría ya no existe.",
+  IMAGE_LIMIT: "Un producto sin atributo de color admite como máximo 4 imágenes.",
   INVALID_BUNDLE_SIZE: "Un set debe tener entre 2 y 10 piezas.",
   BUNDLE_REQUIRES_VARIANTS:
     "Un set necesita al menos un atributo que controle inventario (color, talla...).",
