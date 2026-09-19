@@ -47,6 +47,11 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   MOVE_LIMIT: "Puedes mover como máximo 10 imágenes a la vez.",
   CATEGORY_REQUIRED: "Selecciona la categoría de destino.",
   CONTACT_NOT_FOUND: "El mensaje ya no existe.",
+  USER_NOT_FOUND: "El usuario ya no existe.",
+  USER_EMAIL_DUPLICATED: "Ya existe un usuario con ese correo electrónico.",
+  CANNOT_DELETE_SELF: "No puedes eliminar tu propio usuario.",
+  CANNOT_CHANGE_OWN_ROLE: "No puedes cambiar tu propio rol.",
+  LAST_ADMIN: "Es el único administrador: asigna otro administrador antes.",
   IMAGE_IN_USE: "La imagen está en uso por algún producto o portada.",
 };
 

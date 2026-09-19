@@ -186,7 +186,8 @@ export const updatedUser = async ({
   data,
 }: {
   id: string;
-  data: { username: string; email: string; role: string };
+  /** `password` opcional: si va vacía o falta, se conserva la actual. */
+  data: { username: string; email: string; role: string; password?: string };
 }) => {
   return axiosConfig.put(`/updated-user/${id}`, data);
 };
