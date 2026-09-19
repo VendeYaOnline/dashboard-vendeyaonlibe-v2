@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
+import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
 /**
  * Opciones comunes de los listados paginados: la caché se considera fresca
@@ -23,6 +24,7 @@ const SALES_QUERY_OPTIONS = {
   staleTime: 1000 * 60,
 } as const;
 import {
+  getAnalytics,
   getAttributes,
   getCarousels,
   getCategories,
@@ -118,6 +120,15 @@ export const useQueryUsers = (currentPage: number, search: string) => {
     enabled: currentPage > 0,
   });
 };
+
+/** Métricas del panel: se refrescan cada 5 min o al invalidar ventas/productos. */
+export const useQueryAnalytics = (period: AnalyticsPeriod) =>
+  useQuery({
+    queryKey: ["analytics", period],
+    queryFn: () => getAnalytics(period),
+    ...LIST_QUERY_OPTIONS,
+    staleTime: 1000 * 60 * 5,
+  });
 
 export const useQueryContacts = (
   currentPage: number,

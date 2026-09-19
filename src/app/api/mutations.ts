@@ -241,6 +241,7 @@ export const useMutationProduct = () => {
     mutationFn: createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
@@ -251,6 +252,7 @@ export const useMutationUpdatedProduct = () => {
     mutationFn: updatedProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
@@ -261,6 +263,7 @@ export const useMutationUpdateProductStock = () => {
     mutationFn: updateProductStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
@@ -271,6 +274,7 @@ export const useMutationDeleteProduct = () => {
     mutationFn: deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
@@ -340,6 +344,7 @@ export const useMutationCreateSale = () => {
     mutationFn: createSale,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
@@ -350,6 +355,7 @@ export const useMutationDeleteSale = () => {
     mutationFn: deleteSale,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };
