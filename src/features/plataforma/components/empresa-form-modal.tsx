@@ -103,6 +103,11 @@ export function EmpresaFormModal({
   }, [productsValue, limitProducts, imagesTouched, config]);
 
   const imagesValue = Number.parseInt(maxImages, 10);
+  const perProduct = config?.imagesPerProduct ?? 6;
+  const extra = config?.imagesExtra ?? 5;
+  // Sugerencia visible siempre que haya un tope de productos válido.
+  const suggestion =
+    limitProducts && isProductsValid ? suggestedImageLimit(productsValue, config) : null;
   const isImagesValid =
     !limitImages ||
     (Number.isFinite(imagesValue) &&
@@ -176,7 +181,7 @@ export function EmpresaFormModal({
                   title="Plan"
                   description={`Productos entre ${productsRange.min} y ${productsRange.max}. El tope de imágenes se sugiere como productos × ${config?.imagesPerProduct ?? 6} + ${config?.imagesExtra ?? 5} portadas; puedes ajustarlo.`}
                 >
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4">
                     <LimitField
                       label="Productos"
                       enabled={limitProducts}
@@ -202,10 +207,21 @@ export function EmpresaFormModal({
                       isInvalid={!isImagesValid}
                       hint={
                         limitImages
-                          ? imagesTouched
-                            ? `Entre ${imagesRange.min} y ${imagesRange.max}`
-                            : "Sugerido según los productos"
+                          ? `Entre ${imagesRange.min} y ${imagesRange.max}`
                           : "Sin límite de imágenes"
+                      }
+                      suggestion={
+                        limitImages && suggestion !== null
+                          ? {
+                              value: suggestion,
+                              label: `Sugerido: ${suggestion} imágenes (${productsValue} productos × ${perProduct} + ${extra} portadas)`,
+                              isApplied: imagesValue === suggestion,
+                              onApply: () => {
+                                setImagesTouched(true);
+                                setMaxImages(String(suggestion));
+                              },
+                            }
+                          : undefined
                       }
                     />
                   </div>
@@ -308,6 +324,7 @@ function LimitField({
   onChange,
   isInvalid,
   hint,
+  suggestion,
 }: {
   label: string;
   enabled: boolean;
@@ -316,6 +333,8 @@ function LimitField({
   onChange: (value: string) => void;
   isInvalid: boolean;
   hint: string;
+  /** Valor recomendado con un enlace para aplicarlo. */
+  suggestion?: { value: number; label: string; isApplied: boolean; onApply: () => void };
 }) {
   return (
     <div className="space-y-2">
@@ -340,6 +359,18 @@ function LimitField({
         <Input inputMode="numeric" placeholder="—" />
       </TextField>
       <p className={cn("text-xs", enabled && isInvalid ? "text-danger" : "text-muted")}>{hint}</p>
+      {suggestion && (
+        <p className="flex flex-wrap items-center gap-2 rounded-lg bg-accent-soft px-3 py-2 text-xs text-accent">
+          <span>{suggestion.label}</span>
+          {suggestion.isApplied ? (
+            <span className="font-medium">· aplicado</span>
+          ) : (
+            <button type="button" onClick={suggestion.onApply} className="font-medium underline">
+              Usar sugerencia
+            </button>
+          )}
+        </p>
+      )}
     </div>
   );
 }
