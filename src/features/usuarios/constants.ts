@@ -2,6 +2,7 @@
 export const MIN_USERNAME_LENGTH = 3;
 export const MAX_USERNAME_LENGTH = 40;
 export const MIN_PASSWORD_LENGTH = 8;
+export const MAX_PASSWORD_LENGTH = 72;
 
 export const ROLES = ["admin", "editor", "viewer"] as const;
 export type Role = (typeof ROLES)[number];

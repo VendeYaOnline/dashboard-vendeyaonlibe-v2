@@ -6,6 +6,13 @@ import { Images } from "@/interfaces/images";
 import { UserRequest } from "@/interfaces/users";
 import { ContactRequest, ContactStatusFilter, Contacts } from "@/interfaces/contacts";
 import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics";
+import type {
+  CreateCompanyPayload,
+  PlanResponse,
+  PlatformCompaniesResponse,
+  PlatformConfig,
+  UpdateCompanyPayload,
+} from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
@@ -224,6 +231,22 @@ export const deleteContact = async (idElement: string) => {
 export const getAnalytics = async (period: AnalyticsPeriod) => {
   return (await axiosConfig.get<AnalyticsResponse>(`/get-analytics?period=${period}`)).data;
 };
+
+// * Plan / Plataforma
+
+export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-plan")).data;
+
+export const getPlatformConfig = async () =>
+  (await axiosConfig.get<PlatformConfig>("/platform/config")).data;
+
+export const getPlatformCompanies = async () =>
+  (await axiosConfig.get<PlatformCompaniesResponse>("/platform/companies")).data;
+
+export const createPlatformCompany = async (data: CreateCompanyPayload) =>
+  axiosConfig.post("/platform/companies", data);
+
+export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
+  axiosConfig.put(`/platform/companies/${id}`, data);
 
 export const logoutUser = async () => {
   return axiosConfig.post("/logout-user");

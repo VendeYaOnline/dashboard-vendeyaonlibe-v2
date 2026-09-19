@@ -26,6 +26,9 @@ const SALES_QUERY_OPTIONS = {
 import {
   getAnalytics,
   getAttributes,
+  getPlan,
+  getPlatformCompanies,
+  getPlatformConfig,
   getCarousels,
   getCategories,
   getContacts,
@@ -128,6 +131,34 @@ export const useQueryAnalytics = (period: AnalyticsPeriod) =>
     queryFn: () => getAnalytics(period),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 5,
+  });
+
+/** Plan y uso de la empresa (tope de productos e imágenes). */
+export const useQueryPlan = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["plan"],
+    queryFn: getPlan,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+    enabled,
+  });
+
+export const useQueryPlatformConfig = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["platform", "config"],
+    queryFn: getPlatformConfig,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    enabled,
+  });
+
+export const useQueryPlatformCompanies = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["platform", "companies"],
+    queryFn: getPlatformCompanies,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 2,
+    enabled,
   });
 
 export const useQueryContacts = (
