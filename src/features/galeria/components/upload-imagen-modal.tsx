@@ -6,6 +6,7 @@ import {
   Button,
   Chip,
   Input,
+  InputGroup,
   Label,
   ListBox,
   ListBoxItem,
@@ -243,7 +244,7 @@ export function UploadImagenModal({
                           <li
                             key={item.id}
                             className={cn(
-                              "flex gap-3 rounded-lg border bg-surface p-2",
+                              "flex min-w-0 items-start gap-2 rounded-lg border bg-surface p-2 pr-1",
                               isDuplicated || isEmpty ? "border-danger/60" : "border-border",
                             )}
                           >
@@ -255,17 +256,22 @@ export function UploadImagenModal({
                               />
                             </div>
                             <div className="min-w-0 flex-1 space-y-1">
-                              <div className="flex items-center gap-1">
-                                <Input
+                              {/* La extensión va como sufijo dentro del campo: no se sale de la tarjeta. */}
+                              <InputGroup className="h-8 w-full min-w-0">
+                                <InputGroup.Input
                                   aria-label={`Nombre de ${item.file.name}`}
                                   value={item.name === "" ? "" : base}
                                   placeholder="nombre"
                                   disabled={isPending}
                                   onChange={(e) => renameFile(item.id, e.target.value)}
-                                  className="h-8 text-sm"
+                                  className="min-w-0 text-sm"
                                 />
-                                {ext && <span className="shrink-0 text-xs text-muted">{ext}</span>}
-                              </div>
+                                {ext && (
+                                  <InputGroup.Suffix>
+                                    <span className="text-xs text-muted">{ext}</span>
+                                  </InputGroup.Suffix>
+                                )}
+                              </InputGroup>
                               <p className="text-xs text-muted">
                                 {formatFileSize(item.file.size)}
                                 {isDuplicated && (
