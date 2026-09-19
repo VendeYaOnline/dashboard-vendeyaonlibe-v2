@@ -36,6 +36,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
     "La categoría tiene productos asignados. Cámbialos de categoría antes de eliminarla.",
   CATEGORY_HAS_IMAGES:
     "La categoría contiene imágenes en la galería. Elimínalas o muévelas antes de eliminarla.",
+  INVALID_CATEGORY_IMAGE: "La imagen debe elegirse de la galería de tu tienda.",
   CATEGORY_DUPLICATED: "Ya existe una categoría con ese nombre.",
   CATEGORY_NOT_FOUND: "La categoría ya no existe.",
   IMAGE_LIMIT: "Un producto sin atributo de color admite como máximo 4 imágenes.",

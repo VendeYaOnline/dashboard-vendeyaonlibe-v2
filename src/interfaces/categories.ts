@@ -1,6 +1,8 @@
 export interface Category {
   id: string;
   name: string;
+  /** Imagen de la galería que representa la categoría; null si no tiene. */
+  image?: string | null;
   /** Productos asignados; solo lo devuelve el listado del panel. */
   productCount?: number;
 }
