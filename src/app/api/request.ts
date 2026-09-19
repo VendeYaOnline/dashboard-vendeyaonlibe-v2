@@ -60,8 +60,8 @@ export const deleteAttribute = async (idElement: string) => {
 // * Categories
 // ------------------------------------
 
-export const createCategory = async (name: string) => {
-  return axiosConfig.post("/create-category", { name });
+export const createCategory = async (data: { name: string; image: string | null }) => {
+  return axiosConfig.post("/create-category", data);
 };
 
 export const getCategories = async (
@@ -83,8 +83,8 @@ export const deleteCategory = async (idElement: string) => {
   return axiosConfig.delete(`/delete-category/${idElement}`);
 };
 
-export const updatedCategory = async (data: { id: string; name: string }) => {
-  return axiosConfig.put(`/updated-category/${data.id}`, { name: data.name });
+export const updatedCategory = async (data: { id: string; name: string; image: string | null }) => {
+  return axiosConfig.put(`/updated-category/${data.id}`, { name: data.name, image: data.image });
 };
 
 //* Imagenes

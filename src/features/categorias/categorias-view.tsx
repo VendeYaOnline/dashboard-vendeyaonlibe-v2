@@ -18,7 +18,7 @@ import {
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import type { Category } from "@/interfaces/categories";
-import { CategoriaFormModal } from "./components/categoria-form-modal";
+import { CategoriaFormModal, type CategoriaFormValues } from "./components/categoria-form-modal";
 
 export function CategoriasView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -40,10 +40,10 @@ export function CategoriasView() {
 
   const categories = data?.categories ?? [];
 
-  const handleSubmit = (name: string) => {
+  const handleSubmit = ({ name, image }: CategoriaFormValues) => {
     if (selected) {
       updateMutation.mutate(
-        { id: selected.id, name },
+        { id: selected.id, name, image },
         {
           onSuccess: () => {
             toast.success("Categoría actualizada correctamente");
@@ -57,7 +57,7 @@ export function CategoriasView() {
       return;
     }
 
-    createMutation.mutate(name, {
+    createMutation.mutate({ name, image }, {
       onSuccess: () => {
         toast.success("Categoría creada correctamente");
         setIsFormOpen(false);
@@ -82,7 +82,22 @@ export function CategoriasView() {
       key: "name",
       label: "Nombre de la categoría",
       isRowHeader: true,
-      render: (category) => <span className="font-medium">{category.name}</span>,
+      render: (category) => (
+        <span className="flex items-center gap-3">
+          {category.image ? (
+            <img
+              src={category.image}
+              alt=""
+              className="size-9 shrink-0 rounded-md border border-border object-cover"
+            />
+          ) : (
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-secondary">
+              <FolderTree className="size-4 text-muted" />
+            </span>
+          )}
+          <span className="font-medium">{category.name}</span>
+        </span>
+      ),
     },
     {
       key: "products",
