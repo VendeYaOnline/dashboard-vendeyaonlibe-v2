@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryAllCategories, useQueryImages } from "@/app/api/queries";
+import { useQueryAllCategories, useQueryImages, useQueryPlan } from "@/app/api/queries";
+import { PlanUsage } from "@/components/shared/plan-usage";
 import {
   useMutationDeleteImage,
   useMutationImages,
@@ -56,6 +57,12 @@ export function GaleriaView() {
   );
   // Lista completa: el filtro y el modal de subida necesitan todas las categorías.
   const { data: categoriesData } = useQueryAllCategories();
+  // Tope de imágenes del plan de la empresa.
+  const { data: plan } = useQueryPlan();
+  const imageLimitReached =
+    plan?.limits.images !== null &&
+    plan?.limits.images !== undefined &&
+    plan.usage.images >= plan.limits.images;
   const categories = categoriesData?.categories ?? [];
 
   const uploadMutation = useMutationImages();
@@ -244,16 +251,26 @@ export function GaleriaView() {
           (data?.grandTotal ?? 0) === 1 ? "imagen" : "imágenes"
         } en total`}
         actions={
-          <Button
-            variant="primary"
-            isDisabled={!canManage}
-            onPress={() => setIsUploadOpen(true)}
-          >
-            <Plus className="size-4" />
-            Subir imágenes
-          </Button>
+          <div className="flex items-center gap-3">
+            <PlanUsage kind="images" plan={plan} />
+            <Button
+              variant="primary"
+              isDisabled={!canManage || imageLimitReached}
+              onPress={() => setIsUploadOpen(true)}
+            >
+              <Plus className="size-4" />
+              Subir imágenes
+            </Button>
+          </div>
         }
       />
+
+      {imageLimitReached && (
+        <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+          Tu plan permite {plan?.limits.images} imágenes y ya las tienes todas. Elimina alguna o
+          contacta a VendeYa para ampliarlo.
+        </div>
+      )}
 
       <Card>
         <Card.Content className="p-4">

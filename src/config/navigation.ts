@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Package,
   Settings2,
+  ShieldCheck,
   ShoppingCart,
   Star,
   Users,
@@ -33,13 +34,21 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/galeria", label: "Galería", icon: ImageIcon },
   { href: "/mensajes", label: "Mensajes", icon: MessageSquare },
   { href: "/analisis", label: "Análisis", icon: BarChart3 },
-  { href: "/usuarios", label: "Usuarios", icon: Users, roles: ["admin"] },
+  { href: "/usuarios", label: "Usuarios", icon: Users, roles: ["admin", "superadmin"] },
+  // Administración de la plataforma (empresas, planes): solo el superadministrador.
+  { href: "/plataforma", label: "Plataforma", icon: ShieldCheck, roles: ["superadmin"] },
 ];
+
+/** Rol de quien administra la plataforma (todas las empresas). Hereda lo de admin. */
+export const SUPERADMIN_ROLE = "superadmin";
+
+export const isAdminRole = (role?: string) => role === "admin" || role === SUPERADMIN_ROLE;
 
 /** Ruta a la que se entra tras iniciar sesión. */
 export const DEFAULT_ROUTE = "/ventas";
 
 export const ROLE_LABELS: Record<string, string> = {
+  superadmin: "Superadministrador",
   admin: "Administrador",
   editor: "Editor",
   viewer: "Espectador",

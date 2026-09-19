@@ -3,6 +3,8 @@ import {
   createAttribute,
   createCarousel,
   createCategory,
+  createPlatformCompany,
+  updatePlatformCompany,
   createCover,
   createFeaturedProduct,
   createProduct,
@@ -132,6 +134,7 @@ export const useMutationImages = () => {
     mutationFn: uploadImages,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["images"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -171,6 +174,7 @@ export const useMutationDeleteImage = () => {
     mutationFn: deleteImage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["images"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
       // Puede haber quitado la imagen de la galería secundaria de un producto
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["carousels"] });
@@ -211,6 +215,29 @@ export const useMutationDeleteUser = () => {
   });
 };
 
+// * Plataforma
+
+export const useMutationCreateCompany = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createPlatformCompany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
+  });
+};
+
+export const useMutationUpdateCompany = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatePlatformCompany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+};
+
 // * Contacts
 
 export const useMutationContactRead = () => {
@@ -242,6 +269,7 @@ export const useMutationProduct = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -253,6 +281,7 @@ export const useMutationUpdatedProduct = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -264,6 +293,7 @@ export const useMutationUpdateProductStock = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -275,6 +305,7 @@ export const useMutationDeleteProduct = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -345,6 +376,7 @@ export const useMutationCreateSale = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };
@@ -356,6 +388,7 @@ export const useMutationDeleteSale = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
 };

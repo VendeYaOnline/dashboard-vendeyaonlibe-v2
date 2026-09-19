@@ -9,7 +9,8 @@ import { DataTable, type DataTableColumn } from "@/components/shared/data-table"
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryProducts } from "@/app/api/queries";
+import { useQueryPlan, useQueryProducts } from "@/app/api/queries";
+import { PlanUsage } from "@/components/shared/plan-usage";
 import {
   useMutationDeleteProduct,
   useMutationProduct,
@@ -41,6 +42,12 @@ export function ProductosView() {
   useEffect(() => setPage(1), [debouncedSearch]);
 
   const { data, isLoading, isPlaceholderData } = useQueryProducts(page, debouncedSearch);
+  // Tope de productos del plan de la empresa.
+  const { data: plan } = useQueryPlan();
+  const productLimitReached =
+    plan?.limits.products !== null &&
+    plan?.limits.products !== undefined &&
+    plan.usage.products >= plan.limits.products;
   const createMutation = useMutationProduct();
   const updateMutation = useMutationUpdatedProduct();
   const deleteMutation = useMutationDeleteProduct();
@@ -225,19 +232,29 @@ export function ProductosView() {
         title="Productos"
         description="Gestiona los productos de tu tienda"
         actions={
-          <Button
-            variant="primary"
-            isDisabled={!canManage}
-            onPress={() => {
-              setSelected(null);
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            Crear producto
-          </Button>
+          <div className="flex items-center gap-3">
+            <PlanUsage kind="products" plan={plan} />
+            <Button
+              variant="primary"
+              isDisabled={!canManage || productLimitReached}
+              onPress={() => {
+                setSelected(null);
+                setIsFormOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              Crear producto
+            </Button>
+          </div>
         }
       />
+
+      {productLimitReached && (
+        <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+          Tu plan permite {plan?.limits.products} productos y ya los tienes todos. Elimina alguno o
+          contacta a VendeYa para ampliarlo.
+        </div>
+      )}
 
       <Card>
         <Card.Content className="p-4">
