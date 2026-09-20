@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Chip, toast } from "@heroui/react";
+import { Button, Card, Chip, cn, toast } from "@heroui/react";
 import { Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -20,6 +20,10 @@ import { MAX_FEATURED_PRODUCTS, type FeaturedProduct } from "@/interfaces/featur
 import { FeaturedProductFormModal } from "./components/featured-product-form-modal";
 import { formatCOP } from "@/features/productos/utils";
 
+/** Mismo semáforo que la tabla de productos: verde > 10, naranja 5–10, rojo < 5. */
+const stockTone = (quantity: number) =>
+  quantity > 10 ? "text-success" : quantity >= 5 ? "text-warning" : "text-danger";
+
 export function ProductosDestacadosView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
 
@@ -32,7 +36,7 @@ export function ProductosDestacadosView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryFeaturedProducts(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryFeaturedProducts(page, debouncedSearch);
   const createMutation = useMutationFeaturedProduct();
   const deleteMutation = useMutationDeleteFeaturedProduct();
 
@@ -88,11 +92,16 @@ export function ProductosDestacadosView() {
     {
       key: "stock",
       label: "Stock",
-      render: ({ product }) => (
-        <Chip size="sm" variant="soft" color={product.stock ? "success" : "danger"}>
-          {product.stock ? "Con stock" : "Sin stock"}
-        </Chip>
-      ),
+      render: ({ product }) =>
+        product.quantity != null ? (
+          <span className={cn("font-semibold tabular-nums", stockTone(product.quantity))}>
+            {product.quantity}
+          </span>
+        ) : (
+          <Chip size="sm" variant="soft" color={product.stock ? "success" : "danger"}>
+            {product.stock ? "Disponible" : "Agotado"}
+          </Chip>
+        ),
     },
     {
       key: "price",
@@ -119,12 +128,7 @@ export function ProductosDestacadosView() {
     {
       key: "reference",
       label: "Referencia",
-      render: ({ product }) => <span>{product.reference || "-"}</span>,
-    },
-    {
-      key: "images",
-      label: "Imágenes",
-      render: ({ product }) => <span>{product.images?.length ?? 0}</span>,
+      render: ({ product }) => <span className="text-muted">{product.reference || "-"}</span>,
     },
     {
       key: "actions",
@@ -153,7 +157,7 @@ export function ProductosDestacadosView() {
       <PageHeader
         icon={Star}
         title="Productos Destacados"
-        description={`Gestiona los productos destacados de tu tienda (${grandTotal}/${MAX_FEATURED_PRODUCTS})`}
+        description={`Se muestran en la portada de tu tienda · ${grandTotal}/${MAX_FEATURED_PRODUCTS} destacados`}
         actions={
           <Button
             variant="primary"
@@ -177,15 +181,23 @@ export function ProductosDestacadosView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Al paginar o buscar, la página anterior sigue visible (atenuada) hasta que llega la nueva. */}
+      <Card
+        className={cn("overflow-hidden transition-opacity", isPlaceholderData && "opacity-60")}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Productos destacados"
           items={featuredProducts}
           columns={columns}
           getRowId={(featured) => featured.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando productos destacados..."
-          emptyMessage="No se encontraron productos destacados"
+          emptyMessage={
+            debouncedSearch
+              ? "Ningún producto destacado coincide con la búsqueda"
+              : "Aún no has destacado productos"
+          }
         />
         <TablePagination
           currentPage={page}

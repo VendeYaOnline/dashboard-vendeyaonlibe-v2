@@ -40,7 +40,7 @@ export function FeaturedProductFormModal({
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isFetching } = useQueryProducts(page, debouncedSearch, isOpen);
+  const { data, isLoading, isPlaceholderData } = useQueryProducts(page, debouncedSearch, isOpen);
 
   const handleSelectProduct = (product: Products) => {
     setSelectedProduct((prev) => (prev?.id === product.id ? null : product));
@@ -81,7 +81,9 @@ export function FeaturedProductFormModal({
                   currentPage={page}
                   totalPages={data?.totalPages ?? 1}
                   onPageChange={setPage}
-                  isLoading={isFetching}
+                  isLoading={isLoading}
+                  isRefreshing={isPlaceholderData}
+                  emptyMessage="No hay productos que coincidan con la búsqueda"
                 />
               </Modal.Body>
 
@@ -97,9 +99,11 @@ export function FeaturedProductFormModal({
                 <PendingButton
                   variant="primary"
                   type="submit"
-                   isDisabled={!selectedProduct} isPending={isPending} pendingLabel="Destacando"
+                  isDisabled={!selectedProduct}
+                  isPending={isPending}
+                  pendingLabel="Destacando"
                 >
-                  {"Destacar producto"}
+                  Destacar producto
                 </PendingButton>
               </Modal.Footer>
             </form>
