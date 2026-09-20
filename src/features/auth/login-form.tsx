@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Store } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import {
   Button,
   Checkbox,
@@ -53,10 +54,8 @@ export function LoginForm() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <div className="mb-8 flex items-center gap-2">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-accent">
-            <Store className="size-5 text-accent-foreground" />
-          </div>
+        <div className="mb-8 flex items-center gap-3">
+          <Image src="/logo.svg" alt="" width={40} height={40} priority className="size-10" />
           <span className="text-xl font-semibold">VendeYa</span>
         </div>
         <h2 className="text-3xl sm:text-4xl">Panel de Administración</h2>

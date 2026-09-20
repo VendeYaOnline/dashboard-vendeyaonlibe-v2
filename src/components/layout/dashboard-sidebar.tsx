@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, Store, UserCircle, X } from "lucide-react";
+import Image from "next/image";
+import { LogOut, Menu, UserCircle, X } from "lucide-react";
 import { Button, Chip, cn } from "@heroui/react";
 import { logoutUser } from "@/app/api/request";
 import { useAuthStore } from "@/store/auth.store";
@@ -33,32 +34,32 @@ export function DashboardSidebar() {
 
   return (
     <>
-      {/* Barra superior sólo en móvil */}
-      <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
-        <div className="flex items-center gap-2">
-          <Store className="size-6 text-accent" />
-          <span className="text-lg font-semibold">VendeYa</span>
-        </div>
+      {/* Barra superior sólo en móvil/tablet: menú a la izquierda, logo a la derecha */}
+      <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-3 lg:hidden">
         <Button
           variant="ghost"
           size="sm"
           isIconOnly
           aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={isMobileMenuOpen}
           onPress={() => setIsMobileMenuOpen((open) => !open)}
         >
           {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
+        <Link href="/" aria-label="VendeYa" className="flex items-center">
+          <Image src="/logo.svg" alt="VendeYa" width={36} height={36} priority className="size-9" />
+        </Link>
       </header>
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-14 z-40 flex h-[calc(100%-3.5rem)] w-64 max-w-[85vw] flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-in-out lg:top-0 lg:h-full lg:max-w-none",
           "lg:translate-x-0",
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="hidden items-center gap-2 px-5 py-5 lg:flex">
-          <Store className="size-6 text-accent" />
+        <div className="hidden items-center gap-3 px-5 py-5 lg:flex">
+          <Image src="/logo.svg" alt="" width={32} height={32} className="size-8" />
           <span className="text-lg font-semibold">VendeYa</span>
         </div>
 
