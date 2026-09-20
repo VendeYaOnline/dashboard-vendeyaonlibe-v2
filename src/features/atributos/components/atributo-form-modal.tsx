@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   Button,
-  Chip,
   Input,
   Label,
   ListBox,
@@ -14,7 +13,7 @@ import {
   cn,
   useOverlayState,
 } from "@heroui/react";
-import { Plus, Settings2, X } from "lucide-react";
+import { Plus, Settings2 } from "lucide-react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import type { Attribute } from "@/interfaces/attributes";
 import {
@@ -30,6 +29,7 @@ import {
 } from "../constants";
 import { CharCounter } from "@/features/productos/components/form-section";
 import { PendingButton } from "@/components/shared/pending-button";
+import { SortableChips } from "@/components/shared/sortable-chips";
 
 interface AtributoFormModalProps {
   /** null = crear, con valor = editar */
@@ -257,29 +257,20 @@ export function AtributoFormModal({
                         </p>
                       ) : null}
 
-                      <div className="flex flex-wrap gap-2">
-                        {colors.map((color, index) => (
+                      {/* Arrastra (o usa ◀ ▶) para definir el orden en que se muestran. */}
+                      <SortableChips
+                        items={colors}
+                        getKey={(color) => color.value}
+                        getLabel={(color) => color.name}
+                        renderPrefix={(color) => (
                           <span
-                            key={`${color.name}-${color.value}`}
-                            className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-sm"
-                          >
-                            <span
-                              style={{ backgroundColor: color.value }}
-                              className="size-4 rounded-full border border-border"
-                            />
-                            {color.name}
-                            <button
-                              type="button"
-                              aria-label={`Quitar ${color.name}`}
-                              onClick={() =>
-                                setColors((prev) => prev.filter((_, i) => i !== index))
-                              }
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
+                            style={{ backgroundColor: color.value }}
+                            className="size-4 shrink-0 rounded-full border border-border"
+                          />
+                        )}
+                        onChange={setColors}
+                        isDisabled={isPending}
+                      />
                     </div>
                   )}
 
@@ -329,23 +320,13 @@ export function AtributoFormModal({
                         </Button>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        {texts.map((value, index) => (
-                          <Chip key={value} variant="soft">
-                            {value}
-                            <button
-                              type="button"
-                              aria-label={`Quitar ${value}`}
-                              className="ml-1"
-                              onClick={() =>
-                                setTexts((prev) => prev.filter((_, i) => i !== index))
-                              }
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </Chip>
-                        ))}
-                      </div>
+                      <SortableChips
+                        items={texts}
+                        getKey={(value) => value}
+                        getLabel={(value) => value}
+                        onChange={setTexts}
+                        isDisabled={isPending}
+                      />
                     </div>
                   )}
                 </div>
