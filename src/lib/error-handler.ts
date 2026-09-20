@@ -23,6 +23,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   FEATURED_PRODUCT_REQUIRED: "Debes seleccionar un producto.",
   FEATURED_PRODUCT_NOT_FOUND: "El producto ya no existe.",
   FEATURED_PRODUCT_DUPLICATED: "Este producto ya está destacado.",
+  FEATURED_NOT_FOUND: "El producto destacado ya no existe.",
   FEATURED_LIMIT_REACHED:
     "Has alcanzado el límite de productos destacados permitidos.",
   PRODUCT_TITLE_DUPLICATED: "Ya existe un producto con ese título en tu tienda. Usa otro título.",

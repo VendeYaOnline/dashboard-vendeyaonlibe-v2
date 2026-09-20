@@ -3,14 +3,14 @@
  * (ver getFeaturedProducts en featured-products.controller.js).
  */
 export interface FeaturedProductDetail {
+  id: string;
   image_product: string;
   title: string;
   price: string;
   discount_price: string;
   stock: boolean;
-  description: string;
-  attributes: string;
-  specs: string;
+  /** Unidades cuando el producto controla inventario; null si no. */
+  quantity?: number | null;
   reference: string;
   discount: number;
   images: string[];
