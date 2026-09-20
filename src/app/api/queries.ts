@@ -232,11 +232,16 @@ export const useQueryFeaturedProducts = (currentPage: number, search: string) =>
 };
 
 /** `date` en formato DD/MM/YYYY (ver getSales en request.ts). */
-export const useQuerySales = (currentPage: number, date: string, status: string) => {
+export const useQuerySales = (
+  currentPage: number,
+  date: string,
+  status: string,
+  search: string = "",
+) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
-    queryKey: ["sales", validPage, date, status],
-    queryFn: () => getSales(validPage, { date, status }),
+    queryKey: ["sales", validPage, date, status, search],
+    queryFn: () => getSales(validPage, { date, status, search }),
     ...SALES_QUERY_OPTIONS,
     enabled: currentPage > 0,
   });

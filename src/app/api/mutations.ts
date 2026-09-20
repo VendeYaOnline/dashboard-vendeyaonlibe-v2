@@ -30,6 +30,7 @@ import {
   updateCover,
   updatedProduct,
   updateProductStock,
+  updateSaleStatus,
   updatedUser,
   uploadImages,
 } from "./request";
@@ -392,6 +393,17 @@ export const useMutationCreateSale = () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+};
+
+export const useMutationUpdateSaleStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateSaleStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
 };

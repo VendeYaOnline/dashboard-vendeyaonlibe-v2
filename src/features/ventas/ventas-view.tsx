@@ -12,44 +12,75 @@ import {
   TextField,
   toast,
 } from "@heroui/react";
-import { Eye, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Eye, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { TablePagination } from "@/components/shared/table-pagination";
+import { SearchField } from "@/components/shared/search-field";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useQuerySales } from "@/app/api/queries";
-import { useMutationCreateSale, useMutationDeleteSale } from "@/app/api/mutations";
+import {
+  useMutationCreateSale,
+  useMutationDeleteSale,
+  useMutationUpdateSaleStatus,
+} from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import { getPaymentMethodLabel, SALE_STATUSES, type CreateSalePayload, type Sale } from "./types";
-import { toBackendDate } from "./utils";
+import { formatSaleTotal, toBackendDate } from "./utils";
 import { VentaDetailsModal } from "./components/venta-details-modal";
 import { VentaFormModal } from "./components/venta-form-modal";
-import { VentaStatusChip } from "./components/venta-status-chip";
+import { VentaStatusMenu } from "./components/venta-status-menu";
 
 export function VentasView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
 
   const [statusFilter, setStatusFilter] = useState("todos");
   const [dateFilter, setDateFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
 
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  useEffect(() => setPage(1), [statusFilter, dateFilter]);
+  useEffect(() => setPage(1), [statusFilter, dateFilter, debouncedSearch]);
 
   const { data, isLoading, isPlaceholderData } = useQuerySales(
     page,
     toBackendDate(dateFilter),
     statusFilter === "todos" ? "" : statusFilter,
+    debouncedSearch,
   );
 
   const sales = data?.sales ?? [];
+  const hasFilters = statusFilter !== "todos" || dateFilter !== "" || debouncedSearch !== "";
 
   const createMutation = useMutationCreateSale();
   const deleteMutation = useMutationDeleteSale();
+  const statusMutation = useMutationUpdateSaleStatus();
+  /** Venta cuyo estado se está guardando (para el spinner en su chip). */
+  const [statusPendingId, setStatusPendingId] = useState<string | null>(null);
+
+  const handleStatusChange = (sale: Sale, status: string) => {
+    setStatusPendingId(sale.id);
+    statusMutation.mutate(
+      { id: sale.id, status },
+      {
+        onSuccess: () => {
+          toast.success(`Orden ${sale.order_number}: ${status}`);
+          // Si el detalle está abierto, refleja el cambio sin cerrarlo.
+          setSelectedSale((current) =>
+            current && current.id === sale.id ? { ...current, status } : current,
+          );
+        },
+        onError: (error) => handleAxiosError(error, "No se pudo cambiar el estado"),
+        onSettled: () => setStatusPendingId(null),
+      },
+    );
+  };
 
   const handleCreateSale = (payload: CreateSalePayload) => {
     createMutation.mutate(payload, {
@@ -81,33 +112,63 @@ export function VentasView() {
       render: (sale) => <span className="font-medium">{sale.purchase_date}</span>,
     },
     {
-      key: "city",
-      label: "Ciudad",
+      key: "order_number",
+      label: "Orden",
       className: "whitespace-nowrap",
-      render: (sale) => <span>{sale.city}</span>,
+      render: (sale) => (
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-sm">{sale.order_number}</span>
+          {sale.type_purchase === "online" && (
+            <span title="Venta desde la tienda en línea" className="text-muted">
+              <Store className="size-3.5" />
+            </span>
+          )}
+        </span>
+      ),
     },
     {
-      key: "phone",
-      label: "Teléfono",
-      className: "whitespace-nowrap",
-      render: (sale) => <span className="font-mono text-sm">{sale.phone}</span>,
+      key: "customer",
+      label: "Cliente",
+      render: (sale) => (
+        <div className="min-w-0">
+          <p className="truncate">{[sale.first_name, sale.last_name].filter(Boolean).join(" ") || "—"}</p>
+          <p className="truncate text-xs text-muted">
+            {sale.city}
+            {sale.phone ? ` · ${sale.phone}` : ""}
+          </p>
+        </div>
+      ),
     },
     {
       key: "status",
       label: "Estado",
-      render: (sale) => <VentaStatusChip status={sale.status} />,
+      render: (sale) => (
+        <VentaStatusMenu
+          status={sale.status}
+          isDisabled={!canManage}
+          isPending={statusPendingId === sale.id}
+          onChange={(status) => handleStatusChange(sale, status)}
+        />
+      ),
     },
     {
-      key: "order_number",
-      label: "Número de orden",
+      key: "total",
+      label: "Total",
       className: "whitespace-nowrap",
-      render: (sale) => <span className="font-mono text-sm">{sale.order_number}</span>,
+      render: (sale) => (
+        <div>
+          <p className="font-medium tabular-nums">{formatSaleTotal(sale.total)}</p>
+          <p className="text-xs text-muted">
+            {sale.quantity} {Number(sale.quantity) === 1 ? "unidad" : "unidades"}
+          </p>
+        </div>
+      ),
     },
     {
       key: "payment_method",
-      label: "Método de pago",
+      label: "Pago",
       className: "whitespace-nowrap",
-      render: (sale) => <span>{getPaymentMethodLabel(sale.payment_method)}</span>,
+      render: (sale) => <span className="text-muted">{getPaymentMethodLabel(sale.payment_method)}</span>,
     },
     {
       key: "actions",
@@ -162,7 +223,16 @@ export function VentasView() {
         <Card.Header>
           <Card.Title className="text-base">Filtros</Card.Title>
         </Card.Header>
-        <Card.Content className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card.Content className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1">
+            <Label>Buscar</Label>
+            <SearchField
+              aria-label="Buscar ventas"
+              placeholder="Orden, cliente, cédula, email o teléfono"
+              value={search}
+              onChange={setSearch}
+            />
+          </div>
           <Select
             selectedKey={statusFilter}
             onSelectionChange={(key) => setStatusFilter(String(key))}
@@ -192,9 +262,11 @@ export function VentasView() {
           <Button
             variant="outline"
             className="sm:col-span-2 lg:col-span-1 lg:self-end"
+            isDisabled={!hasFilters}
             onPress={() => {
               setStatusFilter("todos");
               setDateFilter("");
+              setSearch("");
             }}
           >
             Limpiar filtros

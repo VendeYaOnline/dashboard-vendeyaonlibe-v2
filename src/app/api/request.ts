@@ -384,14 +384,20 @@ export const createSale = async (payload: CreateSalePayload) => {
  */
 export const getSales = async (
   page: number,
-  filters: { date?: string; status?: string } = {},
+  filters: { date?: string; status?: string; search?: string } = {},
 ) => {
   const params = new URLSearchParams({ page: String(page) });
   if (filters.date) params.append("date", filters.date);
   if (filters.status) params.append("status", filters.status);
+  if (filters.search) params.append("search", filters.search);
 
   return (await axiosConfig.get<SaleRequest>(`/get-sales?${params.toString()}`))
     .data;
+};
+
+/** Cambia el estado del pedido (único campo editable de una venta). */
+export const updateSaleStatus = async ({ id, status }: { id: string; status: string }) => {
+  return axiosConfig.put<{ message: string; status: string }>(`/updated-sale/${id}`, { status });
 };
 
 export const deleteSale = async (idElement: string) => {
