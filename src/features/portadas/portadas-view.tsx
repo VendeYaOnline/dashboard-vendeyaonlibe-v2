@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Chip, Tooltip, toast } from "@heroui/react";
-import { Edit2, ExternalLink, LayoutTemplate, Plus, Trash2 } from "lucide-react";
+import { Button, Card, Chip, Tooltip, cn, toast } from "@heroui/react";
+import { ArrowDown, ArrowUp, Edit2, ExternalLink, LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -13,6 +13,7 @@ import { useQueryCovers } from "@/app/api/queries";
 import {
   useMutationCreateCover,
   useMutationDeleteCover,
+  useMutationReorderCovers,
   useMutationUpdateCover,
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
@@ -20,6 +21,9 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Cover, CoverPayload } from "@/interfaces/covers";
 import { PortadaFormModal } from "./components/portada-form-modal";
 import { MAX_COVERS } from "./constants";
+
+/** Total de portadas de la empresa (sin filtro), para saber si la lista está completa. */
+const grandTotalOf = (data: { grandTotal: number } | undefined) => data?.grandTotal ?? 0;
 
 export function PortadasView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -34,12 +38,25 @@ export function PortadasView() {
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
-  const { data, isLoading, isFetching } = useQueryCovers(page, debouncedSearch);
+  const { data, isLoading, isPlaceholderData } = useQueryCovers(page, debouncedSearch);
   const createMutation = useMutationCreateCover();
   const updateMutation = useMutationUpdateCover();
   const deleteMutation = useMutationDeleteCover();
+  const reorderMutation = useMutationReorderCovers();
 
   const covers = data?.covers ?? [];
+  // El orden solo se puede cambiar viendo la lista completa (sin búsqueda; caben en una página).
+  const canReorder = canManage && debouncedSearch === "" && covers.length === grandTotalOf(data);
+
+  const moveCover = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= covers.length) return;
+    const ids = covers.map((cover) => cover.id);
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    reorderMutation.mutate(ids, {
+      onError: (error) => handleAxiosError(error, "No se pudo cambiar el orden"),
+    });
+  };
   const maxCovers = data?.maxCovers ?? MAX_COVERS;
   const grandTotal = data?.grandTotal ?? 0;
   const isLimitReached = grandTotal >= maxCovers;
@@ -81,6 +98,41 @@ export function PortadasView() {
   };
 
   const columns: DataTableColumn<Cover>[] = [
+    {
+      key: "order",
+      label: "Orden",
+      className: "w-24",
+      render: (cover) => {
+        const index = covers.findIndex((item) => item.id === cover.id);
+        return (
+          <div className="flex items-center gap-1">
+            <span className="w-5 text-center text-sm font-medium tabular-nums text-muted">
+              {index + 1}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label={`Subir ${cover.title}`}
+              isDisabled={!canReorder || index === 0 || reorderMutation.isPending}
+              onPress={() => moveCover(index, -1)}
+            >
+              <ArrowUp className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label={`Bajar ${cover.title}`}
+              isDisabled={!canReorder || index === covers.length - 1 || reorderMutation.isPending}
+              onPress={() => moveCover(index, 1)}
+            >
+              <ArrowDown className="size-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
     {
       key: "image",
       label: "Imagen",
@@ -183,7 +235,7 @@ export function PortadasView() {
       <PageHeader
         icon={LayoutTemplate}
         title="Portadas"
-        description="Imágenes destacadas de la portada de tu tienda"
+        description="Banners de la portada de tu tienda, en el orden en que se muestran"
         actions={
           <div className="flex items-center gap-3">
             <Chip size="sm" variant="soft" color={isLimitReached ? "warning" : "default"}>
@@ -216,15 +268,21 @@ export function PortadasView() {
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      {/* Al paginar o buscar, la página anterior sigue visible (atenuada) hasta que llega la nueva. */}
+      <Card
+        className={cn("overflow-hidden transition-opacity", isPlaceholderData && "opacity-60")}
+        aria-busy={isPlaceholderData}
+      >
         <DataTable
           aria-label="Portadas"
           items={covers}
           columns={columns}
           getRowId={(cover) => cover.id}
-          isLoading={isLoading || isFetching}
+          isLoading={isLoading}
           loadingMessage="Cargando portadas..."
-          emptyMessage="Aún no has creado portadas"
+          emptyMessage={
+            debouncedSearch ? "Ninguna portada coincide con la búsqueda" : "Aún no has creado portadas"
+          }
         />
         <TablePagination
           currentPage={page}

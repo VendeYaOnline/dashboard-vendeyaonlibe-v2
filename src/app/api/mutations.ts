@@ -22,6 +22,7 @@ import {
   deleteUser,
   moveImages,
   renameImage,
+  reorderCovers,
   updatedAttribute,
   updatedCarousel,
   updatedCategory,
@@ -114,6 +115,16 @@ export const useMutationUpdateCover = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateCover,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["covers"] });
+    },
+  });
+};
+
+export const useMutationReorderCovers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reorderCovers,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["covers"] });
     },

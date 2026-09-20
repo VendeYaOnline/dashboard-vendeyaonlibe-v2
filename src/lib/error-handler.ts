@@ -31,6 +31,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   COVER_LIMIT_REACHED: "Solo puedes tener 5 portadas. Elimina una para crear otra.",
   COVER_TITLE_DUPLICATED: "Ya existe una portada con ese título. Usa otro título.",
   COVER_NOT_FOUND: "La portada ya no existe.",
+  COVER_ORDER_INVALID: "El orden recibido no coincide con tus portadas. Recarga la página.",
+  INVALID_COVER_IMAGE: "La imagen debe elegirse de la galería de tu tienda.",
   ATTRIBUTE_IN_USE:
     "El atributo lo usan productos. Quítalo de esos productos antes de eliminarlo.",
   ATTRIBUTE_DUPLICATED: "Ya existe un atributo con ese nombre.",

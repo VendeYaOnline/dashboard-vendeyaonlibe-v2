@@ -415,6 +415,11 @@ export const updateCover = async ({ id, ...data }: CoverPayload & { id: string }
   return axiosConfig.put(`/update-cover/${id}`, data);
 };
 
+/** Nuevo orden de todas las portadas (posición = índice en el array). */
+export const reorderCovers = async (ids: string[]) => {
+  return axiosConfig.put("/reorder-covers", { ids });
+};
+
 export const deleteCover = async (id: string) => {
   return axiosConfig.delete(`/delete-cover/${id}`);
 };
