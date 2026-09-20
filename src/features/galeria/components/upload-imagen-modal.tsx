@@ -43,6 +43,9 @@ const splitName = (fileName: string) => {
     : { base: fileName, ext: "" };
 };
 
+/** Clave del ítem "Sin categoría" del selector. */
+const NO_CATEGORY = "__none__";
+
 export function UploadImagenModal({
   isOpen,
   onOpenChange,
@@ -126,8 +129,8 @@ export function UploadImagenModal({
   const names = files.map((item) => item.name.trim().toLowerCase());
   const hasEmptyName = names.some((name) => name === "");
   const duplicated = new Set(names.filter((name, index) => name && names.indexOf(name) !== index));
-  const isValid =
-    files.length > 0 && categoryId !== "" && !hasEmptyName && duplicated.size === 0;
+  // La categoría es opcional: sin ella las imágenes quedan "sin categoría".
+  const isValid = files.length > 0 && !hasEmptyName && duplicated.size === 0;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -312,23 +315,21 @@ export function UploadImagenModal({
                 </div>
 
                 <Select
-                  selectedKey={categoryId || null}
-                  onSelectionChange={(key) => setCategoryId(key ? String(key) : "")}
-                  isDisabled={isPending || categories.length === 0}
+                  selectedKey={categoryId || NO_CATEGORY}
+                  onSelectionChange={(key) =>
+                    setCategoryId(key && String(key) !== NO_CATEGORY ? String(key) : "")
+                  }
+                  isDisabled={isPending}
                 >
-                  <Label>Categoría *</Label>
+                  <Label>Categoría</Label>
                   <Select.Trigger>
-                    {categoryId ? (
-                      <Select.Value />
-                    ) : (
-                      <span className="text-muted">
-                        {categories.length === 0 ? "No hay categorías" : "Seleccionar categoría"}
-                      </span>
-                    )}
+                    <Select.Value />
                     <Select.Indicator />
                   </Select.Trigger>
                   <Select.Popover>
-                    <ListBox>
+                    {/* Lista acotada: con muchas categorías se desplaza en vez de crecer. */}
+                    <ListBox className="max-h-56 overflow-y-auto">
+                      <ListBoxItem id={NO_CATEGORY}>Sin categoría</ListBoxItem>
                       {categories.map((category) => (
                         <ListBoxItem key={category.id} id={category.id}>
                           {category.name}
