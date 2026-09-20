@@ -46,8 +46,8 @@ export function DashboardSidebar() {
         >
           {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
-        <Link href="/" aria-label="VendeYa" className="flex items-center">
-          <Image src="/logo.svg" alt="VendeYa" width={36} height={36} priority className="size-9" />
+        <Link href="/" aria-label="VendeYaOnline" className="flex items-center">
+          <Image src="/logo.svg" alt="VendeYaOnline" width={36} height={36} priority className="size-9" />
         </Link>
       </header>
 
@@ -60,21 +60,26 @@ export function DashboardSidebar() {
       >
         <div className="hidden items-center gap-3 px-5 py-5 lg:flex">
           <Image src="/logo.svg" alt="" width={32} height={32} className="size-8" />
-          <span className="text-lg font-semibold">VendeYa</span>
+          <span className="text-lg font-semibold">VendeYaOnline</span>
         </div>
 
         {authUser && (
-          <div className="flex items-center gap-3 border-y border-sidebar-border px-4 py-3 lg:border-t-0">
+          <div className="flex items-start gap-3 border-y border-sidebar-border px-4 py-3 lg:border-t-0">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft">
               <UserCircle className="size-5 text-accent" />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{authUser.username}</p>
-              <p className="truncate text-xs text-muted">{authUser.email}</p>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-sm font-semibold" title={authUser.username}>
+                {authUser.username}
+              </p>
+              {/* El email va completo (con salto si hace falta); el rol debajo para no robarle ancho. */}
+              <p className="break-all text-xs leading-snug text-muted" title={authUser.email}>
+                {authUser.email}
+              </p>
+              <Chip size="sm" variant="soft" color="accent">
+                {ROLE_LABELS[authUser.role] ?? authUser.role}
+              </Chip>
             </div>
-            <Chip size="sm" variant="soft" color="accent">
-              {ROLE_LABELS[authUser.role] ?? authUser.role}
-            </Chip>
           </div>
         )}
 

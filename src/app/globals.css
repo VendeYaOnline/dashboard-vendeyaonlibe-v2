@@ -8,7 +8,7 @@
 @source "../";
 
 /*
- * Marca VendeYa.
+ * Marca VendeYaOnline.
  * HeroUI define sus tokens dentro de `@layer base`; este bloque va sin capa,
  * así que gana en la cascada sin necesidad de !important.
  */

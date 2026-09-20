@@ -1,6 +1,6 @@
 /**
  * Departamentos y ciudades de Colombia, usados en el formulario de crear
- * venta. VendeYa opera en Colombia (mismo dataset que usa `dashboard-cliente`
+ * venta. VendeYaOnline opera en Colombia (mismo dataset que usa `dashboard-cliente`
  * v1 contra el mismo backend).
  */
 export const DEPARTMENTS_AND_CITIES: Record<string, string[]> = {
