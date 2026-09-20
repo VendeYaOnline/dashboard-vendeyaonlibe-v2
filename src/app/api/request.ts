@@ -48,7 +48,7 @@ export const createAttribute = async (data: Attribute) => {
 
 // ? Update Attribute
 export const updatedAttribute = async ({ id, ...data }: Attribute) => {
-  return axiosConfig.put(`/update-attribute/${id}`, data);
+  return axiosConfig.put<{ message: string; updatedProducts: number }>(`/update-attribute/${id}`, data);
 };
 
 // ? Delete Attribute
