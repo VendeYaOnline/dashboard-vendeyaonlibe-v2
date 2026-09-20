@@ -5,6 +5,8 @@ export interface Cover {
   title: string;
   description: string;
   link: string;
+  /** Orden en la tienda (0 = primera); null en portadas antiguas. */
+  position?: number | null;
 }
 
 export interface CoverPayload {
