@@ -62,8 +62,10 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table.Root>
+    // El contenedor recorta y desplaza; la tabla puede ser más ancha que él
+    // (min-w-max) en vez de comprimir las columnas hasta hacerlas ilegibles.
+    <div className="w-full overflow-x-auto">
+      <Table.Root className="w-max min-w-full">
         {/* Table.Content es el `Table` de React Aria; header y body deben ir dentro. */}
         <Table.Content aria-label={ariaLabel}>
           <Table.Header>
@@ -72,7 +74,7 @@ export function DataTable<T>({
                 key={column.key}
                 id={column.key}
                 isRowHeader={column.isRowHeader}
-                className={cn(ALIGN_CLASS[column.align ?? "start"], column.className)}
+                className={cn("whitespace-nowrap", ALIGN_CLASS[column.align ?? "start"], column.className)}
               >
                 {column.label}
               </Table.Column>

@@ -56,7 +56,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="mb-8 flex items-center gap-3">
           <Image src="/logo.svg" alt="" width={40} height={40} priority className="size-10" />
-          <span className="text-xl font-semibold">VendeYa</span>
+          <span className="text-xl font-semibold">VendeYaOnline</span>
         </div>
         <h2 className="text-3xl sm:text-4xl">Panel de Administración</h2>
         <p className="text-muted">Ingresa tus credenciales para gestionar tu tienda</p>

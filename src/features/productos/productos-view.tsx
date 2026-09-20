@@ -252,7 +252,7 @@ export function ProductosView() {
       {productLimitReached && (
         <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           Tu plan permite {plan?.limits.products} productos y ya los tienes todos. Elimina alguno o
-          contacta a VendeYa para ampliarlo.
+          contacta a VendeYaOnline para ampliarlo.
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/features/auth/login-form";
 
-export const metadata: Metadata = { title: "Iniciar sesión | VendeYa" };
+export const metadata: Metadata = { title: "Iniciar sesión | VendeYaOnline" };
 
 export default function LoginPage() {
   return (
@@ -15,7 +15,7 @@ export default function LoginPage() {
             </h1>
             <p className="text-lg leading-relaxed text-accent-foreground/80">
               Accede al panel de administración para controlar tus productos, pedidos y
-              hacer crecer tu negocio con VendeYa.
+              hacer crecer tu negocio con VendeYaOnline.
             </p>
           </div>
         </div>

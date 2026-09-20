@@ -268,7 +268,7 @@ export function GaleriaView() {
       {imageLimitReached && (
         <div className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
           Tu plan permite {plan?.limits.images} imágenes y ya las tienes todas. Elimina alguna o
-          contacta a VendeYa para ampliarlo.
+          contacta a VendeYaOnline para ampliarlo.
         </div>
       )}
 
