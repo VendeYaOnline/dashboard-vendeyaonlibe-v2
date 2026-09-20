@@ -120,8 +120,9 @@ export const uploadImages = async ({
   categoryId: string;
   formData: FormData;
 }) => {
+  // Sin categoría se sube a la raíz de la galería.
   return axiosConfig.post(
-    `/upload-images?categoryId=${encodeURIComponent(categoryId)}`,
+    categoryId ? `/upload-images?categoryId=${encodeURIComponent(categoryId)}` : "/upload-images",
     formData,
     {
       headers: {

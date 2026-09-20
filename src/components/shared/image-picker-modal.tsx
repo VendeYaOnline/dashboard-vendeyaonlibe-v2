@@ -132,6 +132,7 @@ export function ImagePickerModal({
                     {/* Lista acotada: con muchas categorías se desplaza en vez de crecer. */}
                     <ListBox className="max-h-56 overflow-y-auto">
                       <ListBoxItem id="all">Todas las categorías</ListBoxItem>
+                      <ListBoxItem id="none">Sin categoría</ListBoxItem>
                       {categories.map((category) => (
                         <ListBoxItem key={category.id} id={category.id}>
                           {category.name}
