@@ -54,6 +54,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   MOVE_LIMIT: "Puedes mover como máximo 10 imágenes a la vez.",
   CATEGORY_REQUIRED: "Selecciona la categoría de destino.",
   CONTACT_NOT_FOUND: "El mensaje ya no existe.",
+  SALE_NOT_FOUND: "La venta ya no existe.",
+  SALE_STATUS_INVALID: "El estado seleccionado no es válido.",
   USER_NOT_FOUND: "El usuario ya no existe.",
   PLAN_PRODUCT_LIMIT: "Has alcanzado el tope de productos de tu plan. Contacta a VendeYa para ampliarlo.",
   PLAN_IMAGE_LIMIT: "Has alcanzado el tope de imágenes de tu plan. Contacta a VendeYa para ampliarlo.",

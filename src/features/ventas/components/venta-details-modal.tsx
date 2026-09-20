@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, ShoppingBag } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
 import { getPaymentMethodLabel, type Sale } from "../types";
+import { formatSaleTotal } from "../utils";
 import { PurchasedProductsModal } from "./purchased-products-modal";
 import { VentaStatusChip } from "./venta-status-chip";
 
@@ -110,7 +111,7 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                             {getPaymentMethodLabel(sale.payment_method)}
                           </Field>
                           <Field label="Cantidad total">{sale.quantity}</Field>
-                          <Field label="Total pagado">${sale.total}</Field>
+                          <Field label="Total pagado">{formatSaleTotal(sale.total)}</Field>
                         </div>
                       </div>
                     </Section>
