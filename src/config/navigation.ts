@@ -26,7 +26,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
   { href: "/productos", label: "Productos", icon: Package },
-  { href: "/productos-destacados", label: "Productos star", icon: Star },
+  { href: "/productos-destacados", label: "Productos destacados", icon: Star },
   { href: "/carrusel", label: "Carrusel", icon: Images },
   { href: "/portadas", label: "Portadas", icon: LayoutTemplate },
   { href: "/categorias", label: "Categorías", icon: FolderTree },

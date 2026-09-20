@@ -14,12 +14,20 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
 
-  const allowed = !user || pathname === "/" || canAccessRoute(user.role, pathname);
+  const allowed = Boolean(user) && (pathname === "/" || canAccessRoute(user?.role, pathname));
 
   useEffect(() => {
-    if (!allowed) router.replace(getHomeRoute(user?.role));
-  }, [allowed, router, user?.role]);
+    if (!hasHydrated) return;
 
-  return allowed ? <>{children}</> : null;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!allowed) router.replace(getHomeRoute(user.role));
+  }, [allowed, hasHydrated, router, user]);
+
+  return hasHydrated && allowed ? <>{children}</> : null;
 }

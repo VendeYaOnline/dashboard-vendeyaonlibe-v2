@@ -156,7 +156,7 @@ export function ProductosDestacadosView() {
     <div className="space-y-6">
       <PageHeader
         icon={Star}
-        title="Productos Star"
+        title="Productos Destacados"
         description={`Se muestran en la portada de tu tienda · ${grandTotal}/${MAX_FEATURED_PRODUCTS} destacados`}
         actions={
           <Button

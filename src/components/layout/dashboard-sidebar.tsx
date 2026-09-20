@@ -25,6 +25,7 @@ export function DashboardSidebar() {
     } catch {
       // continuar con el logout aunque falle la petición
     } finally {
+      localStorage.removeItem("access_token");
       logout();
       router.push("/login");
     }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Google_Sans } from "next/font/google";
+// @ts-ignore: Next.js processes this global stylesheet import at build time.
 import "./globals.css";
 import { Providers } from "./providers";
 
