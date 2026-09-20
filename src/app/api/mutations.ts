@@ -50,6 +50,10 @@ export const useMutationUpdatedAttribute = () => {
     mutationFn: updatedAttribute,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["attributes"] });
+      // El cambio se propaga a los productos que usan el atributo (nombre, valores, variantes).
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["carousels"] });
+      queryClient.invalidateQueries({ queryKey: ["featured-products"] });
     },
   });
 };

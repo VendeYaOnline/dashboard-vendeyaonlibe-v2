@@ -46,8 +46,15 @@ export function AtributosView() {
       updateMutation.mutate(
         { ...values, id: selected.id },
         {
-          onSuccess: () => {
-            toast.success("Atributo actualizado correctamente");
+          onSuccess: (response) => {
+            const updatedProducts = response.data?.updatedProducts ?? 0;
+            toast.success(
+              updatedProducts > 0
+                ? `Atributo actualizado y aplicado a ${updatedProducts} ${
+                    updatedProducts === 1 ? "producto" : "productos"
+                  }`
+                : "Atributo actualizado correctamente",
+            );
             setIsFormOpen(false);
             setSelected(null);
           },
