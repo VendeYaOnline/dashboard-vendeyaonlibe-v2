@@ -12,6 +12,8 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
 // Códigos de negocio devueltos por el backend
 const API_ERROR_MESSAGES: Record<string, string> = {
   CAROUSEL_NAME_REQUIRED: "El nombre del carrusel es obligatorio.",
+  CAROUSEL_NAME_TOO_LONG: "El nombre del carrusel no puede superar 50 caracteres.",
+  CAROUSEL_NAME_DUPLICATED: "Ya existe un carrusel con ese nombre.",
   CAROUSEL_PRODUCTS_RANGE: "Un carrusel debe tener entre 3 y 8 productos.",
   CAROUSEL_PRODUCTS_INVALID:
     "Alguno de los productos seleccionados ya no está disponible.",

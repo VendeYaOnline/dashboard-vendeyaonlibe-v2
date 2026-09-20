@@ -23,3 +23,5 @@ export interface CarouselPayload {
 export const MAX_CAROUSELS = 5;
 export const MIN_PRODUCTS_CAROUSEL = 3;
 export const MAX_PRODUCTS_CAROUSEL = 8;
+/** Mismo tope que el backend. */
+export const MAX_CAROUSEL_NAME_LENGTH = 50;

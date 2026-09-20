@@ -12,11 +12,13 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { CharCounter } from "@/features/productos/components/form-section";
 import { ProductSelectGrid } from "@/components/shared/product-select-grid";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useQueryAvailableProducts } from "@/app/api/queries";
 import type { Products } from "@/interfaces/products";
 import {
+  MAX_CAROUSEL_NAME_LENGTH,
   MAX_PRODUCTS_CAROUSEL,
   MIN_PRODUCTS_CAROUSEL,
   type Carousel,
@@ -112,9 +114,15 @@ export function CarouselFormModal({
               />
 
               <Modal.Body className="space-y-5">
-                <TextField value={name} onChange={setName} isRequired autoFocus>
+                <TextField
+                  value={name}
+                  onChange={(value) => setName(value.slice(0, MAX_CAROUSEL_NAME_LENGTH))}
+                  isRequired
+                  autoFocus
+                >
                   <Label>Nombre del carrusel</Label>
-                  <Input placeholder="Ej: Ofertas de temporada" maxLength={50} />
+                  <Input placeholder="Ej: Ofertas de temporada" maxLength={MAX_CAROUSEL_NAME_LENGTH} />
+                  <CharCounter length={name.length} max={MAX_CAROUSEL_NAME_LENGTH} />
                 </TextField>
 
                 <div className="space-y-2">
@@ -137,9 +145,19 @@ export function CarouselFormModal({
                       {selectedProducts.map((product) => (
                         <span
                           key={product.id}
-                          className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs text-accent-soft-foreground"
+                          className="inline-flex max-w-full items-center gap-2 rounded-full bg-accent-soft py-1 pr-2 pl-1 text-xs text-accent-soft-foreground"
                         >
-                          {product.title}
+                          <img
+                            src={product.image_product}
+                            alt=""
+                            className="size-6 shrink-0 rounded-full object-cover"
+                          />
+                          <span className="truncate">{product.title}</span>
+                          {product.stock === false && (
+                            <span className="shrink-0 rounded-full bg-danger/10 px-1.5 text-[10px] font-medium text-danger">
+                              Agotado
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleSelectProduct(product)}
@@ -171,7 +189,8 @@ export function CarouselFormModal({
                     emptyMessage="No hay productos disponibles para asignar"
                   />
                   <p className="text-xs text-muted">
-                    Solo se listan productos que no pertenecen a otro carrusel.
+                    Solo se listan productos que no pertenecen a otro carrusel. Los agotados
+                    se muestran igualmente en la tienda, marcados como agotados.
                   </p>
                 </div>
               </Modal.Body>
