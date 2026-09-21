@@ -153,6 +153,7 @@ export const PAYMENT_METHODS = [
   { id: "debit_card", label: "Tarjeta de débito" },
   { id: "ticket", label: "Efecty" },
   { id: "bank_transfer", label: "Transferencia" },
+  { id: "bre_b", label: "Llave BRE-B" },
   { id: "account_money", label: "Mercado pago" },
   { id: "other", label: "Otro" },
 ] as const;
