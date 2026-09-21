@@ -26,6 +26,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -33,15 +34,8 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await loginUser({ email, password });
-      const token =
-        response.data.access_token ??
-        response.data.accessToken ??
-        response.data.token;
-
-      if (token) localStorage.setItem("access_token", token);
-
-      setAuth(response.data.user);
+      const response = await loginUser({ email, password, remember });
+      setAuth(response.data.user, remember);
       toast.success("Inicio de sesión exitoso");
       router.push(getHomeRoute(response.data.user?.role));
     } catch (error) {
@@ -98,7 +92,7 @@ export function LoginForm() {
           </InputGroup>
         </TextField>
 
-        <Checkbox>
+        <Checkbox isSelected={remember} onChange={setRemember}>
           <Checkbox.Content>
             <Checkbox.Control>
               <Checkbox.Indicator />

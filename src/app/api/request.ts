@@ -19,9 +19,13 @@ import { FeaturedProductRequest } from "@/interfaces/featured-products";
 import { CreateSalePayload, Sale, SaleRequest } from "@/features/ventas/types";
 
 // ? Login User
-export const loginUser = async (data: { email: string; password: string }) => {
+export const loginUser = async (data: { email: string; password: string; remember: boolean }) => {
   return axiosConfig.post("/login-user", data);
 };
+
+/** Comprueba la cookie o token vigente antes de mostrar el panel. */
+export const verifySession = async () =>
+  (await axiosConfig.get<{ user: { username: string; email: string; role: string } }>("/verify-token")).data;
 
 // ------------------------------------
 // * Attributes
