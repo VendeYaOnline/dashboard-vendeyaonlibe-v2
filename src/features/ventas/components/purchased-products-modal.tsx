@@ -51,6 +51,11 @@ export function PurchasedProductsModal({
                         >
                           {item.title}
                         </h4>
+                        {item.variant_label && (
+                          <p className="text-xs text-muted" title={item.variant_label}>
+                            {item.variant_label}
+                          </p>
+                        )}
                         <p className="text-xs text-muted">
                           {item.discount > 0 ? (
                             <>

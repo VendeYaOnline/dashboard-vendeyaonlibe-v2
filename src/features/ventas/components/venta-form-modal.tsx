@@ -12,6 +12,7 @@ import {
   Select,
   TextArea,
   TextField,
+  toast,
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
@@ -104,15 +105,20 @@ export function VentaFormModal({
     ? (DEPARTMENTS_AND_CITIES[form.department] ?? [])
     : [];
 
-  const handleAddProduct = (product: Products, quantity: number) => {
+  // La misma variante agregada dos veces suma cantidades, sin pasar del
+  // inventario disponible; otra variante del mismo producto es otra línea.
+  const handleAddProduct = (line: SelectedProduct) => {
     setProducts((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item,
-        );
+      const existing = prev.find((item) => item.lineKey === line.lineKey);
+      if (!existing) return [...prev, line];
+      const wanted = existing.quantity + line.quantity;
+      const quantity = line.available === null ? wanted : Math.min(wanted, line.available);
+      if (quantity < wanted) {
+        toast.warning(`Solo hay ${line.available} unidades disponibles de esa variante`);
       }
-      return [...prev, { ...product, quantity }];
+      return prev.map((item) =>
+        item.lineKey === line.lineKey ? { ...item, quantity, available: line.available } : item,
+      );
     });
     setIsProductPickerOpen(false);
   };
@@ -129,6 +135,9 @@ export function VentaFormModal({
     // en la venta — ver SaleProduct en ../types.
     const items = products.map((product) => ({
       id: product.id,
+      variant_key: product.variant_key,
+      variant_label: product.variant_label,
+      bundle_items: product.bundle_items,
       image_product: product.image_product,
       title: product.title,
       price: product.price,
@@ -333,7 +342,7 @@ export function VentaFormModal({
                           <p className="text-sm font-medium">Productos seleccionados:</p>
                           {products.map((product) => (
                             <div
-                              key={product.id}
+                              key={product.lineKey}
                               className="flex items-center justify-between rounded bg-surface-secondary p-2"
                             >
                               <div className="flex items-center gap-3">
@@ -348,8 +357,13 @@ export function VentaFormModal({
                                     Sin img
                                   </div>
                                 )}
-                                <div>
+                                <div className="min-w-0">
                                   <p className="text-sm font-medium">{product.title}</p>
+                                  {product.variant_label && (
+                                    <p className="truncate text-xs text-muted" title={product.variant_label}>
+                                      {product.variant_label}
+                                    </p>
+                                  )}
                                   <p className="text-xs text-muted">
                                     Cantidad: {product.quantity} × $
                                     {unitPrice(product).toFixed(2)}
@@ -365,7 +379,7 @@ export function VentaFormModal({
                                 className="text-danger"
                                 onPress={() =>
                                   setProducts((prev) =>
-                                    prev.filter((item) => item.id !== product.id),
+                                    prev.filter((item) => item.lineKey !== product.lineKey),
                                   )
                                 }
                               >
