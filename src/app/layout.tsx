@@ -12,6 +12,10 @@ const googleSans = Google_Sans({
 export const metadata: Metadata = {
   title: "VendeYaOnline - Panel de Clientes",
   description: "Panel de Clientes",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
