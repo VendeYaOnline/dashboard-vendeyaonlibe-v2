@@ -11,6 +11,9 @@ importers:
       '@heroui/react':
         specifier: ^3.2.2
         version: 3.2.2(@react-spectrum/provider@3.11.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)
+      '@internationalized/date':
+        specifier: 3.12.2
+        version: 3.12.2
       '@tanstack/react-query':
         specifier: ^5.90.21
         version: 5.90.21(react@19.2.3)

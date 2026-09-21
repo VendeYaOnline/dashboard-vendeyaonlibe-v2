@@ -28,6 +28,7 @@ import {
 import { DEPARTMENTS_AND_CITIES } from "../colombia";
 import { SelectCatalogProductModal } from "./select-catalog-product-modal";
 import { PendingButton } from "@/components/shared/pending-button";
+import { DatePickerField } from "@/components/shared/date-picker-field";
 
 interface VentaFormModalProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ function Field({
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: "text" | "email" | "tel" | "date";
+  type?: "text" | "email" | "tel";
   className?: string;
 }) {
   return (
@@ -186,11 +187,11 @@ export function VentaFormModal({
 
                 <Modal.Body className="space-y-6">
                   <Section title="Información del cliente">
-                    <Field
+                    <DatePickerField
                       label="Fecha"
-                      type="date"
                       value={form.date}
-                      onChange={(v) => setField("date", v)}
+                      onChange={(value) => setField("date", value)}
+                      isRequired
                     />
                     <Field
                       label="Teléfono móvil"

@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
-  Input,
   Label,
   ListBox,
   ListBoxItem,
   Select,
-  TextField,
   toast,
 } from "@heroui/react";
 import { Eye, Link as LinkIcon, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
@@ -19,6 +17,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { SearchField } from "@/components/shared/search-field";
+import { DatePickerField } from "@/components/shared/date-picker-field";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useQuerySales } from "@/app/api/queries";
 import {
@@ -264,10 +263,7 @@ export function VentasView() {
             </Select.Popover>
           </Select>
 
-          <TextField value={dateFilter} onChange={setDateFilter} type="date">
-            <Label>Fecha</Label>
-            <Input />
-          </TextField>
+          <DatePickerField label="Fecha" value={dateFilter} onChange={setDateFilter} />
 
           <Button
             variant="outline"
