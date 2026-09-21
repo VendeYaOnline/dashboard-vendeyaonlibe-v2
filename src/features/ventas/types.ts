@@ -9,6 +9,15 @@ import type { Products } from "@/interfaces/products";
  */
 export interface SaleProduct {
   id?: string;
+  /**
+   * Variante vendida (misma clave que `product_variants.variant_key`): con
+   * ella el backend descuenta el inventario de esa combinación. Un producto
+   * vendido como set lleva en su lugar `bundle_items` (una variante por pieza).
+   */
+  variant_key?: string;
+  /** Texto legible de la variante ("Color: Rojo · Talla: M"). */
+  variant_label?: string;
+  bundle_items?: { variant_key: string; variant_label: string }[];
   image_product: string;
   title: string;
   price: string;
@@ -75,9 +84,18 @@ export interface SaleRequest {
   totalPages: number;
 }
 
-/** Producto del catálogo real, con la cantidad elegida al armar la venta. */
+/**
+ * Línea de la venta: un producto del catálogo con la variante (o las piezas
+ * del set) y la cantidad elegidas. `lineKey` distingue dos variantes del
+ * mismo producto; `available` es el tope de unidades (null = sin control).
+ */
 export interface SelectedProduct extends Products {
+  lineKey: string;
   quantity: number;
+  available: number | null;
+  variant_key?: string;
+  variant_label?: string;
+  bundle_items?: { variant_key: string; variant_label: string }[];
 }
 
 export interface VentaFormValues {
