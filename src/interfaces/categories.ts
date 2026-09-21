@@ -3,6 +3,8 @@ export interface Category {
   name: string;
   /** Imagen de la galería que representa la categoría; null si no tiene. */
   image?: string | null;
+  /** Orden en la tienda (0 = primera); null en categorías antiguas. */
+  position?: number | null;
   /** Productos asignados; solo lo devuelve el listado del panel. */
   productCount?: number;
 }

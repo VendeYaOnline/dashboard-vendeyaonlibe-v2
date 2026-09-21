@@ -2,23 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
-import { Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryCategories } from "@/app/api/queries";
+import { useQueryAllCategories, useQueryCategories } from "@/app/api/queries";
 import {
   useMutationCreateCategory,
   useMutationDeleteCategory,
+  useMutationReorderCategories,
   useMutationUpdatedCategory,
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import type { Category } from "@/interfaces/categories";
 import { CategoriaFormModal, type CategoriaFormValues } from "./components/categoria-form-modal";
+import { OrdenarCategoriasModal } from "./components/ordenar-categorias-modal";
 
 export function CategoriasView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -28,15 +30,29 @@ export function CategoriasView() {
   const [page, setPage] = useState(1);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [selected, setSelected] = useState<Category | null>(null);
   const [toDelete, setToDelete] = useState<Category | null>(null);
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
   const { data, isLoading, isPlaceholderData } = useQueryCategories(page, debouncedSearch);
+  // Lista completa (hasta 100) para el modal de orden: la tabla está paginada.
+  const { data: allData, isLoading: isLoadingAll } = useQueryAllCategories(isOrderOpen);
   const createMutation = useMutationCreateCategory();
   const updateMutation = useMutationUpdatedCategory();
   const deleteMutation = useMutationDeleteCategory();
+  const reorderMutation = useMutationReorderCategories();
+
+  const handleReorder = (ids: string[]) => {
+    reorderMutation.mutate(ids, {
+      onSuccess: () => {
+        toast.success("Orden de las categorías actualizado");
+        setIsOrderOpen(false);
+      },
+      onError: (error) => handleAxiosError(error, "No se pudo guardar el orden"),
+    });
+  };
 
   const categories = data?.categories ?? [];
 
@@ -78,6 +94,16 @@ export function CategoriasView() {
   };
 
   const columns: DataTableColumn<Category>[] = [
+    {
+      key: "position",
+      label: "#",
+      className: "w-12",
+      render: (category) => (
+        <span className="text-sm tabular-nums text-muted">
+          {category.position != null ? category.position + 1 : "—"}
+        </span>
+      ),
+    },
     {
       key: "name",
       label: "Nombre de la categoría",
@@ -151,8 +177,17 @@ export function CategoriasView() {
       <PageHeader
         icon={FolderTree}
         title="Categorías"
-        description="Gestiona las categorías de tus productos"
+        description="Gestiona las categorías de tus productos, en el orden en que se muestran"
         actions={
+          <>
+            <Button
+              variant="outline"
+              isDisabled={!canManage || (data?.grandTotal ?? 0) < 2}
+              onPress={() => setIsOrderOpen(true)}
+            >
+              <ArrowUpDown className="size-4" />
+              Ordenar
+            </Button>
           <Button
             variant="primary"
             isDisabled={!canManage}
@@ -164,6 +199,7 @@ export function CategoriasView() {
             <Plus className="size-4" />
             Crear categoría
           </Button>
+          </>
         }
       />
 
@@ -210,6 +246,15 @@ export function CategoriasView() {
         }}
         onSubmit={handleSubmit}
         isPending={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <OrdenarCategoriasModal
+        categories={allData?.categories ?? []}
+        isLoading={isLoadingAll}
+        isOpen={isOrderOpen}
+        onOpenChange={setIsOrderOpen}
+        onSave={handleReorder}
+        isPending={reorderMutation.isPending}
       />
 
       <ConfirmDialog

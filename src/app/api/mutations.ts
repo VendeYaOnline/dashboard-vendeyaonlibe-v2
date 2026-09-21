@@ -22,6 +22,7 @@ import {
   deleteUser,
   moveImages,
   renameImage,
+  reorderCategories,
   reorderCovers,
   updatedAttribute,
   updatedCarousel,
@@ -84,6 +85,16 @@ export const useMutationDeleteCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteCategory,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    },
+  });
+};
+
+export const useMutationReorderCategories = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reorderCategories,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
