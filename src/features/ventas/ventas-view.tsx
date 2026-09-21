@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
@@ -29,11 +30,11 @@ import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import { getPaymentMethodLabel, SALE_STATUSES, type CreateSalePayload, type Sale } from "./types";
 import { formatSaleTotal, toBackendDate } from "./utils";
-import { VentaDetailsModal } from "./components/venta-details-modal";
 import { VentaFormModal } from "./components/venta-form-modal";
 import { VentaStatusMenu } from "./components/venta-status-menu";
 
 export function VentasView() {
+  const router = useRouter();
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
 
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -42,7 +43,6 @@ export function VentasView() {
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
 
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -71,10 +71,6 @@ export function VentasView() {
       {
         onSuccess: () => {
           toast.success(`Orden ${sale.order_number}: ${status}`);
-          // Si el detalle está abierto, refleja el cambio sin cerrarlo.
-          setSelectedSale((current) =>
-            current && current.id === sale.id ? { ...current, status } : current,
-          );
         },
         onError: (error) => handleAxiosError(error, "No se pudo cambiar el estado"),
         onSettled: () => setStatusPendingId(null),
@@ -181,7 +177,7 @@ export function VentasView() {
             size="sm"
             isIconOnly
             aria-label={`Ver detalles de la orden ${sale.order_number}`}
-            onPress={() => setSelectedSale(sale)}
+            onPress={() => router.push(`/ventas/${sale.id}`)}
           >
             <Eye className="size-4" />
           </Button>
@@ -297,12 +293,6 @@ export function VentasView() {
           onPageChange={setPage}
         />
       </Card>
-
-      <VentaDetailsModal
-        sale={selectedSale}
-        isOpen={selectedSale !== null}
-        onOpenChange={(open) => !open && setSelectedSale(null)}
-      />
 
       <VentaFormModal
         isOpen={isFormOpen}

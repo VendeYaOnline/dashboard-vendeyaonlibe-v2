@@ -38,6 +38,7 @@ import {
   getProducts,
   getProductsByCategory,
   getSales,
+  getSale,
   getUsers,
 } from "./request";
 
@@ -246,3 +247,12 @@ export const useQuerySales = (
     enabled: currentPage > 0,
   });
 };
+
+export const useQuerySale = (id: string) =>
+  useQuery({
+    queryKey: ["sales", id],
+    queryFn: () => getSale(id),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60,
+    enabled: Boolean(id),
+  });

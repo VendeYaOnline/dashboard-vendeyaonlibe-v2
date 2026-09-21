@@ -16,7 +16,7 @@ import type {
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
-import { CreateSalePayload, SaleRequest } from "@/features/ventas/types";
+import { CreateSalePayload, Sale, SaleRequest } from "@/features/ventas/types";
 
 // ? Login User
 export const loginUser = async (data: { email: string; password: string }) => {
@@ -395,6 +395,10 @@ export const getSales = async (
   return (await axiosConfig.get<SaleRequest>(`/get-sales?${params.toString()}`))
     .data;
 };
+
+/** Venta individual, usada por la ruta /ventas/[id]. */
+export const getSale = async (id: string) =>
+  (await axiosConfig.get<Sale>(`/get-sale/${encodeURIComponent(id)}`)).data;
 
 /** Cambia el estado del pedido (único campo editable de una venta). */
 export const updateSaleStatus = async ({ id, status }: { id: string; status: string }) => {
