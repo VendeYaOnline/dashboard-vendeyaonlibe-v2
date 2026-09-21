@@ -13,7 +13,7 @@ import {
   TextField,
   toast,
 } from "@heroui/react";
-import { Eye, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
+import { Eye, Link as LinkIcon, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -32,6 +32,7 @@ import { getPaymentMethodLabel, SALE_STATUSES, type CreateSalePayload, type Sale
 import { formatSaleTotal, toBackendDate } from "./utils";
 import { VentaFormModal } from "./components/venta-form-modal";
 import { VentaStatusMenu } from "./components/venta-status-menu";
+import { VentaDetailsModal } from "./components/venta-details-modal";
 
 export function VentasView() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export function VentasView() {
   const [page, setPage] = useState(1);
 
   const [saleToDelete, setSaleToDelete] = useState<Sale | null>(null);
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => setPage(1), [statusFilter, dateFilter, debouncedSearch]);
@@ -71,6 +73,9 @@ export function VentasView() {
       {
         onSuccess: () => {
           toast.success(`Orden ${sale.order_number}: ${status}`);
+          setSelectedSale((current) =>
+            current && current.id === sale.id ? { ...current, status } : current,
+          );
         },
         onError: (error) => handleAxiosError(error, "No se pudo cambiar el estado"),
         onSettled: () => setStatusPendingId(null),
@@ -177,9 +182,18 @@ export function VentasView() {
             size="sm"
             isIconOnly
             aria-label={`Ver detalles de la orden ${sale.order_number}`}
-            onPress={() => router.push(`/ventas/${sale.id}`)}
+            onPress={() => setSelectedSale(sale)}
           >
             <Eye className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label={`Abrir la página de la orden ${sale.order_number}`}
+            onPress={() => router.push(`/ventas/${sale.id}`)}
+          >
+            <LinkIcon className="size-4" />
           </Button>
           <Button
             variant="ghost"
@@ -299,6 +313,12 @@ export function VentasView() {
         onOpenChange={setIsFormOpen}
         onSubmit={handleCreateSale}
         isPending={createMutation.isPending}
+      />
+
+      <VentaDetailsModal
+        sale={selectedSale}
+        isOpen={selectedSale !== null}
+        onOpenChange={(open) => !open && setSelectedSale(null)}
       />
 
       <ConfirmDialog
