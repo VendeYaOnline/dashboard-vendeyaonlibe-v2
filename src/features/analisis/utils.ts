@@ -1,5 +1,5 @@
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
-import { PAYMENT_METHODS } from "@/features/ventas/types";
+import { getPaymentMethodLabel } from "@/features/ventas/types";
 
 export const PERIOD_OPTIONS: { id: AnalyticsPeriod; label: string; compare: string }[] = [
   { id: 7, label: "7 días", compare: "vs. los 7 días anteriores" },
@@ -72,13 +72,7 @@ const formatBucketLongRaw = (key: string, granularity: "day" | "month") => {
   });
 };
 
-const PAYMENT_LABELS: Record<string, string> = {
-  ...Object.fromEntries(PAYMENT_METHODS.map((m) => [m.id, m.label])),
-  bank_transfer_bancolombia: "Transferencia Bancolombia",
-  bank_transfer_bbva: "Transferencia BBVA",
-};
-
-export const paymentLabel = (method: string) => PAYMENT_LABELS[method] ?? method;
+export const paymentLabel = getPaymentMethodLabel;
 
 const CHANNEL_LABELS: Record<string, string> = {
   online: "Tienda en línea",

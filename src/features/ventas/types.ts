@@ -164,10 +164,24 @@ export const PAYMENT_METHODS = [
  * tienda). Se usa sólo para mostrar la etiqueta correcta al leer.
  */
 const PAYMENT_METHOD_DISPLAY: Record<string, string> = {
-  ...Object.fromEntries(PAYMENT_METHODS.map((m) => [m.id, m.label])),
+  ...Object.fromEntries(PAYMENT_METHODS.flatMap((m) => [
+    [m.id, m.label],
+    [m.label.toLowerCase(), m.label],
+  ])),
   bank_transfer_bancolombia: "Transferencia Bancolombia",
   bank_transfer_bbva: "Transferencia BBVA",
+  "transferencia bancolombia": "Transferencia Bancolombia",
+  "transferencia bbva": "Transferencia BBVA",
+  "pago por llave": "Llave BRE-B",
+  llave: "Llave BRE-B",
+  llaveo: "Llave BRE-B",
+  "bre-b": "Llave BRE-B",
 };
 
-export const getPaymentMethodLabel = (code: string): string =>
-  PAYMENT_METHOD_DISPLAY[code] ?? "Otro medio de pago";
+export const getPaymentMethodLabel = (code: string | null | undefined): string => {
+  const method = code?.trim() ?? "";
+  const key = method.toLowerCase();
+  return Object.hasOwn(PAYMENT_METHOD_DISPLAY, key)
+    ? PAYMENT_METHOD_DISPLAY[key]
+    : method || "No especificado";
+};
