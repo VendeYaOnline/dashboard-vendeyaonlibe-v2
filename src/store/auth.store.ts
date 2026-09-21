@@ -12,7 +12,7 @@ interface AuthState {
   isAuthenticated: boolean;
   hasHydrated: boolean;
   isSessionValidated: boolean;
-  login: (user: User, remember: boolean) => void;
+  login: (user: User, token: string, remember: boolean) => void;
   restoreValidatedSession: (user: User) => void;
   logout: () => void;
   setHasHydrated: (hasHydrated: boolean) => void;
@@ -24,7 +24,7 @@ const REMEMBER_KEY = "auth-remember";
 /**
  * La sesión marcada como recordada se guarda en localStorage. La normal vive
  * en sessionStorage y desaparece al cerrar el navegador. Ambas se restauran
- * antes de validar la cookie con el backend.
+ * antes de validar el token con el backend.
  */
 const authStorage: StateStorage = {
   getItem: (name) => localStorage.getItem(name) ?? sessionStorage.getItem(name),
@@ -46,9 +46,15 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       hasHydrated: false,
       isSessionValidated: false,
-      login: (user, remember) => {
+      login: (user, token, remember) => {
+        const tokenStorage = remember ? localStorage : sessionStorage;
+        const otherStorage = remember ? sessionStorage : localStorage;
+
         if (remember) localStorage.setItem(REMEMBER_KEY, "true");
         else localStorage.removeItem(REMEMBER_KEY);
+
+        tokenStorage.setItem("access_token", token);
+        otherStorage.removeItem("access_token");
         set({ user, isAuthenticated: true, isSessionValidated: true });
       },
       restoreValidatedSession: (user) => set({ user, isAuthenticated: true, isSessionValidated: true }),

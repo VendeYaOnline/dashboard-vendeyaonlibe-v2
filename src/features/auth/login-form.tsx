@@ -35,7 +35,7 @@ export function LoginForm() {
 
     try {
       const response = await loginUser({ email, password, remember });
-      setAuth(response.data.user, remember);
+      setAuth(response.data.user, response.data.access_token, remember);
       toast.success("Inicio de sesión exitoso");
       router.push(getHomeRoute(response.data.user?.role));
     } catch (error) {

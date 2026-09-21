@@ -9,7 +9,10 @@ export const axiosConfig = axios.create({
 
 axiosConfig.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    // Safari bloquea cookies de terceros. El panel y la API viven en
+    // dominios distintos, así que el bearer token mantiene la sesión aunque
+    // dicha cookie no pueda enviarse.
+    const token = localStorage.getItem("access_token") ?? sessionStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
