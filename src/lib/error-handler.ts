@@ -44,6 +44,7 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   INVALID_CATEGORY_IMAGE: "La imagen debe elegirse de la galería de tu tienda.",
   CATEGORY_DUPLICATED: "Ya existe una categoría con ese nombre.",
   CATEGORY_NOT_FOUND: "La categoría ya no existe.",
+  CATEGORY_ORDER_INVALID: "El orden recibido no coincide con tus categorías. Recarga la página.",
   IMAGE_LIMIT: "Un producto sin atributo de color admite como máximo 4 imágenes.",
   INVALID_BUNDLE_SIZE: "Un set debe tener entre 2 y 10 piezas.",
   BUNDLE_REQUIRES_VARIANTS:
