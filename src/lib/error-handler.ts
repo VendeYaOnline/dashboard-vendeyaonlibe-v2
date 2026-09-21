@@ -57,6 +57,8 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   CONTACT_NOT_FOUND: "El mensaje ya no existe.",
   SALE_NOT_FOUND: "La venta ya no existe.",
   SALE_STATUS_INVALID: "El estado seleccionado no es válido.",
+  STORE_PRODUCTS_INVALID: "Uno o más productos no pertenecen a esta tienda.",
+  CHECKOUT_INVALID: "No se pudo validar el pedido. Revisa el carrito e inténtalo de nuevo.",
   USER_NOT_FOUND: "El usuario ya no existe.",
   PLAN_PRODUCT_LIMIT: "Has alcanzado el tope de productos de tu plan. Contacta a VendeYaOnline para ampliarlo.",
   PLAN_IMAGE_LIMIT: "Has alcanzado el tope de imágenes de tu plan. Contacta a VendeYaOnline para ampliarlo.",
