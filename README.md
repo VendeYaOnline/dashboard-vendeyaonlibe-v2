@@ -34,3 +34,8 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## SEO y vista previa al compartir
+
+Configura NEXT_PUBLIC_SITE_URL con la URL pública HTTPS del panel antes de compilar y desplegar. Se utiliza como base de las imágenes Open Graph y Twitter. El panel publica noindex, nofollow; robots.txt permite leer estas etiquetas y las portadas, y bloquea /api/.
+
