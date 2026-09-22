@@ -22,6 +22,16 @@ function DetailField({ label, children }: { label: string; children: React.React
   );
 }
 
+const formatLocation = (department?: string, city?: string) =>
+  [department, city]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" &&
+        value.trim() !== "" &&
+        value.trim().toLowerCase() !== "no especificado",
+    )
+    .join(" · ");
+
 function ReceiptSection({ icon: Icon, title, children }: { icon: typeof UserRound; title: string; children: React.ReactNode }) {
   return (
     <section className="px-5 py-5 sm:px-7">
@@ -125,7 +135,7 @@ export function VentaDetailView({ saleId }: { saleId: string }) {
 
         <ReceiptSection icon={MapPin} title="Entrega">
           <div className="grid gap-4 sm:grid-cols-2">
-            <DetailField label="Ubicación">{`${sale.department} · ${sale.city}`}</DetailField>
+            <DetailField label="Ubicación">{formatLocation(sale.department, sale.city)}</DetailField>
             <DetailField label="Dirección">{sale.address}</DetailField>
             <div className="sm:col-span-2"><DetailField label="Referencias adicionales">{sale.additional_info}</DetailField></div>
           </div>
