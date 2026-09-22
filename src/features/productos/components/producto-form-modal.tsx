@@ -1168,37 +1168,41 @@ export function ProductoFormModal({
         </Modal.Backdrop>
       </Modal>
 
-      <ImagePickerModal
-        isOpen={isMainImagePickerOpen}
-        onOpenChange={setIsMainImagePickerOpen}
-        multiple={false}
-        currentSelected={imageProduct ? [imageProduct] : []}
-        onSelect={(urls) => {
-          if (urls.length > 0) setImageProduct(urls[0]);
-        }}
-      />
+      {isMainImagePickerOpen && (
+        <ImagePickerModal
+          isOpen
+          onOpenChange={setIsMainImagePickerOpen}
+          multiple={false}
+          currentSelected={imageProduct ? [imageProduct] : []}
+          onSelect={(urls) => {
+            if (urls.length > 0) setImageProduct(urls[0]);
+          }}
+        />
+      )}
 
-      <ImagePickerModal
-        isOpen={isGalleryPickerOpen}
-        onOpenChange={(open) => {
-          setIsGalleryPickerOpen(open);
-          if (!open) setPickingColorHex(null);
-        }}
-        multiple
-        maxSelection={pickingColorHex ? MAX_IMAGES_PER_COLOR : MAX_PRODUCT_IMAGES}
-        minSelection={pickingColorHex ? 1 : 0}
-        currentSelected={pickingColorHex ? (pickingGroup?.images ?? []) : productImages}
-        disabledUrls={[
-          ...(imageProduct ? [imageProduct] : []),
-          // Una imagen solo puede pertenecer a un color.
-          ...(pickingColorHex
-            ? orderedGroups
-                .filter((group) => group.color !== pickingColorHex)
-                .flatMap((group) => group.images)
-            : []),
-        ]}
-        onSelect={handleGallerySelect}
-      />
+      {isGalleryPickerOpen && (
+        <ImagePickerModal
+          isOpen
+          onOpenChange={(open) => {
+            setIsGalleryPickerOpen(open);
+            if (!open) setPickingColorHex(null);
+          }}
+          multiple
+          maxSelection={pickingColorHex ? MAX_IMAGES_PER_COLOR : MAX_PRODUCT_IMAGES}
+          minSelection={pickingColorHex ? 1 : 0}
+          currentSelected={pickingColorHex ? (pickingGroup?.images ?? []) : productImages}
+          disabledUrls={[
+            ...(imageProduct ? [imageProduct] : []),
+            // Una imagen solo puede pertenecer a un color.
+            ...(pickingColorHex
+              ? orderedGroups
+                  .filter((group) => group.color !== pickingColorHex)
+                  .flatMap((group) => group.images)
+              : []),
+          ]}
+          onSelect={handleGallerySelect}
+        />
+      )}
 
       {colorAttribute && (
         <ColorSelectModal

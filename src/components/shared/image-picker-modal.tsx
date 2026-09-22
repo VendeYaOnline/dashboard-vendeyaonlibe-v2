@@ -57,6 +57,9 @@ export function ImagePickerModal({
   /** "all" = sin filtro; si no, id de la categoría de la galería. */
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Dejamos que el diálogo pinte primero y sólo entonces montamos la grilla.
+  // Así las imágenes de S3 no bloquean la animación de apertura.
+  const [isGridReady, setIsGridReady] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch, categoryFilter]);
 
@@ -66,6 +69,16 @@ export function ImagePickerModal({
     // del usuario mientras el modal está abierto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsGridReady(false);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => setIsGridReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, page, debouncedSearch, categoryFilter]);
 
   // El modal está montado aunque esté cerrado: la galería y las categorías
   // solo se piden al abrirlo.
@@ -105,6 +118,10 @@ export function ImagePickerModal({
     onSelect(Array.from(selected));
     onOpenChange(false);
   };
+
+  // Evita conservar imágenes y portales de HeroUI en el DOM de los
+  // formularios que tienen el selector cerrado.
+  if (!isOpen) return null;
 
   return (
     <Modal state={state}>
@@ -149,10 +166,12 @@ export function ImagePickerModal({
                 </Select>
               </div>
 
-              {isLoading ? (
+              {isLoading || !isGridReady ? (
                 <div className="flex flex-col items-center gap-3 py-16">
                   <Spinner />
-                  <p className="text-sm text-muted">Cargando imágenes...</p>
+                  <p className="text-sm text-muted">
+                    {isLoading ? "Cargando imágenes..." : "Preparando imágenes..."}
+                  </p>
                 </div>
               ) : images.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">

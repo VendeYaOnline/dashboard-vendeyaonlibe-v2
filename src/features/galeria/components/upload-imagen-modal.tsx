@@ -17,7 +17,7 @@ import {
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import type { Category } from "@/interfaces/categories";
-import { MAX_UPLOAD_IMAGES, formatFileSize } from "../utils";
+import { MAX_IMAGE_SIZE, MAX_UPLOAD_IMAGES, formatFileSize } from "../utils";
 import { PendingButton } from "@/components/shared/pending-button";
 
 interface UploadImagenModalProps {
@@ -75,9 +75,20 @@ export function UploadImagenModal({
   }, [isOpen, reset]);
 
   const addFiles = (incoming: FileList | File[]) => {
-    const images = Array.from(incoming).filter((file) => file.type.startsWith("image/"));
-    if (images.length === 0) {
+    const candidates = Array.from(incoming);
+    const imageFiles = candidates.filter((file) => file.type.startsWith("image/"));
+    const oversized = imageFiles.filter((file) => file.size > MAX_IMAGE_SIZE);
+    const images = imageFiles.filter((file) => file.size <= MAX_IMAGE_SIZE);
+
+    if (imageFiles.length !== candidates.length) {
       toast.danger("Solo se pueden subir archivos de imagen.");
+    }
+    if (oversized.length > 0) {
+      toast.warning(
+        `${oversized.length === 1 ? "Una imagen supera" : `${oversized.length} imágenes superan`} el máximo de 2 MB y no se agregaron.`,
+      );
+    }
+    if (images.length === 0) {
       return;
     }
     setFiles((prev) => {
@@ -199,7 +210,7 @@ export function UploadImagenModal({
                       <p className="mt-0.5 text-xs text-muted">
                         {isFull
                           ? "Quita alguna para agregar otra."
-                          : "o haz clic para seleccionarlas · JPG, PNG, WEBP"}
+                          : "o haz clic para seleccionarlas · JPG, PNG, WEBP · Máx. 2 MB por imagen"}
                       </p>
                     </div>
                   </div>
