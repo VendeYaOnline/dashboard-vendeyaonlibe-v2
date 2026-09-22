@@ -33,7 +33,10 @@ interface ImagePickerModalProps {
   disabledUrls?: string[];
 }
 
-const LIMIT = 30;
+// Las miniaturas son archivos originales de S3. Un lote pequeño evita que al
+// abrir el modal el navegador tenga que decodificar muchas imágenes grandes a
+// la vez, especialmente en equipos móviles.
+const LIMIT = 20;
 
 /** Selector de imágenes de la galería S3, usado por el formulario de producto. */
 export function ImagePickerModal({
@@ -153,7 +156,7 @@ export function ImagePickerModal({
                 </div>
               ) : images.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  {images.map((img: ImageItem) => {
+                  {images.map((img: ImageItem, index) => {
                     const isSelected = selected.has(img.Url);
                     const isDisabled = disabledUrls.includes(img.Url);
 
@@ -175,6 +178,11 @@ export function ImagePickerModal({
                         <img
                           src={img.Url}
                           alt="Imagen de galería"
+                          width={128}
+                          height={128}
+                          loading={index < 10 ? "eager" : "lazy"}
+                          decoding="async"
+                          draggable={false}
                           className="size-full object-cover"
                         />
                         {isSelected && (

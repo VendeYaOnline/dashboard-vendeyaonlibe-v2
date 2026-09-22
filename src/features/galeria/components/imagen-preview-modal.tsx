@@ -40,6 +40,7 @@ export function ImagenPreviewModal({
                     <img
                       src={image.Url}
                       alt={getFileName(image.Key)}
+                      decoding="async"
                       className="max-h-72 w-full object-contain"
                     />
                   </div>
