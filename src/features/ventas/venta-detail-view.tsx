@@ -36,7 +36,7 @@ function ReceiptSection({ icon: Icon, title, children }: { icon: typeof UserRoun
 
 function ProductRow({ product }: { product: SaleProduct }) {
   const image = product.image_product || product.images?.[0];
-  const variantLabel = getSaleProductVariantLabel(product);
+  const variantLabel = product.bundle_items?.length ? undefined : getSaleProductVariantLabel(product);
   return (
     <div className="flex gap-3 py-4 first:pt-0 last:pb-0">
       {image ? (
@@ -49,7 +49,11 @@ function ProductRow({ product }: { product: SaleProduct }) {
           <div className="min-w-0">
             <h3 className="text-sm font-semibold">{product.title}</h3>
             {variantLabel && <p className="mt-0.5 text-xs text-muted">{variantLabel}</p>}
-            {product.bundle_items && product.bundle_items.length > 0 && <p className="mt-0.5 text-xs text-muted">{product.bundle_items.map((item) => item.variant_label).join(" · ")}</p>}
+            {product.bundle_items && product.bundle_items.length > 0 && (
+              <ol className="mt-1 space-y-0.5 text-xs text-muted">
+                {product.bundle_items.map((item, index) => <li key={`${item.variant_key}-${index}`}>{index + 1}. {item.variant_label}</li>)}
+              </ol>
+            )}
           </div>
           <p className="shrink-0 text-sm font-bold tabular-nums">{formatSaleTotal(product.purchase_total)}</p>
         </div>

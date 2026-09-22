@@ -54,7 +54,7 @@ export function PurchasedProductsModal({
 }
 
 function ProductRow({ item }: { item: SaleProduct }) {
-  const variantLabel = getSaleProductVariantLabel(item);
+  const variantLabel = item.bundle_items?.length ? undefined : getSaleProductVariantLabel(item);
   return (
     <Card>
       <Card.Content className="flex gap-4 p-4">
@@ -66,6 +66,11 @@ function ProductRow({ item }: { item: SaleProduct }) {
         <div className="min-w-0 flex-1 space-y-1">
           <h4 className="line-clamp-2 text-sm leading-tight font-semibold" title={item.title}>{item.title}</h4>
           {variantLabel && <p className="text-xs text-muted" title={variantLabel}>{variantLabel}</p>}
+          {item.bundle_items && item.bundle_items.length > 0 && (
+            <ol className="mt-1 space-y-0.5 text-xs text-muted">
+              {item.bundle_items.map((piece, index) => <li key={`${piece.variant_key}-${index}`}>{index + 1}. {piece.variant_label}</li>)}
+            </ol>
+          )}
           <p className="text-xs text-muted">
             {item.discount > 0 ? <><span className="line-through">${item.price}</span>{" "}<span className="text-danger">-{item.discount}%</span></> : <>${item.price}</>}
           </p>
