@@ -9,7 +9,7 @@ import { useMutationUpdateSaleStatus } from "@/app/api/mutations";
 import { PageHeader } from "@/components/layout/page-header";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { getPaymentMethodLabel, type SaleProduct } from "./types";
+import { getPaymentMethodLabel, getSaleProductVariantLabel, type SaleProduct } from "./types";
 import { formatSaleTotal } from "./utils";
 import { VentaStatusChip } from "./components/venta-status-chip";
 import { VentaStatusMenu } from "./components/venta-status-menu";
@@ -25,6 +25,7 @@ function DetailField({ label, children }: { label: string; children: React.React
 
 function ProductCard({ product, index }: { product: SaleProduct; index: number }) {
   const image = product.image_product || product.images?.[0];
+  const variantLabel = getSaleProductVariantLabel(product);
   return (
     <Card key={`${product.id ?? product.title}-${index}`}>
       <Card.Content className="flex gap-4 p-4">
@@ -35,7 +36,7 @@ function ProductCard({ product, index }: { product: SaleProduct; index: number }
         )}
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold">{product.title}</h3>
-          {product.variant_label && <p className="mt-1 text-sm text-muted">{product.variant_label}</p>}
+          {variantLabel && <p className="mt-1 text-sm text-muted">{variantLabel}</p>}
           {product.bundle_items && product.bundle_items.length > 0 && (
             <p className="mt-1 text-sm text-muted">{product.bundle_items.map((item) => item.variant_label).join(" · ")}</p>
           )}

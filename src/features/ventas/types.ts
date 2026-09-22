@@ -17,6 +17,8 @@ export interface SaleProduct {
   variant_key?: string;
   /** Texto legible de la variante ("Color: Rojo · Talla: M"). */
   variant_label?: string;
+  /** Selección que guarda el checkout de la tienda en ventas creadas antes de `variant_label`. */
+  selected_attributes?: Record<string, string>;
   bundle_items?: { variant_key: string; variant_label: string }[];
   image_product: string;
   title: string;
@@ -27,6 +29,18 @@ export interface SaleProduct {
   quantity: number;
   purchase_total: string;
 }
+
+/** Etiqueta de variante compatible con ventas manuales y compras históricas de la tienda. */
+export const getSaleProductVariantLabel = (product: SaleProduct): string | undefined => {
+  if (product.variant_label?.trim()) return product.variant_label.trim();
+  const selected = product.selected_attributes;
+  if (!selected || typeof selected !== "object") return undefined;
+  const label = Object.entries(selected)
+    .filter(([, value]) => typeof value === "string" && value.trim())
+    .map(([name, value]) => `${name}: ${value.trim()}`)
+    .join(" · ");
+  return label || undefined;
+};
 
 /**
  * Payload real que espera `POST /create-sale` (ver sales.controller.js y

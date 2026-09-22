@@ -1,7 +1,8 @@
 "use client";
 
 import { Button, Card, Chip, Modal, useOverlayState } from "@heroui/react";
-import type { SaleProduct } from "../types";
+import { getSaleProductVariantLabel, type SaleProduct } from "../types";
+import { formatSaleTotal } from "../utils";
 
 interface PurchasedProductsModalProps {
   isOpen: boolean;
@@ -31,52 +32,7 @@ export function PurchasedProductsModal({
             <Modal.Body>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {products.map((item, index) => (
-                  <Card key={item.id ?? index}>
-                    <Card.Content className="flex gap-4 p-4">
-                      {item.image_product ? (
-                        <img
-                          src={item.image_product}
-                          alt={item.title}
-                          className="size-20 shrink-0 rounded-md border border-border object-cover"
-                        />
-                      ) : (
-                        <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-border bg-surface-secondary text-[10px] text-muted">
-                          Sin img
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <h4
-                          className="line-clamp-2 text-sm leading-tight font-semibold"
-                          title={item.title}
-                        >
-                          {item.title}
-                        </h4>
-                        {item.variant_label && (
-                          <p className="text-xs text-muted" title={item.variant_label}>
-                            {item.variant_label}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted">
-                          {item.discount > 0 ? (
-                            <>
-                              <span className="line-through">${item.price}</span>{" "}
-                              <span className="text-danger">-{item.discount}%</span>
-                            </>
-                          ) : (
-                            <>${item.price}</>
-                          )}
-                        </p>
-                        <div className="flex items-center justify-between pt-1">
-                          <Chip size="sm" variant="soft">
-                            Cant: {item.quantity}
-                          </Chip>
-                          <p className="font-bold text-accent">
-                            ${Number(item.purchase_total).toLocaleString("es-CO")}
-                          </p>
-                        </div>
-                      </div>
-                    </Card.Content>
-                  </Card>
+                  <ProductRow key={item.id ?? index} item={item} />
                 ))}
               </div>
             </Modal.Body>
@@ -94,5 +50,31 @@ export function PurchasedProductsModal({
         </Modal.Container>
       </Modal.Backdrop>
     </Modal>
+  );
+}
+
+function ProductRow({ item }: { item: SaleProduct }) {
+  const variantLabel = getSaleProductVariantLabel(item);
+  return (
+    <Card>
+      <Card.Content className="flex gap-4 p-4">
+        {item.image_product ? (
+          <img src={item.image_product} alt={item.title} className="size-20 shrink-0 rounded-md border border-border object-cover" />
+        ) : (
+          <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-border bg-surface-secondary text-[10px] text-muted">Sin img</div>
+        )}
+        <div className="min-w-0 flex-1 space-y-1">
+          <h4 className="line-clamp-2 text-sm leading-tight font-semibold" title={item.title}>{item.title}</h4>
+          {variantLabel && <p className="text-xs text-muted" title={variantLabel}>{variantLabel}</p>}
+          <p className="text-xs text-muted">
+            {item.discount > 0 ? <><span className="line-through">${item.price}</span>{" "}<span className="text-danger">-{item.discount}%</span></> : <>${item.price}</>}
+          </p>
+          <div className="flex items-center justify-between pt-1">
+            <Chip size="sm" variant="soft">Cant: {item.quantity}</Chip>
+            <p className="font-bold text-accent">{formatSaleTotal(item.purchase_total)}</p>
+          </div>
+        </div>
+      </Card.Content>
+    </Card>
   );
 }
