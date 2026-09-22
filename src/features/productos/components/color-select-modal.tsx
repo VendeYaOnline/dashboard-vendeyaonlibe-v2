@@ -65,7 +65,7 @@ export function ColorSelectModal({
             <ModalFormHeader
               icon={Palette}
               title="¿A qué color pertenecen las imágenes?"
-              description={`Elige un color de «${attributeName}». Máximo ${MAX_IMAGES_PER_COLOR} imágenes por color.`}
+              description={`Elige un color de «${attributeName}». Cada color requiere entre 1 y ${MAX_IMAGES_PER_COLOR} imágenes.`}
             />
 
             <Modal.Body>

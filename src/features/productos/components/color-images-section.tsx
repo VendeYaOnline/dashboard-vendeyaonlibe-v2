@@ -23,7 +23,7 @@ interface ColorImagesSectionProps {
 /**
  * Galería del producto agrupada por color. Las tarjetas se pueden arrastrar
  * (o mover con las flechas) para decidir qué color carga primero en la tienda.
- * Cada color admite hasta MAX_IMAGES_PER_COLOR imágenes.
+ * Cada color requiere una imagen y admite hasta MAX_IMAGES_PER_COLOR imágenes.
  */
 export function ColorImagesSection({
   colors,
@@ -142,7 +142,7 @@ export function ColorImagesSection({
                     {group.name || group.color}
                   </span>
                   <span className="text-xs text-muted">
-                    {group.images.length}/{MAX_IMAGES_PER_COLOR}
+                    {group.images.length}/{MAX_IMAGES_PER_COLOR} imágenes
                   </span>
                   {index === 0 && !isOrphan && (
                     <Chip size="sm" variant="soft" color="accent">
@@ -160,7 +160,7 @@ export function ColorImagesSection({
                 ) : (
                   <p className="flex items-center gap-1.5 text-xs text-muted">
                     <ImageIcon className="size-3.5" />
-                    Sin imágenes para este color
+                    Agrega entre 1 y {MAX_IMAGES_PER_COLOR} imágenes para este color
                   </p>
                 )}
               </div>

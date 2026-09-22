@@ -27,6 +27,8 @@ interface ImagePickerModalProps {
   /** URLs ya asignadas, para mostrarlas marcadas al abrir. */
   currentSelected?: string[];
   maxSelection?: number;
+  /** Cantidad mínima requerida al confirmar una selección múltiple. */
+  minSelection?: number;
   /** URLs que no se pueden elegir (p. ej. ya usada como imagen principal). */
   disabledUrls?: string[];
 }
@@ -41,6 +43,7 @@ export function ImagePickerModal({
   multiple = false,
   currentSelected = [],
   maxSelection = 5,
+  minSelection = 0,
   disabledUrls = [],
 }: ImagePickerModalProps) {
   const state = useOverlayState({ isOpen, onOpenChange });
@@ -236,7 +239,7 @@ export function ImagePickerModal({
                 </Button>
                 <Button
                   variant="primary"
-                  isDisabled={selected.size === 0 && !multiple}
+                  isDisabled={selected.size < (multiple ? minSelection : 1)}
                   onPress={handleConfirm}
                 >
                   Confirmar selección

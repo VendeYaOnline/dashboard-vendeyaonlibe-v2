@@ -694,10 +694,11 @@ export function ProductoFormModal({
     onSubmit(product?.id ?? null, formData);
   };
 
-  // Mismos obligatorios que exige el backend, para no enviar y recibir un 400.
-  // Con atributo de color, al menos un color debe tener imagen.
-  const hasColorImage = orderedGroups.some((group) => group.images.length > 0);
-  const missingColorImage = Boolean(colorAttribute) && !hasColorImage;
+  // Cada color seleccionado necesita entre 1 y MAX_IMAGES_PER_COLOR imágenes.
+  const colorsWithoutImages = orderedGroups.filter(
+    (group) => colorOptions.some((color) => color.hex === group.color) && group.images.length === 0,
+  );
+  const missingColorImages = colorsWithoutImages.length > 0;
   // Un set necesita variantes: el comprador elige color/talla de cada pieza.
   const bundleSizeValue = parseInt(bundleSize, 10) || 0;
   const isBundle = saleMode === "bundle";
@@ -709,7 +710,7 @@ export function ProductoFormModal({
     price !== "" &&
     description.trim() !== "" &&
     imageProduct !== "" &&
-    !missingColorImage &&
+    !missingColorImages &&
     !bundleNeedsVariants &&
     isBundleSizeValid;
 
@@ -1098,9 +1099,9 @@ export function ProductoFormModal({
                       </Button>
                     }
                   >
-                    {missingColorImage && (
+                    {missingColorImages && (
                       <p className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
-                        Agrega al menos una imagen a alguno de los colores para poder guardar el producto.
+                        Agrega entre 1 y {MAX_IMAGES_PER_COLOR} imágenes a cada color para poder guardar el producto. Faltan: {colorsWithoutImages.map((group) => group.name).join(", ")}.
                       </p>
                     )}
                     {colorAttribute ? (
@@ -1146,9 +1147,9 @@ export function ProductoFormModal({
                   >
                     Cancelar
                   </Button>
-                  {missingColorImage && (
+                  {missingColorImages && (
                     <span className="mr-auto self-center text-xs text-warning">
-                      Falta una imagen de color
+                      Faltan imágenes para {colorsWithoutImages.length} {colorsWithoutImages.length === 1 ? "color" : "colores"}
                     </span>
                   )}
                   <PendingButton
@@ -1185,6 +1186,7 @@ export function ProductoFormModal({
         }}
         multiple
         maxSelection={pickingColorHex ? MAX_IMAGES_PER_COLOR : MAX_PRODUCT_IMAGES}
+        minSelection={pickingColorHex ? 1 : 0}
         currentSelected={pickingColorHex ? (pickingGroup?.images ?? []) : productImages}
         disabledUrls={[
           ...(imageProduct ? [imageProduct] : []),
