@@ -76,6 +76,8 @@ export function ImagenCard({
         <img
           src={image.Url}
           alt={fileName}
+          loading="lazy"
+          decoding="async"
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-all duration-500 group-hover:scale-105",

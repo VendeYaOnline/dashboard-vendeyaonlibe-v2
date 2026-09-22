@@ -3,8 +3,9 @@ import type { Category } from "@/interfaces/categories";
 /** Máximo de imágenes seleccionables para el borrado múltiple. */
 export const MAX_SELECTION = 10;
 
-/** Imágenes por página que pide la galería. */
-export const IMAGES_PER_PAGE = 60;
+/** Imágenes por página que pide la galería. Un lote menor evita descargar y
+ * decodificar demasiados originales de S3 al entrar a la vista. */
+export const IMAGES_PER_PAGE = 30;
 
 /** Imágenes que se pueden subir en una sola vez (mismo tope que el backend). */
 export const MAX_UPLOAD_IMAGES = 10;

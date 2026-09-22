@@ -64,6 +64,8 @@ export function ImagenListItem({
         <img
           src={image.Url}
           alt={fileName}
+          loading="lazy"
+          decoding="async"
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-opacity",
