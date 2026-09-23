@@ -5,6 +5,7 @@ import { Button, Card, Chip, Tooltip, cn, toast } from "@heroui/react";
 import { ArrowDown, ArrowUp, Edit2, ExternalLink, LayoutTemplate, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
@@ -137,10 +138,11 @@ export function PortadasView() {
       key: "image",
       label: "Imagen",
       render: (cover) => (
-        <img
+        <ImageWithSkeleton
           src={cover.image}
           alt={cover.title}
-          className="h-12 w-20 rounded-md border border-border object-cover"
+          sizes="80px"
+          className="h-12 w-20 rounded-md border border-border"
         />
       ),
     },

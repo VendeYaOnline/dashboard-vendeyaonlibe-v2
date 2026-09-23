@@ -16,6 +16,7 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import type { Products } from "@/interfaces/products";
 import {
   EMPTY_VENTA_FORM,
@@ -348,10 +349,11 @@ export function VentaFormModal({
                             >
                               <div className="flex items-center gap-3">
                                 {product.image_product ? (
-                                  <img
+                                  <ImageWithSkeleton
                                     src={product.image_product}
                                     alt={product.title}
-                                    className="size-10 rounded object-cover"
+                                    sizes="40px"
+                                    className="size-10 rounded"
                                   />
                                 ) : (
                                   <div className="flex size-10 items-center justify-center rounded bg-surface text-[10px] text-muted">

@@ -12,6 +12,7 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
 import { CharCounter } from "@/features/productos/components/form-section";
 import type { Cover, CoverPayload } from "@/interfaces/covers";
@@ -92,7 +93,12 @@ export function PortadaFormModal({
                       className="relative flex h-40 w-full flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-secondary"
                     >
                       {image ? (
-                        <img src={image} alt="Imagen de la portada" className="size-full object-cover" />
+                        <ImageWithSkeleton
+                          src={image}
+                          alt="Imagen de la portada"
+                          sizes="(max-width: 640px) 100vw, 576px"
+                          className="absolute inset-0 size-full"
+                        />
                       ) : (
                         <>
                           <ImageIcon className="mb-2 size-8 text-muted" />

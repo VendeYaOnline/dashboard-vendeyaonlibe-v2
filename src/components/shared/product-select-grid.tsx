@@ -1,9 +1,9 @@
 "use client";
 
 import { Check, ChevronLeft, ChevronRight, Star } from "lucide-react";
-import Image from "next/image";
 import { Button, Chip, Spinner, cn } from "@heroui/react";
 import type { Products } from "@/interfaces/products";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { formatCOP } from "@/features/productos/utils";
 
 interface ProductSelectGridProps {
@@ -76,13 +76,11 @@ export function ProductSelectGrid({
               )}
             >
               {product.image_product ? (
-                <Image
+                <ImageWithSkeleton
                   src={product.image_product}
                   alt={product.title}
-                  width={64}
-                  height={64}
                   sizes="64px"
-                  className="size-16 shrink-0 rounded object-cover"
+                  className="size-16 shrink-0 rounded"
                 />
               ) : (
                 <div className="flex size-16 shrink-0 items-center justify-center rounded bg-surface-secondary text-xs text-muted">

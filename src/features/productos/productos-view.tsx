@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Button, Card, Chip, toast } from "@heroui/react";
 import { Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
@@ -97,13 +97,11 @@ export function ProductosView() {
       label: "Imagen",
       render: (product) =>
         product.image_product ? (
-          <Image
+          <ImageWithSkeleton
             src={product.image_product}
             alt={product.title}
-            width={48}
-            height={48}
             sizes="48px"
-            className="size-12 rounded-md object-cover"
+            className="size-12 rounded-md"
           />
         ) : (
           <div className="flex size-12 items-center justify-center rounded-md bg-surface-secondary text-xs text-muted">

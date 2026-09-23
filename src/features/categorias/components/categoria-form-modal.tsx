@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FolderTree, ImageIcon, X } from "lucide-react";
 import { Button, Input, Label, Modal, TextField, useOverlayState } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
 import { PendingButton } from "@/components/shared/pending-button";
 import { CharCounter } from "@/features/productos/components/form-section";
@@ -89,10 +90,15 @@ export function CategoriaFormModal({
                         onClick={() => setIsImagePickerOpen(true)}
                         disabled={isPending}
                         aria-label={image ? "Cambiar imagen" : "Seleccionar imagen de la galería"}
-                        className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface-secondary transition-colors hover:border-accent disabled:cursor-not-allowed"
+                        className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-surface-secondary transition-colors hover:border-accent disabled:cursor-not-allowed"
                       >
                         {image ? (
-                          <img src={image} alt="" className="size-full object-cover" />
+                          <ImageWithSkeleton
+                            src={image}
+                            alt=""
+                            sizes="80px"
+                            className="absolute inset-0 size-full"
+                          />
                         ) : (
                           <ImageIcon className="size-6 text-muted" />
                         )}

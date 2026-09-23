@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Button, Card, Chip, toast } from "@heroui/react";
 import { ArrowUpDown, Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
@@ -112,13 +112,11 @@ export function CategoriasView() {
       render: (category) => (
         <span className="flex items-center gap-3">
           {category.image ? (
-            <Image
+            <ImageWithSkeleton
               src={category.image}
               alt=""
-              width={36}
-              height={36}
               sizes="36px"
-              className="size-9 shrink-0 rounded-md border border-border object-cover"
+              className="size-9 shrink-0 rounded-md border border-border"
             />
           ) : (
             <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-secondary">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { CheckCircle, ImageIcon } from "lucide-react";
 import {
   Button,
@@ -17,6 +16,7 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { useQueryAllCategories, useQueryImages } from "@/app/api/queries";
 import type { ImageItem } from "@/lib/types";
 
@@ -195,14 +195,12 @@ export function ImagePickerModal({
                               : "border-transparent hover:border-accent/50",
                         )}
                       >
-                        <Image
+                        <ImageWithSkeleton
                           src={img.Url}
                           alt="Imagen de galería"
-                          fill
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 128px"
                           priority={index < 5}
-                          draggable={false}
-                          className="size-full object-cover"
+                          className="absolute inset-0 size-full"
                         />
                         {isSelected && (
                           <div className="absolute top-2 right-2 rounded-full bg-accent text-accent-foreground">

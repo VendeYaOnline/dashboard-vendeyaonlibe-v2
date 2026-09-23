@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Chip } from "@heroui/react";
 import { ArrowLeft, MapPin, Package, ReceiptText, UserRound } from "lucide-react";
 import { useQuerySale } from "@/app/api/queries";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { useMutationUpdateSaleStatus } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
@@ -50,7 +51,12 @@ function ProductRow({ product }: { product: SaleProduct }) {
   return (
     <div className="flex gap-3 py-4 first:pt-0 last:pb-0">
       {image ? (
-        <img src={image} alt={product.title} className="size-16 shrink-0 rounded-lg border border-border object-cover" />
+        <ImageWithSkeleton
+          src={image}
+          alt={product.title}
+          sizes="64px"
+          className="size-16 shrink-0 rounded-lg border border-border"
+        />
       ) : (
         <div className="flex size-16 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-secondary text-[10px] text-muted">Sin imagen</div>
       )}

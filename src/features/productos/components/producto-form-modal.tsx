@@ -18,6 +18,7 @@ import {
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { useQueryAllAttributes, useQueryAllCategories } from "@/app/api/queries";
 import type { Attribute } from "@/interfaces/attributes";
 import type { ColorImageGroup, Products } from "@/interfaces/products";
@@ -742,10 +743,11 @@ export function ProductoFormModal({
                           className="relative flex size-32 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-secondary"
                         >
                           {imageProduct ? (
-                            <img
+                            <ImageWithSkeleton
                               src={imageProduct}
                               alt="Imagen principal"
-                              className="size-full object-cover"
+                              sizes="128px"
+                              className="absolute inset-0 size-full"
                             />
                           ) : (
                             <>
@@ -1122,7 +1124,12 @@ export function ProductoFormModal({
                             key={img}
                             className="group relative size-20 overflow-hidden rounded-md border border-border"
                           >
-                            <img src={img} alt="Imagen del producto" className="size-full object-cover" />
+                            <ImageWithSkeleton
+                              src={img}
+                              alt="Imagen del producto"
+                              sizes="80px"
+                              className="absolute inset-0 size-full"
+                            />
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(img)}

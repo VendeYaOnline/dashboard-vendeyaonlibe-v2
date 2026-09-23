@@ -2,6 +2,7 @@
 
 import { Eye, Trash2 } from "lucide-react";
 import { Button, Modal, useOverlayState } from "@heroui/react";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import type { ImageItem } from "@/lib/types";
 import { formatDateLong, formatFileSize, getFileName } from "../utils";
 
@@ -36,12 +37,13 @@ export function ImagenPreviewModal({
             <Modal.Body className="space-y-6">
               {image && (
                 <>
-                  <div className="flex max-h-72 items-center justify-center overflow-hidden rounded-lg bg-surface-secondary">
-                    <img
+                  <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-lg bg-surface-secondary">
+                    <ImageWithSkeleton
                       src={image.Url}
                       alt={getFileName(image.Key)}
-                      decoding="async"
-                      className="max-h-72 w-full object-contain"
+                      sizes="(max-width: 640px) 100vw, 768px"
+                      className="absolute inset-0"
+                      imageClassName="object-contain"
                     />
                   </div>
 

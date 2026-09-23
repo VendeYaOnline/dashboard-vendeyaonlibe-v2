@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card, Chip, Modal, useOverlayState } from "@heroui/react";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { getSaleProductVariantLabel, type SaleProduct } from "../types";
 import { formatSaleTotal } from "../utils";
 
@@ -59,7 +60,12 @@ function ProductRow({ item }: { item: SaleProduct }) {
     <Card>
       <Card.Content className="flex gap-4 p-4">
         {item.image_product ? (
-          <img src={item.image_product} alt={item.title} className="size-20 shrink-0 rounded-md border border-border object-cover" />
+          <ImageWithSkeleton
+            src={item.image_product}
+            alt={item.title}
+            sizes="80px"
+            className="size-20 shrink-0 rounded-md border border-border"
+          />
         ) : (
           <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-border bg-surface-secondary text-[10px] text-muted">Sin img</div>
         )}

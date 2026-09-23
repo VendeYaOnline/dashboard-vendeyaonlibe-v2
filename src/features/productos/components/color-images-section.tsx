@@ -3,6 +3,7 @@
 import { useState, type DragEvent } from "react";
 import { Button, Chip, cn } from "@heroui/react";
 import { ChevronDown, ChevronUp, GripVertical, ImageIcon, Plus, Trash2 } from "lucide-react";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import type { ColorImageGroup } from "@/interfaces/products";
 import { ColorSwatch, type ColorOption } from "./attribute-values";
 import { MAX_IMAGES_PER_COLOR } from "./constants";
@@ -70,12 +71,11 @@ export function ColorImagesSection({
           key={url}
           className="group relative size-16 overflow-hidden rounded-md border border-border"
         >
-          {/* Sin esto el navegador arrastra la imagen en lugar de la tarjeta. */}
-          <img
+          <ImageWithSkeleton
             src={url}
             alt="Imagen del producto"
-            draggable={false}
-            className="size-full object-cover"
+            sizes="64px"
+            className="absolute inset-0 size-full"
           />
           <button
             type="button"

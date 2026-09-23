@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowUpDown, FolderTree } from "lucide-react";
 import { Button, Modal, Spinner, useOverlayState } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { PendingButton } from "@/components/shared/pending-button";
 import { SortableList } from "@/components/shared/sortable-list";
 import type { Category } from "@/interfaces/categories";
@@ -66,10 +67,11 @@ export function OrdenarCategoriasModal({
                   renderItem={(category) => (
                     <span className="flex items-center gap-2">
                       {category.image ? (
-                        <img
+                        <ImageWithSkeleton
                           src={category.image}
                           alt=""
-                          className="size-7 shrink-0 rounded-md border border-border object-cover"
+                          sizes="28px"
+                          className="size-7 shrink-0 rounded-md border border-border"
                         />
                       ) : (
                         <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-secondary">
