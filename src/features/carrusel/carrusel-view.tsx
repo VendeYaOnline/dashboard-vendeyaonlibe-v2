@@ -5,6 +5,7 @@ import { Button, Card, toast } from "@heroui/react";
 import { Edit2, GalleryHorizontal, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
@@ -25,7 +26,7 @@ import {
 } from "@/interfaces/carousel";
 
 /** Miniaturas que se muestran en la tabla antes de resumir con "+N". */
-const MAX_PREVIEW_IMAGES = 5;
+const MAX_PREVIEW_IMAGES = 3;
 import { CarouselFormModal } from "./components/carousel-form-modal";
 
 export function CarruselView() {
@@ -101,15 +102,25 @@ export function CarruselView() {
           <span className="text-sm text-muted">Sin productos</span>
         ) : (
           <div className="flex items-center gap-2">
-            {carousel.products.slice(0, MAX_PREVIEW_IMAGES).map((product) => (
-              <img
-                key={product.id}
-                src={product.image_product}
-                alt={product.title}
-                title={product.title}
-                className="size-10 rounded-md border border-border object-cover"
-              />
-            ))}
+            {carousel.products.slice(0, MAX_PREVIEW_IMAGES).map((product) =>
+              product.image_product ? (
+                <ImageWithSkeleton
+                  key={product.id}
+                  src={product.image_product}
+                  alt={product.title}
+                  sizes="40px"
+                  className="size-10 rounded-md border border-border"
+                />
+              ) : (
+                <span
+                  key={product.id}
+                  title={`${product.title} sin imagen`}
+                  className="flex size-10 items-center justify-center rounded-md bg-surface-secondary text-[10px] text-muted"
+                >
+                  Sin img
+                </span>
+              ),
+            )}
             {carousel.products.length > MAX_PREVIEW_IMAGES && (
               <span className="flex size-10 items-center justify-center rounded-md bg-surface-secondary text-xs font-medium text-muted">
                 +{carousel.products.length - MAX_PREVIEW_IMAGES}
