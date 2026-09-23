@@ -20,7 +20,7 @@ export interface CarouselPayload {
 }
 
 // Límites definidos por el negocio
-export const MAX_CAROUSELS = 5;
+export const MAX_CAROUSELS = 10;
 export const MIN_PRODUCTS_CAROUSEL = 3;
 export const MAX_PRODUCTS_CAROUSEL = 8;
 /** Mismo tope que el backend. */

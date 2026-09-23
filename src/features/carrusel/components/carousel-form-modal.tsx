@@ -12,6 +12,7 @@ import {
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { CharCounter } from "@/features/productos/components/form-section";
 import { ProductSelectGrid } from "@/components/shared/product-select-grid";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -49,6 +50,9 @@ export function CarouselFormModal({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
+  // El diálogo aparece antes de iniciar el trabajo de la grilla y la consulta
+  // de productos; evita que la animación de apertura se sienta bloqueada.
+  const [isCatalogReady, setIsCatalogReady] = useState(false);
 
   // Precarga los datos al abrir y limpia el formulario al cerrar
   useEffect(() => {
@@ -62,12 +66,22 @@ export function CarouselFormModal({
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setIsCatalogReady(false);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => setIsCatalogReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen]);
+
   // Se listan todos los productos de la tienda (pueden repetirse entre carruseles).
   const { data, isLoading, isPlaceholderData } = useQueryAvailableProducts(
     page,
     debouncedSearch,
     [],
-    isOpen,
+    isOpen && isCatalogReady,
     carousel?.id,
   );
 
@@ -146,11 +160,16 @@ export function CarouselFormModal({
                           key={product.id}
                           className="inline-flex max-w-full items-center gap-2 rounded-full bg-accent-soft py-1 pr-2 pl-1 text-xs text-accent-soft-foreground"
                         >
-                          <img
-                            src={product.image_product}
-                            alt=""
-                            className="size-6 shrink-0 rounded-full object-cover"
-                          />
+                          {product.image_product ? (
+                            <ImageWithSkeleton
+                              src={product.image_product}
+                              alt=""
+                              sizes="24px"
+                              className="size-6 shrink-0 rounded-full"
+                            />
+                          ) : (
+                            <span className="size-6 shrink-0 rounded-full bg-surface-secondary" />
+                          )}
                           <span className="truncate">{product.title}</span>
                           {product.stock === false && (
                             <span className="shrink-0 rounded-full bg-danger/10 px-1.5 text-[10px] font-medium text-danger">
@@ -183,7 +202,7 @@ export function CarouselFormModal({
                     currentPage={page}
                     totalPages={data?.totalPages ?? 1}
                     onPageChange={setPage}
-                    isLoading={isLoading}
+                    isLoading={isLoading || !isCatalogReady}
                     isRefreshing={isPlaceholderData}
                     emptyMessage="No hay productos disponibles para asignar"
                   />
