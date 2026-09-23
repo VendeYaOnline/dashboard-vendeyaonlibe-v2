@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Checkbox, Chip, cn } from "@heroui/react";
 import type { Category } from "@/interfaces/categories";
 import type { ImageItem } from "@/lib/types";
@@ -61,11 +62,12 @@ export function ImagenListItem({
         className="relative size-12 w-16 shrink-0 overflow-hidden rounded-md bg-surface-secondary"
       >
         {!isLoaded && <div className="absolute inset-0 animate-pulse bg-surface-secondary" />}
-        <img
+        <Image
           src={image.Url}
           alt={fileName}
-          loading="lazy"
-          decoding="async"
+          width={64}
+          height={48}
+          sizes="64px"
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-opacity",

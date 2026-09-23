@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button, Card, Chip, toast } from "@heroui/react";
 import { Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -96,9 +97,12 @@ export function ProductosView() {
       label: "Imagen",
       render: (product) =>
         product.image_product ? (
-          <img
+          <Image
             src={product.image_product}
             alt={product.title}
+            width={48}
+            height={48}
+            sizes="48px"
             className="size-12 rounded-md object-cover"
           />
         ) : (

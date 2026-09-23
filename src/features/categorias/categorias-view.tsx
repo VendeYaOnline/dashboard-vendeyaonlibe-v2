@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Button, Card, Chip, toast } from "@heroui/react";
 import { ArrowUpDown, Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -111,9 +112,12 @@ export function CategoriasView() {
       render: (category) => (
         <span className="flex items-center gap-3">
           {category.image ? (
-            <img
+            <Image
               src={category.image}
               alt=""
+              width={36}
+              height={36}
+              sizes="36px"
               className="size-9 shrink-0 rounded-md border border-border object-cover"
             />
           ) : (

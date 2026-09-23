@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Eye } from "lucide-react";
 import { Card, Checkbox, Chip, cn } from "@heroui/react";
 import type { Category } from "@/interfaces/categories";
@@ -73,11 +74,11 @@ export function ImagenCard({
         className="relative block aspect-4/3 w-full overflow-hidden"
       >
         {!isLoaded && <div className="absolute inset-0 animate-pulse bg-surface-secondary" />}
-        <img
+        <Image
           src={image.Url}
           alt={fileName}
-          loading="lazy"
-          decoding="async"
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-all duration-500 group-hover:scale-105",

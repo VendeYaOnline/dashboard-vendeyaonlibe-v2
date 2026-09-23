@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { CheckCircle, ImageIcon } from "lucide-react";
 import {
   Button,
@@ -194,13 +195,12 @@ export function ImagePickerModal({
                               : "border-transparent hover:border-accent/50",
                         )}
                       >
-                        <img
+                        <Image
                           src={img.Url}
                           alt="Imagen de galería"
-                          width={128}
-                          height={128}
-                          loading={index < 10 ? "eager" : "lazy"}
-                          decoding="async"
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 128px"
+                          priority={index < 5}
                           draggable={false}
                           className="size-full object-cover"
                         />
