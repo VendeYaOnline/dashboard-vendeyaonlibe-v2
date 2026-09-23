@@ -50,7 +50,6 @@ export function CarouselFormModal({
 
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [showOnHome, setShowOnHome] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Products[]>([]);
   const [search, setSearch] = useState("");
   const [discount, setDiscount] = useState<"all" | "with" | "without">("all");
@@ -65,7 +64,6 @@ export function CarouselFormModal({
     if (isOpen) {
       setName(carousel?.name ?? "");
       setCategoryId(carousel?.category_id ?? null);
-      setShowOnHome(carousel?.show_on_home ?? false);
       setSelectedProducts(carousel?.products ?? []);
     }
     setSearch("");
@@ -119,7 +117,6 @@ export function CarouselFormModal({
       name: name.trim(),
       idsProducts: selectedProducts.map((product) => product.id),
       categoryId,
-      showOnHome,
     });
   };
 
@@ -175,19 +172,6 @@ export function CarouselFormModal({
                 <p className="-mt-3 text-xs text-muted">
                   La ficha de los productos de esta categoría mostrará este carrusel, aunque cambies su nombre.
                 </p>
-
-                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-surface-secondary/50 p-3 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={showOnHome}
-                    onChange={(event) => setShowOnHome(event.target.checked)}
-                    className="mt-0.5 size-4 accent-primary"
-                  />
-                  <span>
-                    <span className="block font-medium">Mostrar debajo de las categorías</span>
-                    <span className="text-xs text-muted">Solo puede haber un carrusel en esta ubicación de la portada.</span>
-                  </span>
-                </label>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
