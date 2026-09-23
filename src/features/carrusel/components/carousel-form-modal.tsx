@@ -6,7 +6,10 @@ import {
   Button,
   Input,
   Label,
+  ListBox,
+  ListBoxItem,
   Modal,
+  Select,
   TextField,
   toast,
   useOverlayState,
@@ -16,7 +19,7 @@ import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { CharCounter } from "@/features/productos/components/form-section";
 import { ProductSelectGrid } from "@/components/shared/product-select-grid";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { useQueryAvailableProducts } from "@/app/api/queries";
+import { useQueryAllCategories, useQueryAvailableProducts } from "@/app/api/queries";
 import type { Products } from "@/interfaces/products";
 import {
   MAX_CAROUSEL_NAME_LENGTH,
@@ -46,8 +49,11 @@ export function CarouselFormModal({
   const state = useOverlayState({ isOpen, onOpenChange });
 
   const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [showOnHome, setShowOnHome] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Products[]>([]);
   const [search, setSearch] = useState("");
+  const [discount, setDiscount] = useState<"all" | "with" | "without">("all");
   const debouncedSearch = useDebouncedValue(search);
   const [page, setPage] = useState(1);
   // El diálogo aparece antes de iniciar el trabajo de la grilla y la consulta
@@ -58,13 +64,16 @@ export function CarouselFormModal({
   useEffect(() => {
     if (isOpen) {
       setName(carousel?.name ?? "");
+      setCategoryId(carousel?.category_id ?? null);
+      setShowOnHome(carousel?.show_on_home ?? false);
       setSelectedProducts(carousel?.products ?? []);
     }
     setSearch("");
+    setDiscount("all");
     setPage(1);
   }, [isOpen, carousel]);
 
-  useEffect(() => setPage(1), [debouncedSearch]);
+  useEffect(() => setPage(1), [debouncedSearch, discount]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -83,7 +92,10 @@ export function CarouselFormModal({
     [],
     isOpen && isCatalogReady,
     carousel?.id,
+    discount,
   );
+  const { data: categoriesData } = useQueryAllCategories(isOpen);
+  const categories = categoriesData?.categories ?? [];
 
   const handleSelectProduct = (product: Products) => {
     const isSelected = selectedProducts.some((item) => item.id === product.id);
@@ -106,6 +118,8 @@ export function CarouselFormModal({
     onSubmit({
       name: name.trim(),
       idsProducts: selectedProducts.map((product) => product.id),
+      categoryId,
+      showOnHome,
     });
   };
 
@@ -137,6 +151,43 @@ export function CarouselFormModal({
                   <Input placeholder="Ej: Ofertas de temporada" maxLength={MAX_CAROUSEL_NAME_LENGTH} />
                   <CharCounter length={name.length} max={MAX_CAROUSEL_NAME_LENGTH} />
                 </TextField>
+
+                <Select
+                  selectedKey={categoryId ?? "none"}
+                  onSelectionChange={(key) => setCategoryId(String(key) === "none" ? null : String(key))}
+                >
+                  <Label>Categoría asociada</Label>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBoxItem id="none">Sin categoría (promoción general)</ListBoxItem>
+                      {categories.map((category) => (
+                        <ListBoxItem key={category.id} id={category.id}>
+                          {category.name}
+                        </ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+                <p className="-mt-3 text-xs text-muted">
+                  La ficha de los productos de esta categoría mostrará este carrusel, aunque cambies su nombre.
+                </p>
+
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-surface-secondary/50 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showOnHome}
+                    onChange={(event) => setShowOnHome(event.target.checked)}
+                    className="mt-0.5 size-4 accent-primary"
+                  />
+                  <span>
+                    <span className="block font-medium">Mostrar debajo de las categorías</span>
+                    <span className="text-xs text-muted">Solo puede haber un carrusel en esta ubicación de la portada.</span>
+                  </span>
+                </label>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -190,10 +241,26 @@ export function CarouselFormModal({
                 </div>
 
                 <div className="space-y-2">
-                  <TextField value={search} onChange={setSearch}>
-                    <Label>Buscar producto por título</Label>
-                    <Input placeholder="Buscar por título..." maxLength={30} />
-                  </TextField>
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+                    <TextField value={search} onChange={setSearch}>
+                      <Label>Buscar producto por título</Label>
+                      <Input placeholder="Buscar por título..." maxLength={30} />
+                    </TextField>
+                    <Select selectedKey={discount} onSelectionChange={(key) => setDiscount(String(key) as typeof discount)}>
+                      <Label>Descuento</Label>
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          <ListBoxItem id="all">Todos</ListBoxItem>
+                          <ListBoxItem id="with">Con descuento</ListBoxItem>
+                          <ListBoxItem id="without">Sin descuento</ListBoxItem>
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  </div>
 
                   <ProductSelectGrid
                     products={data?.products ?? []}

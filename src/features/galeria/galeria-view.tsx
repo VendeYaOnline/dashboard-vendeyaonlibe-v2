@@ -366,37 +366,45 @@ export function GaleriaView() {
         </div>
       )}
 
-      <UploadImagenModal
-        isOpen={isUploadOpen}
-        onOpenChange={setIsUploadOpen}
-        onUpload={handleUpload}
-        categories={categories}
-        isPending={uploadMutation.isPending}
-      />
+      {isUploadOpen && (
+        <UploadImagenModal
+          isOpen={isUploadOpen}
+          onOpenChange={setIsUploadOpen}
+          onUpload={handleUpload}
+          categories={categories}
+          isPending={uploadMutation.isPending}
+        />
+      )}
 
-      <ImagenPreviewModal
-        image={previewImage}
-        isOpen={previewImage !== null}
-        onOpenChange={(open) => !open && setPreviewImage(null)}
-        onDelete={setKeyToDelete}
-      />
+      {previewImage && (
+        <ImagenPreviewModal
+          image={previewImage}
+          isOpen
+          onOpenChange={(open) => !open && setPreviewImage(null)}
+          onDelete={setKeyToDelete}
+        />
+      )}
 
-      <RenameImagenModal
-        image={imageToRename}
-        isOpen={imageToRename !== null}
-        onOpenChange={(open) => !open && setImageToRename(null)}
-        onRename={handleRename}
-        isPending={renameMutation.isPending}
-      />
+      {imageToRename && (
+        <RenameImagenModal
+          image={imageToRename}
+          isOpen
+          onOpenChange={(open) => !open && setImageToRename(null)}
+          onRename={handleRename}
+          isPending={renameMutation.isPending}
+        />
+      )}
 
-      <MoveImagenModal
-        keys={keysToMove ?? []}
-        categories={categories}
-        isOpen={keysToMove !== null}
-        onOpenChange={(open) => !open && setKeysToMove(null)}
-        onMove={handleMove}
-        isPending={moveMutation.isPending}
-      />
+      {keysToMove && (
+        <MoveImagenModal
+          keys={keysToMove}
+          categories={categories}
+          isOpen
+          onOpenChange={(open) => !open && setKeysToMove(null)}
+          onMove={handleMove}
+          isPending={moveMutation.isPending}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={keyToDelete !== null}

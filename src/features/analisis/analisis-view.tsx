@@ -23,6 +23,7 @@ import {
   cn,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { useQueryAnalytics } from "@/app/api/queries";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 import { VentaStatusChip } from "@/features/ventas/components/venta-status-chip";
@@ -162,10 +163,11 @@ export function AnalisisView() {
                     label: (
                       <span className="flex items-center gap-2">
                         {product.image ? (
-                          <img
+                          <ImageWithSkeleton
                             src={product.image}
                             alt=""
-                            className="size-7 shrink-0 rounded-md object-cover"
+                            className="size-7 shrink-0 rounded-md"
+                            sizes="28px"
                           />
                         ) : (
                           <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-secondary">
@@ -274,10 +276,11 @@ export function AnalisisView() {
                     {data.lowStock.map((product) => (
                       <li key={product.id} className="flex items-center gap-3 py-2 text-sm">
                         {product.image ? (
-                          <img
+                          <ImageWithSkeleton
                             src={product.image}
                             alt=""
-                            className="size-8 shrink-0 rounded-md object-cover"
+                            className="size-8 shrink-0 rounded-md"
+                            sizes="32px"
                           />
                         ) : (
                           <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-secondary">

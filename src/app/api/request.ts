@@ -279,10 +279,12 @@ export const getProductsByCategory = async (
   categoryIds: string[] = [],
   /** Al editar un carrusel, incluye también sus propios productos. */
   carouselId?: string,
+  discount: "all" | "with" | "without" = "all",
 ) => {
   const params = new URLSearchParams({ page: String(page), search });
   categoryIds.forEach((id) => params.append("categoryId", id));
   if (carouselId) params.append("carouselId", carouselId);
+  if (discount !== "all") params.append("discount", discount);
 
   const result = (
     await axiosConfig.get<ProductRequest>(

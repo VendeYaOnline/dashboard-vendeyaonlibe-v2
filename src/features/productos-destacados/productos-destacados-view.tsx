@@ -211,12 +211,14 @@ export function ProductosDestacadosView() {
         />
       </Card>
 
-      <FeaturedProductFormModal
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSubmit={handleCreate}
-        isPending={createMutation.isPending}
-      />
+      {isFormOpen && (
+        <FeaturedProductFormModal
+          isOpen={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSubmit={handleCreate}
+          isPending={createMutation.isPending}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={toDelete !== null}

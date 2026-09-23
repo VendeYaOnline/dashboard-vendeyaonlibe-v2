@@ -211,11 +211,12 @@ export const useQueryAvailableProducts = (
   categoryIds: string[],
   enabled: boolean = true,
   carouselId?: string,
+  discount: "all" | "with" | "without" = "all",
 ) => {
   const validPage = currentPage > 0 ? currentPage : 1;
   return useQuery({
-    queryKey: ["available-products", validPage, search, categoryIds, carouselId ?? null],
-    queryFn: () => getProductsByCategory(validPage, search, categoryIds, carouselId),
+    queryKey: ["available-products", validPage, search, categoryIds, carouselId ?? null, discount],
+    queryFn: () => getProductsByCategory(validPage, search, categoryIds, carouselId, discount),
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
     enabled: enabled && currentPage > 0,

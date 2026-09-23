@@ -3,6 +3,10 @@ import { Products } from "./products";
 export interface Carousel {
   id: string;
   name: string;
+  /** UUID de la categoría que abre este carrusel en la ficha del producto. */
+  category_id?: string | null;
+  /** Determina el carrusel que se ve debajo de las categorías en la portada. */
+  show_on_home?: boolean;
   products: Products[];
 }
 
@@ -17,6 +21,8 @@ export interface CarouselRequest {
 export interface CarouselPayload {
   name: string;
   idsProducts: string[];
+  categoryId?: string | null;
+  showOnHome?: boolean;
 }
 
 // Límites definidos por el negocio

@@ -293,22 +293,26 @@ export function ProductosView() {
         />
       </Card>
 
-      <ProductoFormModal
-        product={selected}
-        isOpen={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setSelected(null);
-        }}
-        onSubmit={handleSubmit}
-        isPending={createMutation.isPending || updateMutation.isPending}
-      />
+      {isFormOpen && (
+        <ProductoFormModal
+          product={selected}
+          isOpen={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setSelected(null);
+          }}
+          onSubmit={handleSubmit}
+          isPending={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
 
-      <StockQuickModal
-        product={stockTarget}
-        isOpen={stockTarget !== null}
-        onOpenChange={(open) => !open && setStockTarget(null)}
-      />
+      {stockTarget && (
+        <StockQuickModal
+          product={stockTarget}
+          isOpen
+          onOpenChange={(open) => !open && setStockTarget(null)}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={toDelete !== null}

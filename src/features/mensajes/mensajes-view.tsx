@@ -247,15 +247,17 @@ export function MensajesView() {
         />
       </Card>
 
-      <MensajeDetailsModal
-        contact={selected}
-        isOpen={selected !== null}
-        onOpenChange={(open) => !open && setSelected(null)}
-        onMarkUnread={(contact) => {
-          setRead(contact, false);
-          setSelected(null);
-        }}
-      />
+      {selected && (
+        <MensajeDetailsModal
+          contact={selected}
+          isOpen
+          onOpenChange={(open) => !open && setSelected(null)}
+          onMarkUnread={(contact) => {
+            setRead(contact, false);
+            setSelected(null);
+          }}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={toDelete !== null}

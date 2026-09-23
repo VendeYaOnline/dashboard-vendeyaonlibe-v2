@@ -296,16 +296,18 @@ export function PortadasView() {
         />
       </Card>
 
-      <PortadaFormModal
-        cover={selected}
-        isOpen={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setSelected(null);
-        }}
-        onSubmit={handleSubmit}
-        isPending={createMutation.isPending || updateMutation.isPending}
-      />
+      {isFormOpen && (
+        <PortadaFormModal
+          cover={selected}
+          isOpen={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setSelected(null);
+          }}
+          onSubmit={handleSubmit}
+          isPending={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={toDelete !== null}

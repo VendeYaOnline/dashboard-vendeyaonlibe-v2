@@ -304,18 +304,22 @@ export function VentasView() {
         />
       </Card>
 
-      <VentaFormModal
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSubmit={handleCreateSale}
-        isPending={createMutation.isPending}
-      />
+      {isFormOpen && (
+        <VentaFormModal
+          isOpen={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSubmit={handleCreateSale}
+          isPending={createMutation.isPending}
+        />
+      )}
 
-      <VentaDetailsModal
-        sale={selectedSale}
-        isOpen={selectedSale !== null}
-        onOpenChange={(open) => !open && setSelectedSale(null)}
-      />
+      {selectedSale && (
+        <VentaDetailsModal
+          sale={selectedSale}
+          isOpen
+          onOpenChange={(open) => !open && setSelectedSale(null)}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={saleToDelete !== null}
