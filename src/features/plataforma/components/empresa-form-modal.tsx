@@ -258,7 +258,7 @@ export function EmpresaFormModal({
                         <Label>Envío gratis desde (pesos)</Label>
                         <Input inputMode="numeric" placeholder="Ej: 250000" />
                         <p className="mt-1 text-xs text-muted">
-                          Valor de los productos, después del código promocional. Vacío = nunca gratis.
+                          Valor de los productos antes del código promocional. Vacío = nunca gratis.
                         </p>
                       </TextField>
                     </div>
