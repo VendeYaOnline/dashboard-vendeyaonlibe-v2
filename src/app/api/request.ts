@@ -1,7 +1,8 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
-import { Categories } from "@/interfaces/categories";
+import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
+import type { PromoCodePayload, PromoCodesResponse } from "@/interfaces/promo-codes";
 import { Images } from "@/interfaces/images";
 import { UserRequest } from "@/interfaces/users";
 import { ContactRequest, ContactStatusFilter, Contacts } from "@/interfaces/contacts";
@@ -436,6 +437,51 @@ export const updateCover = async ({ id, ...data }: CoverPayload & { id: string }
 /** Nuevo orden de todas las categorías (posición = índice en el array). */
 export const reorderCategories = async (ids: string[]) => {
   return axiosConfig.put("/reorder-categories", { ids });
+};
+
+// * CÓDIGOS PROMOCIONALES
+
+export const getPromoCodes = async (page: number, search: string = "") =>
+  (
+    await axiosConfig.get<PromoCodesResponse>(
+      `/get-promo-codes?page=${page}&search=${encodeURIComponent(search)}`,
+    )
+  ).data;
+
+export const createPromoCode = async (data: PromoCodePayload) => {
+  return axiosConfig.post("/create-promo-code", data);
+};
+
+export const updatePromoCode = async ({ id, ...data }: PromoCodePayload & { id: string }) => {
+  return axiosConfig.put(`/updated-promo-code/${id}`, data);
+};
+
+/** Pausa o reactiva el código sin tocar su configuración. */
+export const togglePromoCode = async ({ id, isActive }: { id: string; isActive: boolean }) => {
+  return axiosConfig.patch(`/toggle-promo-code/${id}`, { is_active: isActive });
+};
+
+export const deletePromoCode = async (id: string) => {
+  return axiosConfig.delete(`/delete-promo-code/${id}`);
+};
+
+/** Productos de una categoría, en el orden de la tienda. */
+export const getCategoryProducts = async (categoryId: string) =>
+  (
+    await axiosConfig.get<CategoryProductsResponse>(
+      `/get-category-products/${encodeURIComponent(categoryId)}`,
+    )
+  ).data;
+
+/** Nuevo orden de todos los productos de una categoría (posición = índice). */
+export const reorderCategoryProducts = async ({
+  categoryId,
+  ids,
+}: {
+  categoryId: string;
+  ids: string[];
+}) => {
+  return axiosConfig.put(`/reorder-category-products/${encodeURIComponent(categoryId)}`, { ids });
 };
 
 export const reorderCovers = async (ids: string[]) => {

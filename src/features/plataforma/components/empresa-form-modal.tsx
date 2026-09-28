@@ -65,6 +65,9 @@ export function EmpresaFormModal({
   const [maxImages, setMaxImages] = useState("");
   /** Mientras el usuario no toque el tope de imágenes, se recalcula desde los productos. */
   const [imagesTouched, setImagesTouched] = useState(false);
+  /** Envío de la tienda (solo al editar); vacío = no cobra / nunca gratis. */
+  const [shippingFee, setShippingFee] = useState("");
+  const [freeShippingFrom, setFreeShippingFrom] = useState("");
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -81,6 +84,8 @@ export function EmpresaFormModal({
     setLimitImages(images !== null);
     setMaxImages(images === null ? "" : String(images));
     setImagesTouched(Boolean(company));
+    setShippingFee(company?.shipping_fee != null ? String(company.shipping_fee) : "");
+    setFreeShippingFrom(company?.free_shipping_from != null ? String(company.free_shipping_from) : "");
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -133,7 +138,12 @@ export function EmpresaFormModal({
       max_images: limitImages ? imagesValue : null,
     };
     if (isEdit) {
-      onUpdate(company.id, { name: nameTrimmed, ...limits });
+      onUpdate(company.id, {
+        name: nameTrimmed,
+        ...limits,
+        shipping_fee: shippingFee === "" ? null : Number(shippingFee),
+        free_shipping_from: shippingFee === "" || freeShippingFrom === "" ? null : Number(freeShippingFrom),
+      });
       return;
     }
     onCreate({
@@ -226,6 +236,34 @@ export function EmpresaFormModal({
                     />
                   </div>
                 </FormSection>
+
+                {isEdit && (
+                  <FormSection
+                    title="Envío de la tienda"
+                    description="El servidor lo suma al total de cada compra en la tienda. Déjalo vacío si la tienda no cobra envío."
+                  >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <TextField
+                        value={shippingFee}
+                        onChange={(value) => setShippingFee(toDigits(value).slice(0, 9))}
+                      >
+                        <Label>Costo de envío (pesos)</Label>
+                        <Input inputMode="numeric" placeholder="Ej: 16900" />
+                      </TextField>
+                      <TextField
+                        value={freeShippingFrom}
+                        onChange={(value) => setFreeShippingFrom(toDigits(value).slice(0, 9))}
+                        isDisabled={shippingFee === ""}
+                      >
+                        <Label>Envío gratis desde (pesos)</Label>
+                        <Input inputMode="numeric" placeholder="Ej: 250000" />
+                        <p className="mt-1 text-xs text-muted">
+                          Valor de los productos, después del código promocional. Vacío = nunca gratis.
+                        </p>
+                      </TextField>
+                    </div>
+                  </FormSection>
+                )}
 
                 {!isEdit && (
                   <FormSection

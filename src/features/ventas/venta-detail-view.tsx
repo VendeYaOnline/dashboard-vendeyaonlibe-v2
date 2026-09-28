@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Chip } from "@heroui/react";
-import { ArrowLeft, MapPin, Package, ReceiptText, UserRound } from "lucide-react";
+import { ArrowLeft, MapPin, Package, ReceiptText, TicketPercent, Truck, UserRound } from "lucide-react";
 import { useQuerySale } from "@/app/api/queries";
 import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
 import { useMutationUpdateSaleStatus } from "@/app/api/mutations";
@@ -154,6 +154,28 @@ export function VentaDetailView({ saleId }: { saleId: string }) {
         </ReceiptSection>
 
         <div className="border-t border-dashed border-border" />
+        {sale.promo_code && (
+          <div className="flex items-center justify-between gap-4 px-5 py-3 text-sm sm:px-7">
+            <span className="inline-flex items-center gap-2 text-muted">
+              <TicketPercent className="size-4" />
+              Código promocional <span className="font-mono font-semibold text-foreground">{sale.promo_code}</span>
+            </span>
+            <span className="font-semibold tabular-nums text-success">
+              −{formatSaleTotal(sale.promo_discount ?? "0")}
+            </span>
+          </div>
+        )}
+        {sale.shipping_cost != null && (
+          <div className="flex items-center justify-between gap-4 px-5 py-3 text-sm sm:px-7">
+            <span className="inline-flex items-center gap-2 text-muted">
+              <Truck className="size-4" />
+              Envío
+            </span>
+            <span className="font-semibold tabular-nums">
+              {Number(sale.shipping_cost) > 0 ? formatSaleTotal(sale.shipping_cost) : "Gratis"}
+            </span>
+          </div>
+        )}
         <div className="flex items-end justify-between gap-4 bg-surface-secondary px-5 py-5 sm:px-7">
           <div><p className="text-xs font-medium tracking-wide text-muted">TOTAL PAGADO</p><p className="mt-1 text-sm text-muted">{sale.products.length} {sale.products.length === 1 ? "producto" : "productos"}</p></div>
           <p className="text-2xl font-bold tabular-nums">{formatSaleTotal(sale.total)}</p>

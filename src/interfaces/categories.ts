@@ -19,3 +19,16 @@ export interface Categories {
   page: number;
   totalPages: number;
 }
+
+/** Producto de una categoría, tal como se lista en el modal de orden. */
+export interface CategoryProduct {
+  id: string;
+  title: string;
+  image_product: string | null;
+}
+
+/** Productos de una categoría en el orden en que los muestra la tienda. */
+export interface CategoryProductsResponse {
+  category: Pick<Category, "id" | "name">;
+  products: CategoryProduct[];
+}

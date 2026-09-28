@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   Star,
+  TicketPercent,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -27,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
   { href: "/productos", label: "Productos", icon: Package },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },
+  { href: "/promociones", label: "Códigos promocionales", icon: TicketPercent },
   { href: "/carrusel", label: "Carrusel", icon: Images },
   { href: "/portadas", label: "Portadas", icon: LayoutTemplate },
   { href: "/categorias", label: "Categorías", icon: FolderTree },

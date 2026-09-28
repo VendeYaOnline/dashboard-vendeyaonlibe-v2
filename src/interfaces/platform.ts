@@ -21,6 +21,10 @@ export interface PlatformCompany {
   created_at: string | null;
   max_products: number | null;
   max_images: number | null;
+  /** Envío que cobra la tienda (pesos); null = no cobra envío. */
+  shipping_fee: number | null;
+  /** Envío gratis desde este valor de productos (pesos); null = nunca gratis. */
+  free_shipping_from: number | null;
   products: number;
   users: number;
   /** null cuando no se puede atribuir (varias empresas comparten la raíz). */
@@ -44,4 +48,6 @@ export interface UpdateCompanyPayload {
   name?: string;
   max_products?: number | null;
   max_images?: number | null;
+  shipping_fee?: number | null;
+  free_shipping_from?: number | null;
 }

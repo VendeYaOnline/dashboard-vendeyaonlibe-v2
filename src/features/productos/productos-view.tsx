@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
-import { Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowUpDown, Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
@@ -22,6 +22,7 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Products } from "@/interfaces/products";
 import { ProductoFormModal } from "./components/producto-form-modal";
 import { StockQuickModal } from "./components/stock-quick-modal";
+import { OrdenarProductosModal } from "./components/ordenar-productos-modal";
 import { formatCOP } from "./utils";
 
 /** Color del número de unidades: verde > 10, naranja 5–10, rojo 0–4. */
@@ -39,6 +40,7 @@ export function ProductosView() {
   const [selected, setSelected] = useState<Products | null>(null);
   const [toDelete, setToDelete] = useState<Products | null>(null);
   const [stockTarget, setStockTarget] = useState<Products | null>(null);
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
@@ -237,6 +239,14 @@ export function ProductosView() {
           <div className="flex items-center gap-3">
             <PlanUsage kind="products" plan={plan} />
             <Button
+              variant="outline"
+              isDisabled={!canManage || (data?.grandTotal ?? 0) < 2}
+              onPress={() => setIsOrderOpen(true)}
+            >
+              <ArrowUpDown className="size-4" />
+              Ordenar
+            </Button>
+            <Button
               variant="primary"
               isDisabled={!canManage || productLimitReached}
               onPress={() => {
@@ -312,6 +322,10 @@ export function ProductosView() {
           isOpen
           onOpenChange={(open) => !open && setStockTarget(null)}
         />
+      )}
+
+      {isOrderOpen && (
+        <OrdenarProductosModal isOpen={isOrderOpen} onOpenChange={setIsOrderOpen} />
       )}
 
       <ConfirmDialog

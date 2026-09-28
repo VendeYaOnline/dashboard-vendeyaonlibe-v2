@@ -22,7 +22,12 @@ import {
   deleteUser,
   moveImages,
   renameImage,
+  createPromoCode,
+  deletePromoCode,
+  togglePromoCode,
+  updatePromoCode,
   reorderCategories,
+  reorderCategoryProducts,
   reorderCovers,
   updatedAttribute,
   updatedCarousel,
@@ -101,7 +106,34 @@ export const useMutationReorderCategories = () => {
   });
 };
 
-export const useMutationUpdatedCategory = () => {
+// * CÓDIGOS PROMOCIONALES
+
+const usePromoCodeMutation = <TVariables,>(mutationFn: (variables: TVariables) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
+    },
+  });
+};
+
+export const useMutationCreatePromoCode = () => usePromoCodeMutation(createPromoCode);
+export const useMutationUpdatePromoCode = () => usePromoCodeMutation(updatePromoCode);
+export const useMutationTogglePromoCode = () => usePromoCodeMutation(togglePromoCode);
+export const useMutationDeletePromoCode = () => usePromoCodeMutation(deletePromoCode);
+
+export const useMutationReorderCategoryProducts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reorderCategoryProducts,
+    onSuccess: (_data, { categoryId }) => {
+      queryClient.invalidateQueries({ queryKey: ["products", "by-category", categoryId] });
+    },
+  });
+};
+
+export const useMutationUpdatedCategory =() => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updatedCategory,

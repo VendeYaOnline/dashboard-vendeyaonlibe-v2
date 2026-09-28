@@ -31,7 +31,9 @@ import {
   getPlatformConfig,
   getCarousels,
   getCategories,
+  getCategoryProducts,
   getContacts,
+  getPromoCodes,
   getCovers,
   getFeaturedProducts,
   getImages,
@@ -175,6 +177,32 @@ export const useQueryContacts = (
     enabled: currentPage > 0,
   });
 };
+
+/**
+ * Códigos promocionales. El estado (vigente, vencido...) depende de la hora,
+ * así que se refresca al volver a la pestaña tras un minuto.
+ */
+export const useQueryPromoCodes = (currentPage: number, search: string) => {
+  const validPage = currentPage > 0 ? currentPage : 1;
+  return useQuery({
+    queryKey: ["promo-codes", validPage, search],
+    queryFn: () => getPromoCodes(validPage, search),
+    ...SALES_QUERY_OPTIONS,
+    enabled: currentPage > 0,
+  });
+};
+
+/**
+ * Productos de una categoría en su orden de la tienda (modal de orden).
+ * Bajo "products" para que crear/editar/eliminar productos lo refresque.
+ */
+export const useQueryCategoryProducts = (categoryId: string | null) =>
+  useQuery({
+    queryKey: ["products", "by-category", categoryId],
+    queryFn: () => getCategoryProducts(categoryId as string),
+    refetchOnWindowFocus: false,
+    enabled: categoryId !== null,
+  });
 
 export const useQueryProducts = (
   currentPage: number,

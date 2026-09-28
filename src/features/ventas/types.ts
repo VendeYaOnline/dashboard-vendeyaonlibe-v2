@@ -87,7 +87,13 @@ export interface Sale {
   /** Ya viene formateada como DD/MM/YYYY (`formatDate` en el backend). */
   purchase_date: string;
   payment_method: string;
+  /** Total cobrado; si hubo código promocional, ya tiene el descuento restado. */
   total: string;
+  /** Código promocional usado (copia) y descuento en pesos; null si no hubo. */
+  promo_code?: string | null;
+  promo_discount?: string | null;
+  /** Envío cobrado (ya sumado a `total`); null en ventas del panel o anteriores. */
+  shipping_cost?: string | null;
 }
 
 export interface SaleRequest {

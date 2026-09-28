@@ -111,6 +111,18 @@ export function VentaDetailsModal({ sale, isOpen, onOpenChange }: VentaDetailsMo
                         <OrderMetric label="Método de pago">{getPaymentMethodLabel(sale.payment_method)}</OrderMetric>
                         <OrderMetric label="Total pagado">
                           <span className="text-base tabular-nums">{formatSaleTotal(sale.total)}</span>
+                          {sale.promo_code && (
+                            <span className="block text-xs font-normal text-success">
+                              Código <span className="font-mono">{sale.promo_code}</span> · −
+                              {formatSaleTotal(sale.promo_discount ?? "0")}
+                            </span>
+                          )}
+                          {sale.shipping_cost != null && (
+                            <span className="block text-xs font-normal text-muted">
+                              Envío ·{" "}
+                              {Number(sale.shipping_cost) > 0 ? formatSaleTotal(sale.shipping_cost) : "Gratis"}
+                            </span>
+                          )}
                         </OrderMetric>
                         <OrderMetric label="Productos" className="sm:col-span-2 xl:col-span-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
