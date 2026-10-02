@@ -71,7 +71,7 @@ export function ImagenCard({
         type="button"
         onClick={() => onView(image)}
         aria-label={`Ver ${fileName}`}
-        className="relative block aspect-4/3 w-full overflow-hidden"
+        className="@container relative block aspect-4/3 w-full cursor-pointer overflow-hidden"
       >
         {!isLoaded && <div className="absolute inset-0 animate-pulse bg-surface-secondary" />}
         <Image
@@ -88,9 +88,10 @@ export function ImagenCard({
           )}
         />
         <span className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
-          <span className="inline-flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 text-sm font-medium shadow-surface">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5 text-sm font-medium whitespace-nowrap shadow-surface">
             <Eye className="size-4" />
-            Ver imagen
+            {/* En tarjetas angostas sólo se muestra el ojo. */}
+            <span className="hidden @[12rem]:inline">Ver imagen</span>
           </span>
         </span>
       </button>
