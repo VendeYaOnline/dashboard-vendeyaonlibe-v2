@@ -2,10 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Vercel responde 402 en /_next/image cuando se agota la cuota de Image
-    // Optimization del plan, y las imágenes nuevas dejan de verse. Mientras
-    // tanto se sirven directo desde S3. Quitar esta línea al ampliar el plan.
-    unoptimized: true,
+    // Next sirve miniaturas redimensionadas y en AVIF/WebP desde su caché,
+    // sin cambiar el bucket S3 que conserva los originales.
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
