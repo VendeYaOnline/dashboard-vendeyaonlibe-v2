@@ -41,6 +41,7 @@ export function ImagenPreviewModal({
                     <ImageWithSkeleton
                       src={image.ThumbUrl ?? image.Url}
                       unoptimized={Boolean(image.ThumbUrl)}
+                      useThumbnail={false}
                       alt={getFileName(image.Key)}
                       sizes="(max-width: 640px) 100vw, 768px"
                       className="size-full"
