@@ -8,6 +8,8 @@ export interface ImageItem {
   LastModified: string;
   Size: number;
   Url: string;
+  /** Miniatura WebP; null en las imágenes anteriores a las miniaturas. */
+  ThumbUrl?: string | null;
 }
 
 export interface Images {

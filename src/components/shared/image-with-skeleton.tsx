@@ -12,6 +12,8 @@ interface ImageWithSkeletonProps {
   imageClassName?: string;
   sizes: string;
   priority?: boolean;
+  /** Sirve la imagen tal cual, sin pasar por el optimizador de Next. */
+  unoptimized?: boolean;
 }
 
 /** Miniatura optimizada con espacio reservado y esqueleto hasta que cargue. */
@@ -22,6 +24,7 @@ export function ImageWithSkeleton({
   imageClassName = "",
   sizes,
   priority = false,
+  unoptimized = false,
 }: ImageWithSkeletonProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -34,6 +37,7 @@ export function ImageWithSkeleton({
         fill
         sizes={sizes}
         priority={priority}
+        unoptimized={unoptimized}
         onLoad={() => setIsLoaded(true)}
         // Si S3 responde con un error, ocultamos el esqueleto en vez de dejar
         // una tarjeta cargando indefinidamente.

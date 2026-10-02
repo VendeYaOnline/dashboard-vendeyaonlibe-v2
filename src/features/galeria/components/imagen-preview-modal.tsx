@@ -39,10 +39,11 @@ export function ImagenPreviewModal({
                 <>
                   <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-lg bg-surface-secondary">
                     <ImageWithSkeleton
-                      src={image.Url}
+                      src={image.ThumbUrl ?? image.Url}
+                      unoptimized={Boolean(image.ThumbUrl)}
                       alt={getFileName(image.Key)}
                       sizes="(max-width: 640px) 100vw, 768px"
-                      className="absolute inset-0"
+                      className="size-full"
                       imageClassName="object-contain"
                     />
                   </div>

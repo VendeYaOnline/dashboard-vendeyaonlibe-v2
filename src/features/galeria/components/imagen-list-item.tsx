@@ -63,11 +63,13 @@ export function ImagenListItem({
       >
         {!isLoaded && <div className="absolute inset-0 animate-pulse bg-surface-secondary" />}
         <Image
-          src={image.Url}
+          src={image.ThumbUrl ?? image.Url}
           alt={fileName}
           width={64}
           height={48}
           sizes="64px"
+          // La miniatura ya es liviana; sólo el original pasa por el optimizador.
+          unoptimized={Boolean(image.ThumbUrl)}
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-opacity",

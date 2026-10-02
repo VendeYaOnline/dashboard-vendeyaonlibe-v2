@@ -75,10 +75,12 @@ export function ImagenCard({
       >
         {!isLoaded && <div className="absolute inset-0 animate-pulse bg-surface-secondary" />}
         <Image
-          src={image.Url}
+          src={image.ThumbUrl ?? image.Url}
           alt={fileName}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          // La miniatura ya es liviana; sólo el original pasa por el optimizador.
+          unoptimized={Boolean(image.ThumbUrl)}
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "size-full object-cover transition-all duration-500 group-hover:scale-105",
