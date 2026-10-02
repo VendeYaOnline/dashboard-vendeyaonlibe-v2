@@ -39,9 +39,8 @@ export function ImagenPreviewModal({
                 <>
                   <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-lg bg-surface-secondary">
                     <ImageWithSkeleton
-                      src={image.ThumbUrl ?? image.Url}
-                      unoptimized={Boolean(image.ThumbUrl)}
-                      useThumbnail={false}
+                      src={image.Url}
+                      thumbnailSize="lg"
                       alt={getFileName(image.Key)}
                       sizes="(max-width: 640px) 100vw, 768px"
                       className="size-full"

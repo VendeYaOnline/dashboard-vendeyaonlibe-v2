@@ -15,25 +15,35 @@ interface ImageWithSkeletonProps {
   /** Sirve la imagen tal cual, sin pasar por el optimizador de Next. */
   unoptimized?: boolean;
   /**
-   * Usa la miniatura WebP de 480px que el backend guarda en `_thumbs/` si la
-   * imagen es del bucket de S3: pesa decenas de KB y se sirve sin gastar cuota
-   * del optimizador de Vercel. Si no existe, cae al original. Desactívalo
-   * donde la imagen se vea grande (banners).
+   * Usa la miniatura WebP que el backend guarda en S3 si la imagen es del
+   * bucket: pesa decenas de KB y se sirve sin gastar cuota del optimizador de
+   * Vercel. Si no existe, cae al original.
    */
   useThumbnail?: boolean;
+  /** `sm` (480px) para listados y tarjetas; `lg` (1280px) para banners y vistas amplias. */
+  thumbnailSize?: ThumbnailSize;
 }
+
+type ThumbnailSize = "sm" | "lg";
+
+const THUMBNAIL_ROOTS: Record<ThumbnailSize, string> = {
+  sm: "_thumbs",
+  lg: "_thumbs-lg",
+};
 
 /**
  * URL de la miniatura de una imagen del bucket de S3
  * (`https://host/{clave}` → `https://host/_thumbs/{clave}.webp`), o null si la
  * URL no es de S3 o ya es una miniatura.
  */
-function getThumbnailUrl(src: string): string | null {
+function getThumbnailUrl(src: string, size: ThumbnailSize): string | null {
   try {
     const url = new URL(src);
     if (!url.hostname.endsWith(".amazonaws.com")) return null;
-    if (url.pathname.startsWith("/_thumbs/")) return null;
-    return `${url.origin}/_thumbs${url.pathname}.webp`;
+    if (Object.values(THUMBNAIL_ROOTS).some((root) => url.pathname.startsWith(`/${root}/`))) {
+      return null;
+    }
+    return `${url.origin}/${THUMBNAIL_ROOTS[size]}${url.pathname}.webp`;
   } catch {
     return null;
   }
@@ -49,12 +59,13 @@ export function ImageWithSkeleton({
   priority = false,
   unoptimized = false,
   useThumbnail = true,
+  thumbnailSize = "sm",
 }: ImageWithSkeletonProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   // Miniatura que dio error (no existe todavía): se vuelve al original.
   const [failedThumb, setFailedThumb] = useState<string | null>(null);
 
-  const thumbUrl = useThumbnail ? getThumbnailUrl(src) : null;
+  const thumbUrl = useThumbnail ? getThumbnailUrl(src, thumbnailSize) : null;
   const showingThumb = thumbUrl !== null && failedThumb !== thumbUrl;
 
   return (

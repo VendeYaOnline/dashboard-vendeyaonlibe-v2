@@ -97,7 +97,7 @@ export function PortadaFormModal({
                           src={image}
                           alt="Imagen de la portada"
                           sizes="(max-width: 640px) 100vw, 576px"
-                          useThumbnail={false}
+                          thumbnailSize="lg"
                           className="absolute inset-0 size-full"
                         />
                       ) : (
