@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Boxes,
+  Contact,
   FolderTree,
   ImageIcon,
   Images,
@@ -36,6 +37,7 @@ export const NEW_BADGE_DAYS = 3;
 /** Fuente única de la navegación: la usan el sidebar y el título de cada página. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
+  { href: "/clientes", label: "Clientes", icon: Contact, roles: ["admin", "editor"], releasedAt: "2026-10-06" },
   { href: "/productos", label: "Productos", icon: Package },
   { href: "/inventario", label: "Inventario", icon: Boxes, releasedAt: "2026-10-06" },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },

@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { InventoryFilters } from "@/interfaces/inventory";
+import type { CustomersFilters } from "@/interfaces/customers";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -27,6 +28,7 @@ const SALES_QUERY_OPTIONS = {
 import {
   getAnalytics,
   getInventory,
+  getCustomers,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -144,6 +146,15 @@ export const useQueryInventory = (filters: InventoryFilters) =>
   useQuery({
     queryKey: ["inventory", filters],
     queryFn: () => getInventory(filters),
+    ...LIST_QUERY_OPTIONS,
+    staleTime: 1000 * 60 * 2,
+  });
+
+/** Clientes armados a partir de las ventas (admin y editor). */
+export const useQueryCustomers = (filters: CustomersFilters) =>
+  useQuery({
+    queryKey: ["customers", filters],
+    queryFn: () => getCustomers(filters),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 2,
   });

@@ -1,5 +1,6 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
+import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -250,6 +251,15 @@ export const getInventory = async ({ page, search, status, categoryId, staleDays
   if (categoryId !== "all") params.set("categoryId", categoryId);
   if (staleDays) params.set("staleDays", String(staleDays));
   return (await axiosConfig.get<InventoryResponse>(`/get-inventory?${params}`)).data;
+};
+
+export const getCustomers = async ({ page, search, segment, payment, pending, sort }: CustomersFilters) => {
+  const params = new URLSearchParams({ page: String(page), sort });
+  if (search) params.set("search", search);
+  if (segment !== "all") params.set("segment", segment);
+  if (payment !== "all") params.set("payment", payment);
+  if (pending) params.set("pending", "1");
+  return (await axiosConfig.get<CustomersResponse>(`/get-customers?${params}`)).data;
 };
 
 // * Plan / Plataforma
