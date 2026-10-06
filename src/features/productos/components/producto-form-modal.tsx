@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ImageIcon, Package, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, ImageIcon, Package, Plus, Trash2 } from "lucide-react";
 import {
   Button,
   Input,
@@ -152,6 +152,7 @@ export function ProductoFormModal({
   /** Unidades disponibles (0 a MAX_QUANTITY); vacío = no especificado. */
   const [quantity, setQuantity] = useState("");
   const [inStock, setInStock] = useState(true);
+  const [hidden, setHidden] = useState(false);
   /** "unit" = se vende por unidad; "bundle" = set de N piezas elegidas una a una. */
   const [saleMode, setSaleMode] = useState<"unit" | "bundle">("unit");
   const [bundleSize, setBundleSize] = useState("3");
@@ -199,6 +200,7 @@ export function ProductoFormModal({
       setSaleMode("unit");
       setBundleSize("3");
       setBundleLabel("");
+      setHidden(false);
       setSpecs([]);
       setSelectedAttributeIds([]);
       setAreAttributesHydrated(true);
@@ -226,6 +228,7 @@ export function ProductoFormModal({
     // el interruptor de stock, que sí existe desde siempre.
     setQuantity(product.quantity != null ? product.quantity.toString() : "");
     setInStock(Boolean(product.stock));
+    setHidden(Boolean(product.hidden));
     setSaleMode((product.bundle_size ?? 0) > 1 ? "bundle" : "unit");
     setBundleSize(String(product.bundle_size ?? 3));
     setBundleLabel(product.bundle_item_label ?? "");
@@ -647,6 +650,7 @@ export function ProductoFormModal({
     formData.append("bundle_size", isBundle ? String(bundleSizeValue) : "");
     formData.append("bundle_item_label", isBundle ? bundleLabel.trim() : "");
     formData.append("stock", String(effectiveInStock));
+    formData.append("hidden", String(hidden));
     // Unidades por combinación (0 si el campo está vacío).
     formData.append(
       "variants",
@@ -727,6 +731,18 @@ export function ProductoFormModal({
                   icon={Package}
                   title={isEdit ? "Editar producto" : "Crear producto"}
                   description="Los campos marcados con * son obligatorios para publicarlo en la tienda."
+                  actions={
+                    <Button
+                      variant={hidden ? "secondary" : "ghost"}
+                      size="sm"
+                      type="button"
+                      aria-pressed={hidden}
+                      onPress={() => setHidden((value) => !value)}
+                    >
+                      {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {hidden ? "Oculto" : "Visible"}
+                    </Button>
+                  }
                 />
 
                 <Modal.Body className="space-y-4">

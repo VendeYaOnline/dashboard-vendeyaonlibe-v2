@@ -329,6 +329,14 @@ export const updateProductStock = async ({
   );
 };
 
+/** Oculta o vuelve a mostrar un producto en la tienda. */
+export const updateProductVisibility = async ({ id, hidden }: { id: string; hidden: boolean }) => {
+  return axiosConfig.patch<{ message: string; hidden: boolean }>(
+    `/update-product-visibility/${id}`,
+    { hidden },
+  );
+};
+
 export const deleteProduct = async (idElement: string) => {
   return axiosConfig.delete(`/delete-product/${idElement}`);
 };

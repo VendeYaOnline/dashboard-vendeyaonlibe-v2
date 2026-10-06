@@ -4,8 +4,43 @@
     {
       "name": "panel",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "-p", "3005"],
+      "runtimeArgs": [
+        "node_modules/next/dist/bin/next",
+        "dev",
+        "-p",
+        "3005"
+      ],
       "port": 3005
+    },
+    {
+      "name": "backend-local",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../backend-cliente",
+        "run",
+        "dev"
+      ],
+      "port": 5001,
+      "env": {
+        "PORT": "5001",
+        "ALLOWED_ORIGINS": "http://localhost:3006"
+      }
+    },
+    {
+      "name": "panel-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "node_modules/next/dist/bin/next",
+        "dev",
+        "-p",
+        "3006"
+      ],
+      "port": 3006,
+      "env": {
+        "NEXT_PUBLIC_URL_BACKEND": "http://localhost:5001/api",
+        "NEXT_DIST_DIR": ".next/local"
+      }
     }
   ]
 }
