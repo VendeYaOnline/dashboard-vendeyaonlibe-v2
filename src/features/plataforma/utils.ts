@@ -1,4 +1,12 @@
-import type { PlatformConfig } from "@/interfaces/platform";
+import type { MercadoPagoSource, PlatformConfig } from "@/interfaces/platform";
+
+/** Estado de Mercado Pago de una empresa, para chips y avisos. */
+export const MERCADOPAGO_SOURCE_LABELS: Record<MercadoPagoSource, string> = {
+  company: "Cuenta propia",
+  legacy: "Cuenta del servidor (heredada)",
+  disabled: "Desactivado",
+  none: "Sin configurar",
+};
 
 /** Tope de imágenes sugerido: productos × imágenes por producto + portadas (mismo cálculo que el backend). */
 export const suggestedImageLimit = (maxProducts: number, config?: PlatformConfig) => {

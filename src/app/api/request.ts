@@ -10,6 +10,8 @@ import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics"
 import type {
   CreateCompanyPayload,
   PlanResponse,
+  MercadoPagoSettings,
+  MercadoPagoSettingsPayload,
   PlatformCompaniesResponse,
   PlatformConfig,
   UpdateCompanyPayload,
@@ -253,6 +255,12 @@ export const createPlatformCompany = async (data: CreateCompanyPayload) =>
 
 export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
   axiosConfig.put(`/platform/companies/${id}`, data);
+
+export const getMercadoPagoSettings = async (companyId: string) =>
+  (await axiosConfig.get<MercadoPagoSettings>(`/platform/companies/${companyId}/mercadopago`)).data;
+
+export const updateMercadoPagoSettings = async ({ id, data }: { id: string; data: MercadoPagoSettingsPayload }) =>
+  axiosConfig.put<{ message: string; settings: MercadoPagoSettings }>(`/platform/companies/${id}/mercadopago`, data);
 
 export const logoutUser = async () => {
   return axiosConfig.post("/logout-user");

@@ -5,6 +5,7 @@ import {
   createCategory,
   createPlatformCompany,
   updatePlatformCompany,
+  updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
   createProduct,
@@ -283,6 +284,17 @@ export const useMutationCreateCompany = () => {
     mutationFn: createPlatformCompany,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
+  });
+};
+
+export const useMutationUpdateMercadoPagoSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMercadoPagoSettings,
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "mercadopago", id] });
     },
   });
 };

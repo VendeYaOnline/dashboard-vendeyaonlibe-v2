@@ -27,6 +27,7 @@ import {
   getAnalytics,
   getAttributes,
   getPlan,
+  getMercadoPagoSettings,
   getPlatformCompanies,
   getPlatformConfig,
   getCarousels,
@@ -153,6 +154,15 @@ export const useQueryPlatformConfig = (enabled: boolean = true) =>
     refetchOnWindowFocus: false,
     staleTime: Infinity,
     enabled,
+  });
+
+/** Configuración de Mercado Pago de una empresa (solo superadmin). */
+export const useQueryMercadoPagoSettings = (companyId: string | null) =>
+  useQuery({
+    queryKey: ["platform", "mercadopago", companyId],
+    queryFn: () => getMercadoPagoSettings(companyId as string),
+    refetchOnWindowFocus: false,
+    enabled: Boolean(companyId),
   });
 
 export const useQueryPlatformCompanies = (enabled: boolean = true) =>
