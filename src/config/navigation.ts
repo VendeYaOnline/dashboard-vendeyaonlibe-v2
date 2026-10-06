@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Boxes,
   FolderTree,
   ImageIcon,
   Images,
@@ -27,6 +28,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
   { href: "/productos", label: "Productos", icon: Package },
+  { href: "/inventario", label: "Inventario", icon: Boxes },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },
   { href: "/promociones", label: "Códigos promocionales", icon: TicketPercent },
   { href: "/carrusel", label: "Carrusel", icon: Images },

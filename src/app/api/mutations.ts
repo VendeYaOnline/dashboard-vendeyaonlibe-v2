@@ -364,6 +364,7 @@ export const useMutationUpdateProductStock = () => {
     mutationFn: updateProductStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
     },

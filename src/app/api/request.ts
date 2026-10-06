@@ -1,4 +1,5 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
+import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -238,6 +239,17 @@ export const deleteContact = async (idElement: string) => {
 
 export const getAnalytics = async (period: AnalyticsPeriod) => {
   return (await axiosConfig.get<AnalyticsResponse>(`/get-analytics?period=${period}`)).data;
+};
+
+// * Inventario
+
+export const getInventory = async ({ page, search, status, categoryId, staleDays, sort }: InventoryFilters) => {
+  const params = new URLSearchParams({ page: String(page), sort });
+  if (search) params.set("search", search);
+  if (status !== "all") params.set("status", status);
+  if (categoryId !== "all") params.set("categoryId", categoryId);
+  if (staleDays) params.set("staleDays", String(staleDays));
+  return (await axiosConfig.get<InventoryResponse>(`/get-inventory?${params}`)).data;
 };
 
 // * Plan / Plataforma

@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { InventoryFilters } from "@/interfaces/inventory";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -25,6 +26,7 @@ const SALES_QUERY_OPTIONS = {
 } as const;
 import {
   getAnalytics,
+  getInventory,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -135,6 +137,15 @@ export const useQueryAnalytics = (period: AnalyticsPeriod) =>
     queryFn: () => getAnalytics(period),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 5,
+  });
+
+/** Inventario por variante con filtros (la página anterior sigue visible mientras carga). */
+export const useQueryInventory = (filters: InventoryFilters) =>
+  useQuery({
+    queryKey: ["inventory", filters],
+    queryFn: () => getInventory(filters),
+    ...LIST_QUERY_OPTIONS,
+    staleTime: 1000 * 60 * 2,
   });
 
 /** Plan y uso de la empresa (tope de productos e imágenes). */
