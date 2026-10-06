@@ -48,4 +48,8 @@ export interface AnalyticsResponse {
   lowStockThreshold: number;
   catalog: { products: number; categories: number; outOfStock: number; lowStock: number };
   unreadMessages: number;
+  /** Ventas e ingresos de cada uno de los últimos 12 meses (hora de Colombia), del más antiguo al actual. */
+  monthlySales: { month: string; orders: number; revenue: number }[];
+  /** Todas las ventas de la tienda y la fecha de la primera (null si aún no hay). */
+  totalSales: { orders: number; since: string | null };
 }
