@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { ArrowUpDown, Edit2, FolderTree, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -145,10 +146,8 @@ export function CategoriasView() {
       align: "end",
       render: (category) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Editar categoría"
             aria-label={`Editar ${category.name}`}
             isDisabled={!canManage}
             onPress={() => {
@@ -157,18 +156,16 @@ export function CategoriasView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar categoría"
             aria-label={`Eliminar ${category.name}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(category)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

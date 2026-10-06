@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, cn, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Edit2, Plus, ShieldOff, Trash2, Users as UsersIcon } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -156,10 +157,8 @@ export function UsuariosView() {
 
         return (
           <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              isIconOnly
+            <IconAction
+              tooltip="Editar usuario"
               aria-label={`Editar ${user.username}`}
               onPress={() => {
                 setSelected(user);
@@ -167,18 +166,16 @@ export function UsuariosView() {
               }}
             >
               <Edit2 className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              isIconOnly
+            </IconAction>
+            <IconAction
+              tooltip="Eliminar usuario"
               aria-label={`Eliminar ${user.username}`}
               className="text-danger"
               isDisabled={isSelf}
               onPress={() => setToDelete(user)}
             >
               <Trash2 className="size-4" />
-            </Button>
+            </IconAction>
           </div>
         );
       },

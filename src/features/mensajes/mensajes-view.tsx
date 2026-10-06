@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Chip, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
+import { Card, Chip, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Eye, Mail, MailOpen, MessageSquare, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -134,19 +135,15 @@ export function MensajesView() {
       align: "end",
       render: (contact) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Ver mensaje"
             aria-label={`Ver mensaje ${contact.subject}`}
             onPress={() => openContact(contact)}
           >
             <Eye className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip={contact.is_read ? "Marcar como no leído" : "Marcar como leído"}
             aria-label={
               contact.is_read
                 ? `Marcar como no leído ${contact.subject}`
@@ -155,18 +152,16 @@ export function MensajesView() {
             onPress={() => setRead(contact, !contact.is_read)}
           >
             {contact.is_read ? <Mail className="size-4" /> : <MailOpen className="size-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar mensaje"
             aria-label={`Eliminar mensaje ${contact.subject}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(contact)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },
