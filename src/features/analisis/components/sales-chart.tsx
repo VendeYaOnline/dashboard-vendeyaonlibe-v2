@@ -12,9 +12,13 @@ import {
   niceTicks,
 } from "../utils";
 
-interface RevenueChartProps {
+interface SalesChartProps {
   series: AnalyticsPoint[];
   granularity: "day" | "month";
+  /** Qué miden las columnas: ingresos (por defecto) o cantidad de ventas. */
+  metric?: "revenue" | "orders";
+  /** Muestra el valor encima de cada columna (útil con pocas columnas, p. ej. 12 meses). */
+  showValues?: boolean;
 }
 
 const HEIGHT = 260;
@@ -35,7 +39,7 @@ function useElementWidth<T extends HTMLElement>() {
   }, []);
   return [ref, width] as const;
 }
-const PAD = { top: 12, right: 12, bottom: 28, left: 56 };
+const PAD = { top: 22, right: 12, bottom: 28, left: 56 };
 const MAX_BAR = 24;
 const RADIUS = 4;
 
@@ -55,24 +59,26 @@ const columnPath = (x: number, y: number, w: number, h: number) => {
 };
 
 /**
- * Ingresos por día/mes como columnas de una sola serie (tono de acento),
- * con tooltip al pasar el cursor. SVG responsivo sin librerías.
+ * Ingresos o ventas por día/mes como columnas de una sola serie (tono de
+ * acento), con tooltip al pasar el cursor. SVG responsivo sin librerías.
  */
-export function RevenueChart({ series, granularity }: RevenueChartProps) {
+export function SalesChart({ series, granularity, metric = "revenue", showValues = false }: SalesChartProps) {
+  const valueOf = (point: AnalyticsPoint) => (metric === "orders" ? point.orders : point.revenue);
+  const formatAxis = (value: number) => (metric === "orders" ? formatInteger(value) : formatMoneyCompact(value));
   const [active, setActive] = useState<number | null>(null);
   const [containerRef, measured] = useElementWidth<HTMLDivElement>();
   const WIDTH = Math.max(MIN_WIDTH, measured);
 
   const { ticks, bars, labelEvery, plotBottom } = useMemo(() => {
-    const max = Math.max(0, ...series.map((p) => p.revenue));
-    const ticks = niceTicks(max);
+    const max = Math.max(0, ...series.map(valueOf));
+    const ticks = niceTicks(max, 4, metric === "orders" ? 1 : 0);
     const top = ticks[ticks.length - 1] || 1;
     const plotW = WIDTH - PAD.left - PAD.right;
     const plotH = HEIGHT - PAD.top - PAD.bottom;
     const slot = plotW / Math.max(1, series.length);
     const barW = Math.min(MAX_BAR, slot * 0.6);
     const bars = series.map((point, index) => {
-      const h = (point.revenue / top) * plotH;
+      const h = (valueOf(point) / top) * plotH;
       return {
         point,
         index,
@@ -84,10 +90,12 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
         slotW: slot,
       };
     });
-    // Etiquetas del eje X espaciadas para que no choquen.
-    const labelEvery = Math.max(1, Math.ceil(series.length / 8));
+    // Etiquetas del eje X espaciadas para que no choquen: como mucho 8, y
+    // una cada ~64 px (en celular caben menos).
+    const maxLabels = Math.max(2, Math.min(8, Math.floor(plotW / 64)));
+    const labelEvery = Math.max(1, Math.ceil(series.length / maxLabels));
     return { ticks, bars, labelEvery, plotBottom: PAD.top + plotH };
-  }, [series, WIDTH]);
+  }, [series, WIDTH, metric]);
 
   const hasData = series.some((p) => p.revenue > 0 || p.orders > 0);
   const activeBar = active !== null ? bars[active] : null;
@@ -101,7 +109,7 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="block max-w-full"
         role="img"
-        aria-label="Ingresos por periodo"
+        aria-label={metric === "orders" ? "Ventas por periodo" : "Ingresos por periodo"}
         onMouseLeave={() => setActive(null)}
       >
         {/* Cuadrícula y eje Y (recesivos). */}
@@ -123,7 +131,7 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
                 textAnchor="end"
                 className="fill-muted text-[11px] tabular-nums"
               >
-                {tick === 0 ? "0" : formatMoneyCompact(tick)}
+                {tick === 0 ? "0" : formatAxis(tick)}
               </text>
             </g>
           );
@@ -148,6 +156,16 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
               fill="transparent"
               onMouseEnter={() => setActive(bar.index)}
             />
+            {showValues && valueOf(bar.point) > 0 && (
+              <text
+                x={bar.x + bar.w / 2}
+                y={bar.y - 6}
+                textAnchor="middle"
+                className="fill-foreground text-[11px] font-semibold tabular-nums"
+              >
+                {formatAxis(valueOf(bar.point))}
+              </text>
+            )}
             {bar.index % labelEvery === 0 && (
               <text
                 x={bar.slotX + bar.slotW / 2}
@@ -194,7 +212,7 @@ export function RevenueChart({ series, granularity }: RevenueChartProps) {
               {formatMoney(activeBar.point.revenue)}
             </span>{" "}
             · {formatInteger(activeBar.point.orders)}{" "}
-            {activeBar.point.orders === 1 ? "pedido" : "pedidos"}
+            {activeBar.point.orders === 1 ? "venta" : "ventas"}
           </p>
         </div>
       )}

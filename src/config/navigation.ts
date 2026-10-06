@@ -1,5 +1,7 @@
 import {
   BarChart3,
+  Boxes,
+  Contact,
   FolderTree,
   ImageIcon,
   Images,
@@ -21,12 +23,23 @@ export interface NavItem {
   icon: LucideIcon;
   /** Roles con acceso. Sin definir = todos los roles autenticados. */
   roles?: string[];
+  /**
+   * Día en que la vista sale a producción ("AAAA-MM-DD", hora de Colombia).
+   * Durante NEW_BADGE_DAYS días el menú la marca como "Nuevo"; después la
+   * etiqueta desaparece sola. Ponerlo en toda vista nueva.
+   */
+  releasedAt?: string;
 }
+
+/** Días que una vista nueva lleva la etiqueta "Nuevo". */
+export const NEW_BADGE_DAYS = 3;
 
 /** Fuente única de la navegación: la usan el sidebar y el título de cada página. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
+  { href: "/clientes", label: "Clientes", icon: Contact, roles: ["admin", "editor"], releasedAt: "2026-10-06" },
   { href: "/productos", label: "Productos", icon: Package },
+  { href: "/inventario", label: "Inventario", icon: Boxes, releasedAt: "2026-10-06" },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },
   { href: "/promociones", label: "Códigos promocionales", icon: TicketPercent },
   { href: "/carrusel", label: "Carrusel", icon: Images },
@@ -55,6 +68,14 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
   editor: "Editor",
   viewer: "Espectador",
+};
+
+/** true mientras la vista esté dentro de sus NEW_BADGE_DAYS días desde `releasedAt`. */
+export const isNewNavItem = (item: NavItem, now = new Date()) => {
+  if (!item.releasedAt) return false;
+  const released = new Date(`${item.releasedAt}T00:00:00-05:00`).getTime();
+  const elapsed = now.getTime() - released;
+  return elapsed >= 0 && elapsed < NEW_BADGE_DAYS * 24 * 60 * 60 * 1000;
 };
 
 export const getNavItemsForRole = (role?: string): NavItem[] =>

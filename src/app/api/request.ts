@@ -1,4 +1,6 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
+import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
+import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -10,6 +12,8 @@ import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics"
 import type {
   CreateCompanyPayload,
   PlanResponse,
+  MercadoPagoSettings,
+  MercadoPagoSettingsPayload,
   PlatformCompaniesResponse,
   PlatformConfig,
   UpdateCompanyPayload,
@@ -238,6 +242,26 @@ export const getAnalytics = async (period: AnalyticsPeriod) => {
   return (await axiosConfig.get<AnalyticsResponse>(`/get-analytics?period=${period}`)).data;
 };
 
+// * Inventario
+
+export const getInventory = async ({ page, search, status, categoryId, staleDays, sort }: InventoryFilters) => {
+  const params = new URLSearchParams({ page: String(page), sort });
+  if (search) params.set("search", search);
+  if (status !== "all") params.set("status", status);
+  if (categoryId !== "all") params.set("categoryId", categoryId);
+  if (staleDays) params.set("staleDays", String(staleDays));
+  return (await axiosConfig.get<InventoryResponse>(`/get-inventory?${params}`)).data;
+};
+
+export const getCustomers = async ({ page, search, segment, payment, pending, sort }: CustomersFilters) => {
+  const params = new URLSearchParams({ page: String(page), sort });
+  if (search) params.set("search", search);
+  if (segment !== "all") params.set("segment", segment);
+  if (payment !== "all") params.set("payment", payment);
+  if (pending) params.set("pending", "1");
+  return (await axiosConfig.get<CustomersResponse>(`/get-customers?${params}`)).data;
+};
+
 // * Plan / Plataforma
 
 export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-plan")).data;
@@ -253,6 +277,12 @@ export const createPlatformCompany = async (data: CreateCompanyPayload) =>
 
 export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
   axiosConfig.put(`/platform/companies/${id}`, data);
+
+export const getMercadoPagoSettings = async (companyId: string) =>
+  (await axiosConfig.get<MercadoPagoSettings>(`/platform/companies/${companyId}/mercadopago`)).data;
+
+export const updateMercadoPagoSettings = async ({ id, data }: { id: string; data: MercadoPagoSettingsPayload }) =>
+  axiosConfig.put<{ message: string; settings: MercadoPagoSettings }>(`/platform/companies/${id}/mercadopago`, data);
 
 export const logoutUser = async () => {
   return axiosConfig.post("/logout-user");

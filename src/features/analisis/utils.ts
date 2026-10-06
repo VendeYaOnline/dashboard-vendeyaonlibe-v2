@@ -82,12 +82,13 @@ const CHANNEL_LABELS: Record<string, string> = {
 export const channelLabel = (channel: string) => CHANNEL_LABELS[channel] ?? channel;
 
 /** Ticks "redondos" para el eje Y: 0, 1M, 2M... nunca valores raros. */
-export const niceTicks = (max: number, count = 4): number[] => {
+export const niceTicks = (max: number, count = 4, minStep = 0): number[] => {
   if (max <= 0) return [0];
   const rough = max / count;
   const magnitude = 10 ** Math.floor(Math.log10(rough));
   const candidates = [1, 2, 2.5, 5, 10].map((m) => m * magnitude);
-  const step = candidates.find((c) => c >= rough) ?? candidates[candidates.length - 1];
+  // minStep = 1 para cantidades (ventas): el eje nunca muestra "0,5 ventas".
+  const step = Math.max(minStep, candidates.find((c) => c >= rough) ?? candidates[candidates.length - 1]);
   const ticks: number[] = [];
   for (let value = 0; value <= max + step * 0.001; value += step) ticks.push(value);
   if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + step);

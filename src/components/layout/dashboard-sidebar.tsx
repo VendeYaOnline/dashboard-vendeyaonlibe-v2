@@ -4,11 +4,26 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogOut, Menu, UserCircle, X } from "lucide-react";
+import { LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
 import { Button, Chip, cn } from "@heroui/react";
 import { logoutUser } from "@/app/api/request";
 import { useAuthStore } from "@/store/auth.store";
-import { getNavItemsForRole, ROLE_LABELS } from "@/config/navigation";
+import { getNavItemsForRole, isNewNavItem, ROLE_LABELS } from "@/config/navigation";
+
+/** Etiqueta "Nuevo" para las vistas recién publicadas (ver `releasedAt` en navigation.ts). */
+function NewBadge({ onActive }: { onActive: boolean }) {
+  return (
+    <span
+      className={cn(
+        "new-badge ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none text-white",
+        onActive ? "bg-white/20 ring-1 ring-white/40" : "bg-new-gradient",
+      )}
+    >
+      <Sparkles className="size-3" aria-hidden />
+      Nuevo
+    </span>
+  );
+}
 
 export function DashboardSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,6 +102,7 @@ export function DashboardSidebar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
+            const isNew = isNewNavItem(item);
 
             return (
               <Link
@@ -103,6 +119,7 @@ export function DashboardSidebar() {
               >
                 <Icon className="size-5" />
                 <span>{item.label}</span>
+                {isNew && <NewBadge onActive={isActive} />}
               </Link>
             );
           })}

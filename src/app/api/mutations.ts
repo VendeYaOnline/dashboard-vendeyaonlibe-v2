@@ -5,6 +5,7 @@ import {
   createCategory,
   createPlatformCompany,
   updatePlatformCompany,
+  updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
   createProduct,
@@ -287,6 +288,17 @@ export const useMutationCreateCompany = () => {
   });
 };
 
+export const useMutationUpdateMercadoPagoSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMercadoPagoSettings,
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "mercadopago", id] });
+    },
+  });
+};
+
 export const useMutationUpdateCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -352,6 +364,7 @@ export const useMutationUpdateProductStock = () => {
     mutationFn: updateProductStock,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
@@ -445,6 +458,7 @@ export const useMutationCreateSale = () => {
     mutationFn: createSale,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
@@ -457,6 +471,7 @@ export const useMutationUpdateSaleStatus = () => {
     mutationFn: updateSaleStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
     },
   });
@@ -468,6 +483,7 @@ export const useMutationDeleteSale = () => {
     mutationFn: deleteSale,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
     },

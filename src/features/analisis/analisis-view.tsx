@@ -1,25 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
   BarChart3,
-  Boxes,
-  MessageSquare,
+  CalendarDays,
+  CreditCard,
   Package,
   Receipt,
   ShoppingCart,
-  Tags,
 } from "lucide-react";
 import {
   Button,
   Card,
-  Chip,
   Spinner,
   ToggleButton,
   ToggleButtonGroup,
-  buttonVariants,
   cn,
 } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -28,49 +24,71 @@ import { useQueryAnalytics } from "@/app/api/queries";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 import { VentaStatusChip } from "@/features/ventas/components/venta-status-chip";
 import { BarList } from "./components/bar-list";
-import { RevenueChart } from "./components/revenue-chart";
+import { PaymentMethodsModal } from "./components/payment-methods-modal";
+import { SalesChart } from "./components/sales-chart";
 import { StatTile } from "./components/stat-tile";
 import {
   PERIOD_OPTIONS,
-  channelLabel,
+  formatBucketLong,
   formatInteger,
   formatMoney,
   formatMoneyCompact,
-  paymentLabel,
 } from "./utils";
+
+const plural = (count: number, singular: string, pluralForm: string) =>
+  `${formatInteger(count)} ${count === 1 ? singular : pluralForm}`;
+
+const formatSince = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-CO", { month: "long", year: "numeric", timeZone: "America/Bogota" });
 
 export function AnalisisView() {
   const [period, setPeriod] = useState<AnalyticsPeriod>(30);
+  const [isPaymentsOpen, setIsPaymentsOpen] = useState(false);
   const { data, isLoading, isError, isPlaceholderData, refetch } = useQueryAnalytics(period);
 
   const periodOption = PERIOD_OPTIONS.find((option) => option.id === period) ?? PERIOD_OPTIONS[1];
   const kpis = data?.kpis;
   const hasSales = (kpis?.orders ?? 0) > 0;
 
+  // Ventas por mes: los 12 meses y el mejor mes (para el resumen).
+  const months = data?.monthlySales ?? [];
+  const monthsTotal = months.reduce((sum, month) => sum + month.orders, 0);
+  const bestMonth = months.reduce<(typeof months)[number] | null>(
+    (best, month) => (month.orders > (best?.orders ?? 0) ? month : best),
+    null,
+  );
+  const thisMonth = months.at(-1);
+
   return (
     <div className="space-y-6">
       <PageHeader
         icon={BarChart3}
         title="Análisis"
-        description="Rendimiento de tus ventas, productos e inventario"
+        description="Cuánto vendes y qué se vende más"
         actions={
-          <ToggleButtonGroup
-            aria-label="Periodo"
-            selectionMode="single"
-            disallowEmptySelection
-            selectedKeys={new Set([String(period)])}
-            onSelectionChange={(keys) => {
-              const [next] = Array.from(keys, Number);
-              const match = PERIOD_OPTIONS.find((option) => option.id === next);
-              if (match) setPeriod(match.id);
-            }}
-          >
-            {PERIOD_OPTIONS.map((option) => (
-              <ToggleButton key={option.id} id={String(option.id)}>
-                {option.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onPress={() => setIsPaymentsOpen(true)} isDisabled={!data}>
+              <CreditCard className="size-4" />
+              Medios de pago
+            </Button>
+            <ToggleButtonGroup
+              aria-label="Periodo"
+              selectionMode="single"
+              disallowEmptySelection
+              selectedKeys={new Set([String(period)])}
+              onSelectionChange={(keys) => {
+                const [next] = Array.from(keys, Number);
+                const match = PERIOD_OPTIONS.find((option) => option.id === next);
+                if (match) setPeriod(match.id);
+              }}
+            >
+              {PERIOD_OPTIONS.map((option) => (
+                <ToggleButton key={option.id} id={String(option.id)}>
+                  {option.label}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </div>
         }
       />
 
@@ -94,8 +112,15 @@ export function AnalisisView() {
           className={cn("space-y-6 transition-opacity", isPlaceholderData && "opacity-60")}
           aria-busy={isPlaceholderData}
         >
-          {/* KPIs del periodo */}
+          {/* Resumen del periodo elegido */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile
+              label="Ventas"
+              value={formatInteger(kpis!.orders)}
+              icon={ShoppingCart}
+              change={kpis!.ordersChange}
+              compareLabel={periodOption.compare}
+            />
             <StatTile
               label="Ingresos"
               value={formatMoneyCompact(kpis!.revenue)}
@@ -104,46 +129,60 @@ export function AnalisisView() {
               compareLabel={periodOption.compare}
             />
             <StatTile
-              label="Pedidos"
-              value={formatInteger(kpis!.orders)}
-              icon={ShoppingCart}
-              change={kpis!.ordersChange}
-              compareLabel={periodOption.compare}
-            />
-            <StatTile
-              label="Ticket promedio"
+              label="Venta promedio"
               value={formatMoneyCompact(kpis!.averageTicket)}
               icon={Package}
-              hint={
-                kpis!.units > 0
-                  ? `${formatInteger(kpis!.units)} ${kpis!.units === 1 ? "unidad vendida" : "unidades vendidas"}`
-                  : "Sin unidades vendidas"
-              }
+              hint={kpis!.units > 0 ? `${plural(kpis!.units, "unidad vendida", "unidades vendidas")}` : "Sin unidades vendidas"}
             />
             <StatTile
               label="Pagos pendientes"
               value={formatInteger(kpis!.pendingOrders)}
               icon={AlertTriangle}
-              hint={`${formatInteger(kpis!.deliveredOrders)} ${
-                kpis!.deliveredOrders === 1 ? "pedido entregado" : "pedidos entregados"
-              }`}
+              hint={plural(kpis!.deliveredOrders, "venta entregada", "ventas entregadas")}
             />
           </div>
 
-          {/* Ingresos en el tiempo */}
+          {/* Ventas por mes: siempre los últimos 12 meses */}
           <Card>
-            <Card.Header className="flex flex-row items-start justify-between gap-3">
+            <Card.Header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <Card.Title className="text-base">
-                  Ingresos por {data.period.granularity === "month" ? "mes" : "día"}
-                </Card.Title>
+                <Card.Title className="text-base">Ventas por mes</Card.Title>
                 <p className="text-xs text-muted">
-                  {formatMoney(kpis!.revenue)} en los últimos {periodOption.label}
+                  {plural(monthsTotal, "venta", "ventas")} en los últimos 12 meses
+                  {bestMonth && ` · mejor mes: ${formatBucketLong(bestMonth.month, "month")} (${plural(bestMonth.orders, "venta", "ventas")})`}
                 </p>
+              </div>
+              <div className="flex shrink-0 gap-3">
+                <MiniStat label="Este mes" value={plural(thisMonth?.orders ?? 0, "venta", "ventas")} />
+                <MiniStat
+                  icon={CalendarDays}
+                  label={data.totalSales.since ? `Desde ${formatSince(data.totalSales.since)}` : "En total"}
+                  value={plural(data.totalSales.orders, "venta", "ventas")}
+                />
               </div>
             </Card.Header>
             <Card.Content>
-              <RevenueChart series={data.series} granularity={data.period.granularity} />
+              <SalesChart
+                series={months.map((month) => ({ date: month.month, orders: month.orders, revenue: month.revenue }))}
+                granularity="month"
+                metric="orders"
+                showValues
+              />
+            </Card.Content>
+          </Card>
+
+          {/* Ingresos del periodo elegido */}
+          <Card>
+            <Card.Header>
+              <Card.Title className="text-base">
+                Ingresos por {data.period.granularity === "month" ? "mes" : "día"}
+              </Card.Title>
+              <p className="text-xs text-muted">
+                {formatMoney(kpis!.revenue)} en los últimos {periodOption.label}
+              </p>
+            </Card.Header>
+            <Card.Content>
+              <SalesChart series={data.series} granularity={data.period.granularity} />
             </Card.Content>
           </Card>
 
@@ -152,7 +191,7 @@ export function AnalisisView() {
             <Card>
               <Card.Header>
                 <Card.Title className="text-base">Productos más vendidos</Card.Title>
-                <p className="text-xs text-muted">Unidades vendidas en el periodo</p>
+                <p className="text-xs text-muted">Unidades vendidas en los últimos {periodOption.label}</p>
               </Card.Header>
               <Card.Content>
                 <BarList
@@ -185,20 +224,18 @@ export function AnalisisView() {
               </Card.Content>
             </Card>
 
-            {/* Estado de los pedidos */}
+            {/* Estado de las ventas */}
             <Card>
               <Card.Header>
-                <Card.Title className="text-base">Pedidos por estado</Card.Title>
+                <Card.Title className="text-base">Ventas por estado</Card.Title>
                 <p className="text-xs text-muted">
-                  {hasSales
-                    ? `${formatInteger(kpis!.orders)} ${kpis!.orders === 1 ? "pedido" : "pedidos"} en el periodo`
-                    : "Sin pedidos en el periodo"}
+                  {hasSales ? `${plural(kpis!.orders, "venta", "ventas")} en los últimos ${periodOption.label}` : "Sin ventas en el periodo"}
                 </p>
               </Card.Header>
               <Card.Content>
                 <BarList
-                  unit="pedidos"
-                  emptyMessage="Aún no hay pedidos en este periodo"
+                  unit="ventas"
+                  emptyMessage="Aún no hay ventas en este periodo"
                   items={data.byStatus.map((item) => ({
                     key: item.status,
                     label: <VentaStatusChip status={item.status} />,
@@ -208,137 +245,30 @@ export function AnalisisView() {
                 />
               </Card.Content>
             </Card>
-
-            {/* Medios de pago */}
-            <Card>
-              <Card.Header>
-                <Card.Title className="text-base">Medios de pago</Card.Title>
-                <p className="text-xs text-muted">Pedidos e ingresos por método</p>
-              </Card.Header>
-              <Card.Content>
-                <BarList
-                  unit="pedidos"
-                  emptyMessage="Aún no hay pagos en este periodo"
-                  items={data.byPaymentMethod.map((item) => ({
-                    key: item.method,
-                    label: paymentLabel(item.method),
-                    value: item.orders,
-                    display: formatInteger(item.orders),
-                    secondary: formatMoney(item.revenue),
-                  }))}
-                />
-                {data.byChannel.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-                    {data.byChannel.map((item) => (
-                      <Chip key={item.channel} size="sm" variant="soft">
-                        {channelLabel(item.channel)}: {formatInteger(item.orders)}
-                      </Chip>
-                    ))}
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-
-            {/* Inventario y catálogo */}
-            <Card>
-              <Card.Header className="flex flex-row items-start justify-between gap-3">
-                <div>
-                  <Card.Title className="text-base">Inventario</Card.Title>
-                  <p className="text-xs text-muted">
-                    Productos con {data.lowStockThreshold} unidades o menos
-                  </p>
-                </div>
-                <Link
-                  href="/productos"
-                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "shrink-0")}
-                >
-                  Ver productos
-                </Link>
-              </Card.Header>
-              <Card.Content className="space-y-4">
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <CatalogStat icon={Boxes} label="Productos" value={data.catalog.products} />
-                  <CatalogStat icon={Tags} label="Categorías" value={data.catalog.categories} />
-                  <CatalogStat
-                    icon={AlertTriangle}
-                    label="Agotados"
-                    value={data.catalog.outOfStock}
-                    tone={data.catalog.outOfStock > 0 ? "danger" : "default"}
-                  />
-                </div>
-
-                {data.lowStock.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted">
-                    Ningún producto con stock bajo
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-border">
-                    {data.lowStock.map((product) => (
-                      <li key={product.id} className="flex items-center gap-3 py-2 text-sm">
-                        {product.image ? (
-                          <ImageWithSkeleton
-                            src={product.image}
-                            alt=""
-                            className="size-8 shrink-0 rounded-md"
-                            sizes="32px"
-                          />
-                        ) : (
-                          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface-secondary">
-                            <Package className="size-4 text-muted" />
-                          </span>
-                        )}
-                        <span className="min-w-0 flex-1 truncate">{product.title}</span>
-                        <Chip
-                          size="sm"
-                          variant="soft"
-                          color={product.quantity === 0 ? "danger" : "warning"}
-                        >
-                          {product.quantity === 0
-                            ? "Agotado"
-                            : `${product.quantity} ${product.quantity === 1 ? "unidad" : "unidades"}`}
-                        </Chip>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {data.unreadMessages > 0 && (
-                  <Link
-                    href="/mensajes"
-                    className="flex items-center gap-2 rounded-lg border border-accent/20 bg-accent-soft px-3 py-2 text-sm text-accent hover:underline"
-                  >
-                    <MessageSquare className="size-4" />
-                    {data.unreadMessages}{" "}
-                    {data.unreadMessages === 1 ? "mensaje sin leer" : "mensajes sin leer"}
-                  </Link>
-                )}
-              </Card.Content>
-            </Card>
           </div>
+
+          <PaymentMethodsModal
+            isOpen={isPaymentsOpen}
+            onOpenChange={setIsPaymentsOpen}
+            byPaymentMethod={data.byPaymentMethod}
+            byChannel={data.byChannel}
+            periodLabel={periodOption.label}
+          />
         </div>
       )}
     </div>
   );
 }
 
-function CatalogStat({
-  icon: Icon,
-  label,
-  value,
-  tone = "default",
-}: {
-  icon: typeof Boxes;
-  label: string;
-  value: number;
-  tone?: "default" | "danger";
-}) {
+/** Dato pequeño en el encabezado de una tarjeta. */
+function MiniStat({ label, value, icon: Icon }: { label: string; value: string; icon?: typeof CalendarDays }) {
   return (
-    <div className="rounded-lg bg-surface-secondary px-2 py-3">
-      <Icon
-        className={cn("mx-auto mb-1 size-4", tone === "danger" ? "text-danger" : "text-muted")}
-      />
-      <p className="text-lg font-semibold tabular-nums">{formatInteger(value)}</p>
-      <p className="text-xs text-muted">{label}</p>
+    <div className="rounded-lg bg-surface-secondary px-3 py-2">
+      <p className="flex items-center gap-1 text-xs text-muted">
+        {Icon && <Icon className="size-3" />}
+        {label}
+      </p>
+      <p className="text-sm font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

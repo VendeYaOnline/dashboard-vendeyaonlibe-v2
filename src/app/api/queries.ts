@@ -1,4 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { InventoryFilters } from "@/interfaces/inventory";
+import type { CustomersFilters } from "@/interfaces/customers";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -25,8 +27,11 @@ const SALES_QUERY_OPTIONS = {
 } as const;
 import {
   getAnalytics,
+  getInventory,
+  getCustomers,
   getAttributes,
   getPlan,
+  getMercadoPagoSettings,
   getPlatformCompanies,
   getPlatformConfig,
   getCarousels,
@@ -136,6 +141,24 @@ export const useQueryAnalytics = (period: AnalyticsPeriod) =>
     staleTime: 1000 * 60 * 5,
   });
 
+/** Inventario por variante con filtros (la página anterior sigue visible mientras carga). */
+export const useQueryInventory = (filters: InventoryFilters) =>
+  useQuery({
+    queryKey: ["inventory", filters],
+    queryFn: () => getInventory(filters),
+    ...LIST_QUERY_OPTIONS,
+    staleTime: 1000 * 60 * 2,
+  });
+
+/** Clientes armados a partir de las ventas (admin y editor). */
+export const useQueryCustomers = (filters: CustomersFilters) =>
+  useQuery({
+    queryKey: ["customers", filters],
+    queryFn: () => getCustomers(filters),
+    ...LIST_QUERY_OPTIONS,
+    staleTime: 1000 * 60 * 2,
+  });
+
 /** Plan y uso de la empresa (tope de productos e imágenes). */
 export const useQueryPlan = (enabled: boolean = true) =>
   useQuery({
@@ -153,6 +176,15 @@ export const useQueryPlatformConfig = (enabled: boolean = true) =>
     refetchOnWindowFocus: false,
     staleTime: Infinity,
     enabled,
+  });
+
+/** Configuración de Mercado Pago de una empresa (solo superadmin). */
+export const useQueryMercadoPagoSettings = (companyId: string | null) =>
+  useQuery({
+    queryKey: ["platform", "mercadopago", companyId],
+    queryFn: () => getMercadoPagoSettings(companyId as string),
+    refetchOnWindowFocus: false,
+    enabled: Boolean(companyId),
   });
 
 export const useQueryPlatformCompanies = (enabled: boolean = true) =>

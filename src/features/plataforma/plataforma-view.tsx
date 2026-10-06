@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Edit2, Folder, Plus, ShieldCheck, ShieldOff } from "lucide-react";
+import { Building2, CreditCard, Edit2, Folder, Plus, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -12,7 +12,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
-import { formatDate } from "./utils";
+import { MercadoPagoModal } from "./components/mercadopago-modal";
+import { MERCADOPAGO_SOURCE_LABELS, formatDate } from "./utils";
 
 /** "38 / 50" con color según lo cerca que esté del tope; "sin límite" si no hay. */
 function Usage({ used, limit }: { used: number | null; limit: number | null }) {
@@ -43,6 +44,7 @@ export function PlataformaView() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<PlatformCompany | null>(null);
+  const [paymentsCompany, setPaymentsCompany] = useState<PlatformCompany | null>(null);
 
   const { data, isLoading, isError, refetch } = useQueryPlatformCompanies(isSuperadmin);
   const { data: config } = useQueryPlatformConfig(isSuperadmin);
@@ -114,6 +116,19 @@ export function PlataformaView() {
       render: (company) => <span className="tabular-nums">{company.users}</span>,
     },
     {
+      key: "mercadopago",
+      label: "Mercado Pago",
+      render: (company) => (
+        <Chip
+          size="sm"
+          variant="soft"
+          color={company.mercadopago === "company" ? "success" : company.mercadopago === "legacy" ? "warning" : "default"}
+        >
+          {MERCADOPAGO_SOURCE_LABELS[company.mercadopago] ?? "—"}
+        </Chip>
+      ),
+    },
+    {
       key: "created_at",
       label: "Alta",
       render: (company) => (
@@ -125,18 +140,29 @@ export function PlataformaView() {
       label: "Acciones",
       align: "end",
       render: (company) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          isIconOnly
-          aria-label={`Editar ${company.name}`}
-          onPress={() => {
-            setSelected(company);
-            setIsFormOpen(true);
-          }}
-        >
-          <Edit2 className="size-4" />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label={`Mercado Pago de ${company.name}`}
+            onPress={() => setPaymentsCompany(company)}
+          >
+            <CreditCard className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label={`Editar ${company.name}`}
+            onPress={() => {
+              setSelected(company);
+              setIsFormOpen(true);
+            }}
+          >
+            <Edit2 className="size-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -192,6 +218,8 @@ export function PlataformaView() {
           )}
         </Card>
       )}
+
+      <MercadoPagoModal company={paymentsCompany} onClose={() => setPaymentsCompany(null)} />
 
       <EmpresaFormModal
         company={selected}

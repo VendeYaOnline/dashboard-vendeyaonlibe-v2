@@ -30,6 +30,43 @@ export interface PlatformCompany {
   /** null cuando no se puede atribuir (varias empresas comparten la raíz). */
   images: number | null;
   admin: { email: string; username: string } | null;
+  /** Con qué cuenta cobra en Mercado Pago (ver MercadoPagoSource). */
+  mercadopago: MercadoPagoSource;
+}
+
+/**
+ * company = cuenta propia configurada; legacy = empresa heredada que aún usa
+ * el token del servidor; disabled = configurada pero desactivada; none = sin pagos.
+ */
+export type MercadoPagoSource = "company" | "legacy" | "disabled" | "none";
+
+/** Configuración de Mercado Pago de una empresa. El token nunca llega: solo su pista. */
+export interface MercadoPagoSettings {
+  enabled: boolean;
+  source: MercadoPagoSource;
+  store_url: string;
+  statement_descriptor: string;
+  email_from: string;
+  email_color: string;
+  logo_url: string;
+  has_access_token: boolean;
+  /** "…ABCD" (últimos 4 caracteres) o null. */
+  access_token_hint: string | null;
+  mode: "test" | "production" | "unreadable" | null;
+  webhook_url: string;
+  /** false si el servidor no tiene SECRETS_KEY (no puede guardar tokens). */
+  can_store_secrets: boolean;
+}
+
+export interface MercadoPagoSettingsPayload {
+  enabled: boolean;
+  /** Texto = reemplazar; "" = conservar el guardado; null = borrarlo. */
+  access_token: string | null;
+  store_url: string;
+  statement_descriptor: string;
+  email_from: string;
+  email_color: string;
+  logo_url: string;
 }
 
 export interface PlatformCompaniesResponse {
