@@ -26,7 +26,7 @@ import { formatInteger, formatMoney, formatMoneyCompact } from "@/features/anali
 import type { InventoryFilters, InventoryRow, InventorySort, InventoryVariant, StockStatus } from "@/interfaces/inventory";
 import { AdjustStockModal } from "./components/adjust-stock-modal";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 /** Variantes que se muestran en la tabla antes del "+N". */
 const VISIBLE_VARIANTS = 8;
 

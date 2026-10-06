@@ -26,7 +26,7 @@ import { CustomerDetailModal } from "./components/customer-detail-modal";
 import { PAYMENT_GROUPS, PaymentChip } from "./payments";
 import { formatRelative } from "./utils";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const SORT_OPTIONS: { id: CustomerSort; label: string }[] = [
   { id: "last-purchase", label: "Compra más reciente" },
