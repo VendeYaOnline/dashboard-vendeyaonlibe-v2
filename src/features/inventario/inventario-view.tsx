@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Boxes, EyeOff, Package, PackageX, Wallet } from "lucide-react";
+import { AlertTriangle, Boxes, EyeOff, Package, PackageX, SlidersHorizontal, Wallet } from "lucide-react";
 import {
   Button,
   Card,
@@ -23,10 +23,12 @@ import { useQueryAllCategories, useQueryInventory } from "@/app/api/queries";
 import { useAuthStore } from "@/store/auth.store";
 import { StatTile } from "@/features/analisis/components/stat-tile";
 import { formatInteger, formatMoney, formatMoneyCompact } from "@/features/analisis/utils";
-import type { InventoryFilters, InventoryRow, InventorySort, StockStatus } from "@/interfaces/inventory";
+import type { InventoryFilters, InventoryRow, InventorySort, InventoryVariant, StockStatus } from "@/interfaces/inventory";
 import { AdjustStockModal } from "./components/adjust-stock-modal";
 
 const PAGE_SIZE = 20;
+/** Variantes que se muestran en la tabla antes del "+N". */
+const VISIBLE_VARIANTS = 8;
 
 const STATUS_CHIP: Record<StockStatus, { label: string; color: "danger" | "warning" | "success" | "default" }> = {
   out: { label: "Agotado", color: "danger" },
@@ -58,6 +60,34 @@ const formatLastSale = (iso: string | null) => {
   if (days < 30) return `Hace ${days} días`;
   return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Bogota" });
 };
+
+/** "S 5 · M 0 · L 2": cada variante con sus unidades; las agotadas en rojo. */
+function VariantChips({ variants }: { variants: InventoryVariant[] }) {
+  // Primero las agotadas para que se vean aunque haya muchas.
+  const visible = variants.length > VISIBLE_VARIANTS
+    ? [...variants].sort((a, b) => Number(b.quantity === 0) - Number(a.quantity === 0)).slice(0, VISIBLE_VARIANTS)
+    : variants;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((variant) => (
+        <span
+          key={variant.key}
+          title={`${variant.label}: ${variant.quantity}`}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs",
+            variant.quantity === 0 ? "border-danger/40 bg-danger/10 text-danger" : "border-border bg-surface-secondary",
+          )}
+        >
+          <span className="max-w-24 truncate">{variant.name}</span>
+          <span className="font-semibold tabular-nums">{variant.quantity}</span>
+        </span>
+      ))}
+      {variants.length > visible.length && (
+        <span className="px-1 py-0.5 text-xs text-muted">+{variants.length - visible.length} más</span>
+      )}
+    </div>
+  );
+}
 
 export function InventarioView() {
   const canManage = useAuthStore((s) => s.user?.role) !== "viewer";
@@ -103,7 +133,7 @@ export function InventarioView() {
               {row.hidden && <EyeOff className="size-3.5 shrink-0 text-muted" aria-label="Oculto en la tienda" />}
             </p>
             <p className="truncate text-xs text-muted">
-              {row.variantLabel ?? (row.categories.map((c) => c.name).join(", ") || "Sin variantes")}
+              {row.categories.map((c) => c.name).join(", ") || "Sin categoría"}
             </p>
           </div>
         </div>
@@ -113,13 +143,25 @@ export function InventarioView() {
       key: "quantity",
       label: "Unidades",
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <span className={cn("w-10 text-lg font-semibold tabular-nums", row.status === "out" && "text-danger", row.status === "low" && "text-warning")}>
-            {row.quantity ?? "—"}
-          </span>
-          <Chip size="sm" variant="soft" color={STATUS_CHIP[row.status].color}>
-            {STATUS_CHIP[row.status].label}
-          </Chip>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className={cn("text-lg font-semibold tabular-nums", row.status === "out" && "text-danger", row.status === "low" && "text-warning")}>
+              {row.quantity ?? "—"}
+            </span>
+            <Chip size="sm" variant="soft" color={STATUS_CHIP[row.status].color}>
+              {STATUS_CHIP[row.status].label}
+            </Chip>
+            {row.variants.length > 0 && (
+              <span className={cn("text-xs", row.variantsOut > 0 && row.status !== "out" ? "text-danger" : "text-muted")}>
+                {row.status === "out"
+                  ? `Todas sus ${row.variants.length} variantes en 0`
+                  : row.variantsOut > 0
+                    ? `${row.variantsOut} de ${row.variants.length} variantes agotadas`
+                    : `${row.variants.length} variantes con stock`}
+              </span>
+            )}
+          </div>
+          {row.variants.length > 0 && <VariantChips variants={row.variants} />}
         </div>
       ),
     },
@@ -145,9 +187,9 @@ export function InventarioView() {
       label: "Acciones",
       align: "end",
       render: (row) => (
-        <Button variant="ghost" size="sm" isDisabled={!canManage} onPress={() => setAdjusting(row)} aria-label={`Ajustar unidades de ${row.title}${row.variantLabel ? ` ${row.variantLabel}` : ""}`}>
-          <Boxes className="size-4" />
-          Ajustar
+        <Button variant="outline" size="sm" isDisabled={!canManage} onPress={() => setAdjusting(row)} aria-label={`Ajustar inventario de ${row.title}`}>
+          <SlidersHorizontal className="size-4" />
+          Ajustar inventario
         </Button>
       ),
     },
@@ -157,6 +199,7 @@ export function InventarioView() {
     { id: "all", label: "Todos" },
     { id: "out", label: `Agotados${summary ? ` (${summary.out})` : ""}` },
     { id: "low", label: `Stock bajo${summary ? ` (${summary.low})` : ""}` },
+    { id: "partial", label: `Con variantes agotadas${summary ? ` (${summary.partial})` : ""}` },
     ...(summary?.untracked ? [{ id: "untracked" as const, label: `Sin cantidad (${summary.untracked})` }] : []),
   ];
 
@@ -170,7 +213,7 @@ export function InventarioView() {
           label="Unidades en stock"
           value={summary ? formatInteger(summary.units) : "—"}
           icon={Boxes}
-          hint={summary ? `${formatInteger(summary.products)} productos · ${formatInteger(summary.rows)} variantes` : undefined}
+          hint={summary ? `${formatInteger(summary.products)} productos · ${formatInteger(summary.variants)} variantes` : undefined}
         />
         <StatTile
           label="Valor del inventario"
@@ -182,13 +225,13 @@ export function InventarioView() {
           label="Agotados"
           value={summary ? formatInteger(summary.out) : "—"}
           icon={PackageX}
-          hint="Variantes con 0 unidades"
+          hint={summary ? `Productos sin ninguna unidad · ${formatInteger(summary.partial)} con alguna variante agotada` : "Productos sin ninguna unidad"}
         />
         <StatTile
           label="Stock bajo"
           value={summary ? formatInteger(summary.low) : "—"}
           icon={AlertTriangle}
-          hint={data ? `Con ${data.lowStockThreshold} unidades o menos` : undefined}
+          hint={data ? `Productos con ${data.lowStockThreshold} unidades o menos en total` : undefined}
         />
       </div>
 
@@ -273,7 +316,7 @@ export function InventarioView() {
           aria-label="Inventario"
           items={rows}
           columns={columns}
-          getRowId={(row) => row.key}
+          getRowId={(row) => row.productId}
           isLoading={isLoading}
           loadingMessage="Cargando inventario..."
           emptyMessage="No hay productos con estos filtros"
@@ -283,7 +326,7 @@ export function InventarioView() {
           totalPages={data?.totalPages ?? 1}
           totalItems={data?.total ?? 0}
           itemsInPage={rows.length}
-          itemLabel="variantes"
+          itemLabel="productos"
           pageSize={PAGE_SIZE}
           onPageChange={(page) => setFilter("page", page)}
         />
