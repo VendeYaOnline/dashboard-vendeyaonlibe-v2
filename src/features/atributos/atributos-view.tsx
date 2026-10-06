@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Edit2, Plus, Settings2, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -151,10 +152,8 @@ export function AtributosView() {
       align: "end",
       render: (attribute) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Editar atributo"
             aria-label={`Editar ${attribute.attribute_name}`}
             isDisabled={!canManage}
             onPress={() => {
@@ -163,18 +162,16 @@ export function AtributosView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar atributo"
             aria-label={`Eliminar ${attribute.attribute_name}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(attribute)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

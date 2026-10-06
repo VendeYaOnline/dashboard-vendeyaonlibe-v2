@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Edit2, GalleryHorizontal, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -138,10 +139,8 @@ export function CarruselView() {
       align: "end",
       render: (carousel) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Editar carrusel"
             aria-label={`Editar ${carousel.name}`}
             isDisabled={!canManage}
             onPress={() => {
@@ -150,18 +149,16 @@ export function CarruselView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar carrusel"
             aria-label={`Eliminar ${carousel.name}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(carousel)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

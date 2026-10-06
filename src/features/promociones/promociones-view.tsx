@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, Switch, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Copy, Edit2, Plus, TicketPercent, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -207,10 +208,8 @@ export function PromocionesView() {
               </Switch.Control>
             </Switch.Content>
           </Switch>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Editar código"
             aria-label={`Editar ${promo.code}`}
             isDisabled={!canManage}
             onPress={() => {
@@ -219,18 +218,16 @@ export function PromocionesView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar código"
             aria-label={`Eliminar ${promo.code}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(promo)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

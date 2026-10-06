@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Building2, CreditCard, Edit2, Folder, Plus, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { useQueryPlatformCompanies, useQueryPlatformConfig } from "@/app/api/queries";
@@ -141,19 +142,15 @@ export function PlataformaView() {
       align: "end",
       render: (company) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Configurar Mercado Pago"
             aria-label={`Mercado Pago de ${company.name}`}
             onPress={() => setPaymentsCompany(company)}
           >
             <CreditCard className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Editar empresa"
             aria-label={`Editar ${company.name}`}
             onPress={() => {
               setSelected(company);
@@ -161,7 +158,7 @@ export function PlataformaView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

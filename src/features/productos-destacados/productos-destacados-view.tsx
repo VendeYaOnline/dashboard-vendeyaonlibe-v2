@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, cn, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -138,17 +139,15 @@ export function ProductosDestacadosView() {
       align: "end",
       render: (featured) => (
         <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Quitar de destacados"
             aria-label={`Quitar ${featured.product.title} de destacados`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(featured)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

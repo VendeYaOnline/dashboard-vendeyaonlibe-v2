@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { ArrowUpDown, Boxes, Edit2, Eye, EyeOff, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -212,10 +213,8 @@ export function ProductosView() {
       align: "end",
       render: (product) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip={product.hidden ? "Oculto en la tienda: clic para mostrarlo" : "Visible en la tienda: clic para ocultarlo"}
             aria-label={product.hidden ? `Mostrar ${product.title} en la tienda` : `Ocultar ${product.title} de la tienda`}
             className={product.hidden ? "text-muted" : undefined}
             isDisabled={
@@ -225,21 +224,17 @@ export function ProductosView() {
             onPress={() => handleToggleVisibility(product)}
           >
             {product.hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Gestionar inventario"
             aria-label={`Inventario de ${product.title}`}
             isDisabled={!canManage}
             onPress={() => setStockTarget(product)}
           >
             <Boxes className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Editar producto"
             aria-label={`Editar ${product.title}`}
             isDisabled={!canManage}
             onPress={() => {
@@ -248,18 +243,16 @@ export function ProductosView() {
             }}
           >
             <Edit2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar producto"
             aria-label={`Eliminar ${product.title}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setToDelete(product)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },

@@ -11,6 +11,7 @@ import {
   Select,
   toast,
 } from "@heroui/react";
+import { IconAction } from "@/components/shared/icon-action";
 import { Eye, Link as LinkIcon, Plus, ShoppingCart, Store, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -176,35 +177,29 @@ export function VentasView() {
       align: "end",
       render: (sale) => (
         <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          <IconAction
+            tooltip="Ver detalles"
             aria-label={`Ver detalles de la orden ${sale.order_number}`}
             onPress={() => setSelectedSale(sale)}
           >
             <Eye className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Abrir la página de la venta"
             aria-label={`Abrir la página de la orden ${sale.order_number}`}
             onPress={() => router.push(`/ventas/${sale.id}`)}
           >
             <LinkIcon className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            isIconOnly
+          </IconAction>
+          <IconAction
+            tooltip="Eliminar venta"
             aria-label={`Eliminar la orden ${sale.order_number}`}
             className="text-danger"
             isDisabled={!canManage}
             onPress={() => setSaleToDelete(sale)}
           >
             <Trash2 className="size-4" />
-          </Button>
+          </IconAction>
         </div>
       ),
     },
