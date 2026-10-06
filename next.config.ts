@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Permite un segundo `next dev` (p. ej. contra la base local) sin chocar con
+  // el bloqueo de la instancia principal.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   images: {
     // Next sirve miniaturas redimensionadas y en AVIF/WebP desde su caché,
     // sin cambiar el bucket S3 que conserva los originales.

@@ -73,6 +73,8 @@ export interface Products {
   variants?: ProductVariant[];
   /** Presente cuando el producto está destacado ("star"); null si no. */
   featuredProduct?: { id: string } | null;
+  /** Oculto en la tienda (se conserva en el panel); false si no se envía. */
+  hidden?: boolean;
   /** Piezas por set cuando se vende como "Set x N"; null = por unidad. */
   bundle_size?: number | null;
   /** Nombre de cada pieza del set ("esqueleto"). */

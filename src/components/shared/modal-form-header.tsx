@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Modal } from "@heroui/react";
 
@@ -5,6 +6,8 @@ interface ModalFormHeaderProps {
   icon: LucideIcon;
   title: string;
   description?: string;
+  /** Controles opcionales alineados a la derecha del título. */
+  actions?: ReactNode;
 }
 
 /**
@@ -18,6 +21,7 @@ export function ModalFormHeader({
   icon: Icon,
   title,
   description,
+  actions,
 }: ModalFormHeaderProps) {
   return (
     <Modal.Header className="-mx-6 -mt-6 mb-2 rounded-t-[inherit] border-b border-border bg-surface px-6 pt-6 pb-5">
@@ -31,6 +35,7 @@ export function ModalFormHeader({
             <p className="mt-0.5 text-sm text-muted">{description}</p>
           )}
         </div>
+        {actions && <div className="shrink-0">{actions}</div>}
       </div>
     </Modal.Header>
   );

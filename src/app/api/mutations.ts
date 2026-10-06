@@ -36,6 +36,7 @@ import {
   updateCover,
   updatedProduct,
   updateProductStock,
+  updateProductVisibility,
   updateSaleStatus,
   updatedUser,
   uploadImages,
@@ -353,6 +354,16 @@ export const useMutationUpdateProductStock = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+};
+
+export const useMutationUpdateProductVisibility = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateProductVisibility,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };

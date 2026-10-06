@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
-import { ArrowUpDown, Boxes, Edit2, Package, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowUpDown, Boxes, Edit2, Eye, EyeOff, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
@@ -16,6 +16,7 @@ import {
   useMutationDeleteProduct,
   useMutationProduct,
   useMutationUpdatedProduct,
+  useMutationUpdateProductVisibility,
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
@@ -54,6 +55,7 @@ export function ProductosView() {
   const createMutation = useMutationProduct();
   const updateMutation = useMutationUpdatedProduct();
   const deleteMutation = useMutationDeleteProduct();
+  const visibilityMutation = useMutationUpdateProductVisibility();
 
   const products = data?.products ?? [];
 
@@ -80,6 +82,18 @@ export function ProductosView() {
       },
       onError: (error) => handleAxiosError(error, "Error al crear el producto"),
     });
+  };
+
+  const handleToggleVisibility = (product: Products) => {
+    const hidden = !product.hidden;
+    visibilityMutation.mutate(
+      { id: product.id, hidden },
+      {
+        onSuccess: () =>
+          toast.success(hidden ? "Producto oculto en la tienda" : "Producto visible en la tienda"),
+        onError: (error) => handleAxiosError(error, "Error al cambiar la visibilidad del producto"),
+      },
+    );
   };
 
   const handleConfirmDelete = () => {
@@ -117,7 +131,15 @@ export function ProductosView() {
       isRowHeader: true,
       render: (product) => (
         <span className="inline-flex items-center gap-2">
-          <span className="font-medium">{product.title}</span>
+          <span className={product.hidden ? "font-medium text-muted" : "font-medium"}>
+            {product.title}
+          </span>
+          {product.hidden && (
+            <Chip size="sm" variant="soft" color="default" title="No se muestra en la tienda">
+              <EyeOff className="mr-1 size-3" />
+              Oculto
+            </Chip>
+          )}
           {product.featuredProduct && (
             <Chip size="sm" variant="soft" color="warning" title="Producto destacado">
               <Star className="mr-1 size-3 fill-current" />
@@ -190,6 +212,20 @@ export function ProductosView() {
       align: "end",
       render: (product) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            isIconOnly
+            aria-label={product.hidden ? `Mostrar ${product.title} en la tienda` : `Ocultar ${product.title} de la tienda`}
+            className={product.hidden ? "text-muted" : undefined}
+            isDisabled={
+              !canManage ||
+              (visibilityMutation.isPending && visibilityMutation.variables?.id === product.id)
+            }
+            onPress={() => handleToggleVisibility(product)}
+          >
+            {product.hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
