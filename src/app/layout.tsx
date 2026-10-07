@@ -7,6 +7,9 @@ import { Providers } from "./providers";
 const googleSans = Google_Sans({
   variable: "--font-google-sans",
   subsets: ["latin"],
+  // Next no tiene las métricas de Google Sans y avisa en consola en cada compilación.
+  adjustFontFallback: false,
+  fallback: ["system-ui", "arial"],
 });
 
 const title = "Panel de clientes | VendeYaOnline";
