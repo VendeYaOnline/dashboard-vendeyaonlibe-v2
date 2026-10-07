@@ -13,6 +13,8 @@ export interface PlatformConfig {
   imagesExtra: number;
 }
 
+import type { PaidFeature } from "@/config/navigation";
+
 export interface PlatformCompany {
   id: string;
   name: string;
@@ -32,6 +34,8 @@ export interface PlatformCompany {
   admin: { email: string; username: string } | null;
   /** Con qué cuenta cobra en Mercado Pago (ver MercadoPagoSource). */
   mercadopago: MercadoPagoSource;
+  /** Vistas de pago activas. */
+  features: PaidFeature[];
 }
 
 /**
@@ -87,4 +91,5 @@ export interface UpdateCompanyPayload {
   max_images?: number | null;
   shipping_fee?: number | null;
   free_shipping_from?: number | null;
+  features?: PaidFeature[];
 }

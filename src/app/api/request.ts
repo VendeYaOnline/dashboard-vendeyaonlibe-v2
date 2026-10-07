@@ -1,6 +1,7 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
+import type { PaidFeature } from "@/config/navigation";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -265,6 +266,10 @@ export const getCustomers = async ({ page, search, segment, payment, pending, so
 // * Plan / Plataforma
 
 export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-plan")).data;
+
+/** Vistas de pago activas de la propia empresa (liviano: lo usa el menú). */
+export const getFeatures = async () =>
+  (await axiosConfig.get<{ features: PaidFeature[] }>("/get-features")).data;
 
 export const getPlatformConfig = async () =>
   (await axiosConfig.get<PlatformConfig>("/platform/config")).data;

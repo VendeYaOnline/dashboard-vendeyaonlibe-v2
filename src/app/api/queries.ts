@@ -29,6 +29,7 @@ import {
   getAnalytics,
   getInventory,
   getCustomers,
+  getFeatures,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -157,6 +158,15 @@ export const useQueryCustomers = (filters: CustomersFilters) =>
     queryFn: () => getCustomers(filters),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 2,
+  });
+
+/** Vistas de pago activas de la empresa (menú y vistas bloqueadas). */
+export const useQueryFeatures = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["features"],
+    queryFn: getFeatures,
+    enabled,
+    staleTime: 1000 * 60 * 5,
   });
 
 /** Plan y uso de la empresa (tope de productos e imágenes). */

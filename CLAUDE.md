@@ -25,13 +25,15 @@ fuente del menú y de los permisos por rol.
   la etiqueta "Nuevo" (degradado + icono Sparkles) durante `NEW_BADGE_DAYS`
   (3 días) y después desaparece sola. No hay que quitar nada a mano; el campo
   puede quedarse.
-- **Vistas de pago (pendiente):** habrá vistas bloqueadas que la empresa
-  desbloquea pagando aparte, y el superadministrador las activará desde
-  Plataforma. Todavía no existen. Cuando llegue la primera, la idea es:
-  1. Un campo `feature` (clave de la funcionalidad) en el `NavItem`.
-  2. Las funcionalidades activas de la empresa guardadas en el backend
-     (columna de `companies`) y editables desde Plataforma.
-  3. En el menú, la vista bloqueada se muestra con un candado y abre una
-     pantalla de "Disponible con el plan…" en lugar del contenido.
-  4. El backend también rechaza sus endpoints (no basta con ocultarla en el
-     panel).
+- **Vistas de pago:** la tienda las paga en vendeyaonline.com y el
+  superadministrador las activa en Plataforma (editar empresa → "Vistas de
+  pago"). Para crear una:
+  1. Sumarla a `PAID_FEATURES` aquí (`src/config/navigation.ts`) y en el backend
+     (`src/modules/platform/features.js`).
+  2. Ponerle `feature: "clave"` a su `NavItem`: sin activar, el menú la muestra
+     con candado.
+  3. Envolver su página en `<FeatureGate feature="clave">`
+     (`src/components/layout/feature-gate.tsx`): sin activar, muestra la
+     pantalla de "no está activo" con el enlace a vendeyaonline.com.
+  4. En el backend, proteger sus endpoints con `requireFeature("clave")`
+     (ocultarla en el panel no basta).

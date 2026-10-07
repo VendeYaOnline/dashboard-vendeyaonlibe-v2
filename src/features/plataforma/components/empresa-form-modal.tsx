@@ -29,6 +29,7 @@ import type {
   PlatformConfig,
   UpdateCompanyPayload,
 } from "@/interfaces/platform";
+import { PAID_FEATURES, type PaidFeature } from "@/config/navigation";
 import { suggestedImageLimit } from "../utils";
 
 interface EmpresaFormModalProps {
@@ -68,6 +69,8 @@ export function EmpresaFormModal({
   /** Envío de la tienda (solo al editar); vacío = no cobra / nunca gratis. */
   const [shippingFee, setShippingFee] = useState("");
   const [freeShippingFrom, setFreeShippingFrom] = useState("");
+  /** Vistas de pago activas (solo al editar). */
+  const [features, setFeatures] = useState<PaidFeature[]>([]);
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -86,6 +89,7 @@ export function EmpresaFormModal({
     setImagesTouched(Boolean(company));
     setShippingFee(company?.shipping_fee != null ? String(company.shipping_fee) : "");
     setFreeShippingFrom(company?.free_shipping_from != null ? String(company.free_shipping_from) : "");
+    setFeatures(company?.features ?? []);
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -143,6 +147,7 @@ export function EmpresaFormModal({
         ...limits,
         shipping_fee: shippingFee === "" ? null : Number(shippingFee),
         free_shipping_from: shippingFee === "" || freeShippingFrom === "" ? null : Number(freeShippingFrom),
+        features,
       });
       return;
     }
@@ -168,7 +173,7 @@ export function EmpresaFormModal({
                 title={isEdit ? "Editar empresa" : "Nueva empresa"}
                 description={
                   isEdit
-                    ? "Cambia el nombre o los topes del plan. El uso actual no se toca."
+                    ? "Cambia el nombre, los topes del plan, el envío o las vistas de pago. El uso actual no se toca."
                     : "Crea el cliente, su plan y el usuario administrador con el que entrará al panel."
                 }
               />
@@ -261,6 +266,37 @@ export function EmpresaFormModal({
                           Valor de los productos antes del código promocional. Vacío = nunca gratis.
                         </p>
                       </TextField>
+                    </div>
+                  </FormSection>
+                )}
+
+                {isEdit && (
+                  <FormSection
+                    title="Vistas de pago"
+                    description="Actívalas cuando la tienda haya pagado en vendeyaonline.com. Si se desactiva una, la tienda la ve con candado; sus datos no se borran."
+                  >
+                    <div className="space-y-3">
+                      {(Object.keys(PAID_FEATURES) as PaidFeature[]).map((key) => (
+                        <Switch
+                          key={key}
+                          isSelected={features.includes(key)}
+                          onChange={(isSelected) =>
+                            setFeatures((current) =>
+                              isSelected ? [...current, key] : current.filter((feature) => feature !== key),
+                            )
+                          }
+                        >
+                          <Switch.Content>
+                            <Switch.Control>
+                              <Switch.Thumb />
+                            </Switch.Control>
+                            <div>
+                              <Label>{PAID_FEATURES[key].label}</Label>
+                              <p className="text-xs text-muted">{PAID_FEATURES[key].description}</p>
+                            </div>
+                          </Switch.Content>
+                        </Switch>
+                      ))}
                     </div>
                   </FormSection>
                 )}

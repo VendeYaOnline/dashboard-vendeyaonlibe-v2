@@ -10,7 +10,7 @@ import { useQueryPlatformCompanies, useQueryPlatformConfig } from "@/app/api/que
 import { useMutationCreateCompany, useMutationUpdateCompany } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { SUPERADMIN_ROLE } from "@/config/navigation";
+import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
@@ -84,6 +84,15 @@ export function PlataformaView() {
               <Folder className="size-3" />
               {company.s3_prefix ? `${company.s3_prefix}/` : "raíz del bucket"}
             </p>
+            {company.features.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {company.features.map((feature) => (
+                  <Chip key={feature} size="sm" variant="soft" color="accent">
+                    {PAID_FEATURES[feature]?.label ?? feature}
+                  </Chip>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ),
