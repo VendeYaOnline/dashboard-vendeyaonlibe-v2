@@ -30,6 +30,7 @@ import {
   getInventory,
   getCustomers,
   getFeatures,
+  getMarketing,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -158,6 +159,15 @@ export const useQueryCustomers = (filters: CustomersFilters) =>
     queryFn: () => getCustomers(filters),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 2,
+  });
+
+/** Marketing: marca, plantillas y productos que usan. */
+export const useQueryMarketing = () =>
+  useQuery({
+    queryKey: ["marketing"],
+    queryFn: getMarketing,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 
 /** Vistas de pago activas de la empresa (menú y vistas bloqueadas). */

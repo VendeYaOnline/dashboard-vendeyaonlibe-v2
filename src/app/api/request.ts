@@ -2,6 +2,13 @@ import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import type { PaidFeature } from "@/config/navigation";
+import type {
+  MarketingBrand,
+  MarketingPreviewRequest,
+  MarketingResponse,
+  MarketingTemplate,
+  MarketingTemplateDraft,
+} from "@/interfaces/marketing";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -262,6 +269,22 @@ export const getCustomers = async ({ page, search, segment, payment, pending, so
   if (pending) params.set("pending", "1");
   return (await axiosConfig.get<CustomersResponse>(`/get-customers?${params}`)).data;
 };
+
+// * Marketing (vista de pago)
+
+export const getMarketing = async () => (await axiosConfig.get<MarketingResponse>("/marketing")).data;
+
+export const saveMarketingBrand = async (brand: MarketingBrand) =>
+  (await axiosConfig.put<{ message: string; brand: MarketingBrand }>("/marketing/brand", brand)).data;
+
+export const saveMarketingTemplate = async ({ slot, template }: { slot: number; template: MarketingTemplateDraft }) =>
+  (await axiosConfig.put<{ message: string; template: MarketingTemplate }>(`/marketing/templates/${slot}`, template)).data;
+
+export const previewMarketingEmail = async (body: MarketingPreviewRequest) =>
+  (await axiosConfig.post<{ subject: string; html: string }>("/marketing/preview", body)).data;
+
+export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
+  (await axiosConfig.post<{ message: string; to: string }>("/marketing/test-email", body)).data;
 
 // * Plan / Plataforma
 

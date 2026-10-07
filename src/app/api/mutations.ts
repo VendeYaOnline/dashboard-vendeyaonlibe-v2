@@ -5,6 +5,9 @@ import {
   createCategory,
   createPlatformCompany,
   updatePlatformCompany,
+  saveMarketingBrand,
+  saveMarketingTemplate,
+  sendMarketingTestEmail,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -309,6 +312,26 @@ export const useMutationUpdateCompany = () => {
     },
   });
 };
+
+// * Marketing
+
+export const useMutationSaveMarketingBrand = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveMarketingBrand,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing"] }),
+  });
+};
+
+export const useMutationSaveMarketingTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveMarketingTemplate,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing"] }),
+  });
+};
+
+export const useMutationSendMarketingTest = () => useMutation({ mutationFn: sendMarketingTestEmail });
 
 // * Contacts
 
