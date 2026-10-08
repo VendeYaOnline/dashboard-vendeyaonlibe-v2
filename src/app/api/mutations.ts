@@ -10,6 +10,9 @@ import {
   sendMarketingTestEmail,
   createMarketingCampaign,
   markCampaignRecipient,
+  updateMarketingLimits,
+  updateWhatsappSettings,
+  testWhatsappSettings,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -342,6 +345,7 @@ export const useMutationCreateCampaign = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
     },
   });
 };
@@ -353,7 +357,35 @@ export const useMutationMarkRecipient = () => {
     onSuccess: (_data, { campaignId }) => {
       queryClient.invalidateQueries({ queryKey: ["marketing", "campaign", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
     },
+  });
+};
+
+export const useMutationUpdateMarketingLimits = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMarketingLimits,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "marketing-limits"] }),
+  });
+};
+
+export const useMutationUpdateWhatsappSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateWhatsappSettings,
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
+  });
+};
+
+export const useMutationTestWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: testWhatsappSettings,
+    onSuccess: (_data, id) => queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] }),
   });
 };
 

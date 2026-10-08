@@ -87,27 +87,49 @@ export interface MarketingPreviewRequest {
 export type CampaignChannel = "email" | "whatsapp";
 /** Grupos de clientes (los segmentos de Clientes, más "todos"). */
 export type CampaignSegment = "all" | "recurring" | "new" | "inactive";
-/** Correo: sending → sent | failed. WhatsApp: ready. */
+/** sending → sent | failed (correo y WhatsApp por API); ready = lista de WhatsApp manual. */
 export type CampaignStatus = "sending" | "sent" | "failed" | "ready";
+/** whatsapp_api = enviada por la API de Meta; manual = enlaces wa.me; null en correo. */
+export type CampaignDelivery = "whatsapp_api" | "manual" | null;
 
-export interface MarketingQuota {
+/**
+ * Estado de un destinatario. Correo: pending → sent (SES lo aceptó) →
+ * delivered | bounced | complained; failed = rechazado. WhatsApp manual:
+ * pending → opened (se abrió el chat) → contacted (la tienda lo confirmó).
+ * WhatsApp API: pending → sent | failed.
+ */
+export type RecipientStatus = "pending" | "sent" | "delivered" | "bounced" | "complained" | "failed" | "opened" | "contacted";
+
+export interface QuotaWindow {
   limit: number;
   used: number;
   remaining: number;
+  /** Cuándo se restablece (la hora: solo si está llena). */
+  resets_at: string | null;
+}
+
+export interface MarketingQuota {
+  monthly: QuotaWindow;
+  daily: QuotaWindow;
+  hourly: QuotaWindow;
 }
 
 export interface MarketingAudience {
-  /** Clientes alcanzables por grupo y canal. */
-  segments: Record<CampaignSegment, Record<CampaignChannel, number>>;
+  /** Clientes alcanzables por grupo; email_cooldown = con correo pero en espera de 7 días. */
+  segments: Record<CampaignSegment, { email: number; email_cooldown: number; whatsapp: number }>;
   customers: number;
-  /** Correos dados de baja. */
+  /** Correos que no reciben (baja, rebote o spam). */
   unsubscribed: number;
   quota: MarketingQuota;
+  cooldown_days: number;
+  /** api = WhatsApp Cloud API configurada; manual = enlaces wa.me. */
+  whatsapp_mode: "api" | "manual";
 }
 
 export interface MarketingCampaign {
   id: string;
   channel: CampaignChannel;
+  delivery: CampaignDelivery;
   segment: CampaignSegment;
   template_slot: number;
   template_name: string;
@@ -116,8 +138,10 @@ export interface MarketingCampaign {
   total: number;
   sent: number;
   failed: number;
-  /** Solo WhatsApp. */
-  contacted?: number;
+  /** Destinatarios por estado. */
+  counts: Partial<Record<RecipientStatus, number>>;
+  /** Envío pausado por el límite por hora hasta esta fecha. */
+  paused_until: string | null;
   created_by: string | null;
   created_at: string;
   finished_at: string | null;
@@ -128,11 +152,10 @@ export interface CampaignRecipient {
   name: string;
   /** Correo o número para wa.me. */
   address: string;
-  /** pending | sent | failed (correo) · pending | contacted (WhatsApp). */
-  status: "pending" | "sent" | "failed" | "contacted";
+  status: RecipientStatus;
   error: string | null;
   sent_at: string | null;
-  /** Solo WhatsApp: abre el chat con el mensaje ya escrito. */
+  /** Solo WhatsApp manual: abre el chat con el mensaje ya escrito. */
   whatsapp_url?: string;
 }
 
@@ -141,4 +164,48 @@ export interface MarketingCampaignDetail {
   /** Solo WhatsApp ("{nombre}" = nombre de cada cliente). */
   message: string | null;
   recipients: CampaignRecipient[];
+}
+
+export interface CreateCampaignResponse {
+  message: string;
+  campaign: MarketingCampaign;
+  /** true si ese request_id ya había creado la campaña (doble clic). */
+  duplicate: boolean;
+  /** Descartados: baja/rebote y en espera de 7 días. */
+  skipped: { suppressed: number; cooldown: number };
+}
+
+// * Notificaciones por cliente
+
+export interface ContactLastSend {
+  status: RecipientStatus;
+  at: string;
+  error: string | null;
+}
+
+export interface MarketingContact {
+  key: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  /** null = sin correo. */
+  email_state: {
+    last: ContactLastSend | null;
+    /** Desde cuándo puede recibir otro correo (null = ya puede). */
+    available_at: string | null;
+    /** unsubscribed | bounced | complained (null = puede recibir). */
+    blocked: "unsubscribed" | "bounced" | "complained" | null;
+  } | null;
+  /** null = sin celular válido. */
+  whatsapp_state: { last: ContactLastSend | null } | null;
+}
+
+export type ContactsFilter = "all" | "never" | "notified" | "email_cooldown";
+
+export interface MarketingContactsResponse {
+  items: MarketingContact[];
+  total: number;
+  page: number;
+  totalPages: number;
+  summary: { total: number; notified: number; never: number; email_cooldown: number };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, CreditCard, Edit2, Folder, Plus, ShieldCheck, ShieldOff } from "lucide-react";
+import { Building2, CreditCard, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,7 +13,9 @@ import { useAuthStore } from "@/store/auth.store";
 import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
+import { MarketingLimitsCard } from "./components/marketing-limits-card";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
+import { WhatsappModal } from "./components/whatsapp-modal";
 import { MERCADOPAGO_SOURCE_LABELS, formatDate } from "./utils";
 
 /** "38 / 50" con color según lo cerca que esté del tope; "sin límite" si no hay. */
@@ -46,6 +48,7 @@ export function PlataformaView() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<PlatformCompany | null>(null);
   const [paymentsCompany, setPaymentsCompany] = useState<PlatformCompany | null>(null);
+  const [whatsappCompany, setWhatsappCompany] = useState<PlatformCompany | null>(null);
 
   const { data, isLoading, isError, refetch } = useQueryPlatformCompanies(isSuperadmin);
   const { data: config } = useQueryPlatformConfig(isSuperadmin);
@@ -139,6 +142,15 @@ export function PlataformaView() {
       ),
     },
     {
+      key: "whatsapp",
+      label: "WhatsApp",
+      render: (company) => (
+        <Chip size="sm" variant="soft" color={company.whatsapp === "api" ? "success" : "default"}>
+          {company.whatsapp === "api" ? "API" : "Enlaces"}
+        </Chip>
+      ),
+    },
+    {
       key: "created_at",
       label: "Alta",
       render: (company) => (
@@ -157,6 +169,13 @@ export function PlataformaView() {
             onPress={() => setPaymentsCompany(company)}
           >
             <CreditCard className="size-4" />
+          </IconAction>
+          <IconAction
+            tooltip="Configurar WhatsApp"
+            aria-label={`WhatsApp de ${company.name}`}
+            onPress={() => setWhatsappCompany(company)}
+          >
+            <MessageCircle className="size-4" />
           </IconAction>
           <IconAction
             tooltip="Editar empresa"
@@ -225,7 +244,10 @@ export function PlataformaView() {
         </Card>
       )}
 
+      <MarketingLimitsCard />
+
       <MercadoPagoModal company={paymentsCompany} onClose={() => setPaymentsCompany(null)} />
+      <WhatsappModal company={whatsappCompany} onClose={() => setWhatsappCompany(null)} />
 
       <EmpresaFormModal
         company={selected}

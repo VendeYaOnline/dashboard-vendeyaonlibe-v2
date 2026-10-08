@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { InventoryFilters } from "@/interfaces/inventory";
 import type { CustomersFilters } from "@/interfaces/customers";
+import type { ContactsFilter } from "@/interfaces/marketing";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -34,6 +35,9 @@ import {
   getMarketingAudience,
   getMarketingCampaign,
   getMarketingCampaigns,
+  getMarketingContacts,
+  getMarketingLimits,
+  getWhatsappSettings,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -192,6 +196,27 @@ export const useQueryMarketingCampaign = (id: string | null) =>
     queryFn: () => getMarketingCampaign(id as string),
     enabled: Boolean(id),
     refetchInterval: (query) => (query.state.data?.campaign.status === "sending" ? 3000 : false),
+  });
+
+/** Notificaciones por cliente (último envío por canal y espera de 7 días). */
+export const useQueryMarketingContacts = (filters: { page: number; search: string; filter: ContactsFilter }) =>
+  useQuery({
+    queryKey: ["marketing", "contacts", filters],
+    queryFn: () => getMarketingContacts(filters),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+
+/** Superadmin: límites globales de Marketing. */
+export const useQueryMarketingLimits = (enabled = true) =>
+  useQuery({ queryKey: ["platform", "marketing-limits"], queryFn: getMarketingLimits, enabled });
+
+/** Superadmin: WhatsApp Cloud API de una tienda. */
+export const useQueryWhatsappSettings = (companyId: string | null) =>
+  useQuery({
+    queryKey: ["platform", "whatsapp", companyId],
+    queryFn: () => getWhatsappSettings(companyId as string),
+    enabled: Boolean(companyId),
   });
 
 /** Vistas de pago activas de la empresa (menú y vistas bloqueadas). */

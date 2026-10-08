@@ -73,6 +73,9 @@ export function EmpresaFormModal({
   const [features, setFeatures] = useState<PaidFeature[]>([]);
   /** Correos de Marketing por mes; vacío = valor por defecto. */
   const [monthlyLimit, setMonthlyLimit] = useState("");
+  /** Correos por día y por hora; vacío = los globales de Plataforma. */
+  const [dailyLimit, setDailyLimit] = useState("");
+  const [hourlyLimit, setHourlyLimit] = useState("");
   /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
   const [productPath, setProductPath] = useState("");
 
@@ -96,6 +99,8 @@ export function EmpresaFormModal({
     setFeatures(company?.features ?? []);
     setMonthlyLimit(company?.marketing_monthly_limit != null ? String(company.marketing_monthly_limit) : "");
     setProductPath(company?.marketing_product_path ?? "");
+    setDailyLimit(company?.marketing_daily_limit != null ? String(company.marketing_daily_limit) : "");
+    setHourlyLimit(company?.marketing_hourly_limit != null ? String(company.marketing_hourly_limit) : "");
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -156,6 +161,8 @@ export function EmpresaFormModal({
         features,
         marketing_monthly_limit: monthlyLimit === "" ? null : Number(monthlyLimit),
         marketing_product_path: productPath.trim() === "" ? null : productPath.trim(),
+        marketing_daily_limit: dailyLimit === "" ? null : Number(dailyLimit),
+        marketing_hourly_limit: hourlyLimit === "" ? null : Number(hourlyLimit),
       });
       return;
     }
@@ -306,17 +313,26 @@ export function EmpresaFormModal({
                         </Switch>
                       ))}
                       {features.includes("marketing") && (
-                        <TextField
-                          value={monthlyLimit}
-                          onChange={(value) => setMonthlyLimit(toDigits(value).slice(0, 6))}
-                          className="sm:max-w-xs"
-                        >
-                          <Label>Correos de Marketing por mes</Label>
-                          <Input inputMode="numeric" placeholder="2000 (por defecto)" />
-                          <p className="mt-1 text-xs text-muted">
-                            Tope de correos de campaña al mes (hora de Colombia). WhatsApp no cuenta. Vacío = 2.000.
+                        <div className="space-y-1">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <TextField value={dailyLimit} onChange={(value) => setDailyLimit(toDigits(value).slice(0, 5))}>
+                              <Label>Correos por día</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                            <TextField value={hourlyLimit} onChange={(value) => setHourlyLimit(toDigits(value).slice(0, 5))}>
+                              <Label>Correos por hora</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                            <TextField value={monthlyLimit} onChange={(value) => setMonthlyLimit(toDigits(value).slice(0, 6))}>
+                              <Label>Correos por mes</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                          </div>
+                          <p className="text-xs text-muted">
+                            Límites de correos de campaña de esta tienda (hora de Colombia). WhatsApp no cuenta. Vacío = los
+                            límites globales de Plataforma.
                           </p>
-                        </TextField>
+                        </div>
                       )}
                       {features.includes("marketing") && (
                         <TextField value={productPath} onChange={(value) => setProductPath(value.trim().slice(0, 120))}>

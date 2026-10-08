@@ -3,6 +3,9 @@ import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import type { PaidFeature } from "@/config/navigation";
 import type {
+  ContactsFilter,
+  CreateCampaignResponse,
+  MarketingContactsResponse,
   CampaignChannel,
   CampaignSegment,
   MarketingAudience,
@@ -30,6 +33,9 @@ import type {
   PlatformCompaniesResponse,
   PlatformConfig,
   UpdateCompanyPayload,
+  MarketingLimits,
+  WhatsappSettings,
+  WhatsappSettingsPayload,
 } from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
@@ -299,11 +305,43 @@ export const getMarketingCampaigns = async () =>
 export const getMarketingCampaign = async (id: string) =>
   (await axiosConfig.get<MarketingCampaignDetail>(`/marketing/campaigns/${id}`)).data;
 
-export const createMarketingCampaign = async (body: { slot: number; segment: CampaignSegment; channel: CampaignChannel }) =>
-  (await axiosConfig.post<{ message: string; campaign: MarketingCampaign }>("/marketing/campaigns", body)).data;
+/** `request_id`: uno por confirmación; repetirlo no crea otra campaña (doble clic). */
+export const createMarketingCampaign = async (body: { slot: number; segment: CampaignSegment; channel: CampaignChannel; request_id: string }) =>
+  (await axiosConfig.post<CreateCampaignResponse>("/marketing/campaigns", body)).data;
 
-export const markCampaignRecipient = async ({ campaignId, recipientId, contacted }: { campaignId: string; recipientId: string; contacted: boolean }) =>
-  (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { contacted })).data;
+export const markCampaignRecipient = async ({
+  campaignId,
+  recipientId,
+  status,
+}: {
+  campaignId: string;
+  recipientId: string;
+  status: "opened" | "contacted" | "pending";
+}) => (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { status })).data;
+
+export const getMarketingContacts = async ({ page, search, filter }: { page: number; search: string; filter: ContactsFilter }) => {
+  const params = new URLSearchParams({ page: String(page), filter });
+  if (search) params.set("search", search);
+  return (await axiosConfig.get<MarketingContactsResponse>(`/marketing/contacts?${params}`)).data;
+};
+
+// Superadmin: límites globales de Marketing y WhatsApp Cloud API por tienda.
+export const getMarketingLimits = async () =>
+  (await axiosConfig.get<{ limits: MarketingLimits }>("/platform/marketing-limits")).data;
+
+export const updateMarketingLimits = async (limits: MarketingLimits) =>
+  (await axiosConfig.put<{ message: string; limits: MarketingLimits }>("/platform/marketing-limits", limits)).data;
+
+export const getWhatsappSettings = async (companyId: string) =>
+  (await axiosConfig.get<WhatsappSettings>(`/platform/companies/${companyId}/whatsapp`)).data;
+
+export const updateWhatsappSettings = async ({ id, data }: { id: string; data: WhatsappSettingsPayload }) =>
+  (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>(`/platform/companies/${id}/whatsapp`, data)).data;
+
+export const testWhatsappSettings = async (companyId: string) =>
+  (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>(
+    `/platform/companies/${companyId}/whatsapp/test`,
+  )).data;
 
 // * Plan / Plataforma
 

@@ -40,6 +40,11 @@ export interface PlatformCompany {
   marketing_monthly_limit: number | null;
   /** Ruta de un producto en la tienda para los correos; null = /producto/{id}. */
   marketing_product_path: string | null;
+  /** Correos de Marketing por día y por hora; null = los globales de Plataforma. */
+  marketing_daily_limit: number | null;
+  marketing_hourly_limit: number | null;
+  /** api = WhatsApp Cloud API activa; off = enlaces wa.me. */
+  whatsapp: "api" | "off";
 }
 
 /**
@@ -98,4 +103,37 @@ export interface UpdateCompanyPayload {
   features?: PaidFeature[];
   marketing_monthly_limit?: number | null;
   marketing_product_path?: string | null;
+  marketing_daily_limit?: number | null;
+  marketing_hourly_limit?: number | null;
+}
+
+/** Límites de correos de Marketing por defecto (todas las tiendas sin límite propio). */
+export interface MarketingLimits {
+  monthly: number;
+  daily: number;
+  hourly: number;
+}
+
+/** WhatsApp Cloud API de una tienda (el token nunca llega al navegador). */
+export interface WhatsappSettings {
+  enabled: boolean;
+  phone_number_id: string;
+  template_name: string;
+  template_language: string;
+  display_phone: string | null;
+  verified_name: string | null;
+  /** Lista para enviar (activa y con todo lo necesario). */
+  ready: boolean;
+  has_token: boolean;
+  token_hint: string | null;
+  can_store_secrets: boolean;
+}
+
+export interface WhatsappSettingsPayload {
+  enabled?: boolean;
+  phone_number_id?: string;
+  template_name?: string;
+  template_language?: string;
+  /** Texto = reemplazar; ausente = conservar; null = borrar. */
+  access_token?: string | null;
 }

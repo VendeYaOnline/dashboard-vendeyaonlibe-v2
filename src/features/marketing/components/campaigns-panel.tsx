@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { History, Send, Users } from "lucide-react";
 import { Button, Card, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -14,14 +14,39 @@ import type {
   CampaignSegment,
   MarketingCampaign,
   MarketingResponse,
+  QuotaWindow,
 } from "@/interfaces/marketing";
 import { CampaignDetailModal } from "./campaign-detail-modal";
-import { CHANNELS, CampaignProgress, SEGMENTS, SEGMENT_LABELS } from "./campaign-shared";
+import { CHANNELS, CampaignProgress, SEGMENTS, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
+import { ContactsPanel } from "./contacts-panel";
 
 const clients = (count: number) => `${formatInteger(count)} ${count === 1 ? "cliente" : "clientes"}`;
 
-const formatDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("es-CO", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Bogota" });
+const resetsLabel = (window: QuotaWindow) => (window.resets_at ? `Se restablece el ${formatDateTime(window.resets_at)}.` : "");
+
+/** Uso de un límite de correos: "35 de 100 · quedan 65". */
+function QuotaBar({ label, window }: { label: string; window: QuotaWindow }) {
+  const full = window.remaining === 0;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="text-muted">{label}</span>
+        <span className="tabular-nums">
+          {formatInteger(window.used)} de {formatInteger(window.limit)}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-surface-secondary">
+        <div
+          className={cn("h-full rounded-full", full ? "bg-danger" : "bg-accent")}
+          style={{ width: `${Math.min(100, (window.used / Math.max(window.limit, 1)) * 100)}%` }}
+        />
+      </div>
+      <p className={cn("text-xs", full ? "text-danger" : "text-muted")}>
+        {full ? `Límite alcanzado. ${resetsLabel(window)}` : `${formatInteger(window.remaining)} disponibles`}
+      </p>
+    </div>
+  );
+}
 
 interface CampaignsPanelProps {
   data: MarketingResponse;
@@ -45,10 +70,21 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
   const create = useMutationCreateCampaign();
 
   const count = audience?.segments[segment][channel] ?? 0;
+  const cooldownCount = channel === "email" ? (audience?.segments[segment].email_cooldown ?? 0) : 0;
   const quota = audience?.quota;
-  const overQuota = channel === "email" && quota !== undefined && count > quota.remaining;
+  const whatsappApi = audience?.whatsapp_mode === "api";
+  const quotaBlocker =
+    channel !== "email" || !quota || count === 0
+      ? null
+      : count > quota.daily.remaining
+        ? `Esta campaña necesita ${count} correos y te quedan ${quota.daily.remaining} hoy. ${resetsLabel(quota.daily)}`
+        : count > quota.monthly.remaining
+          ? `Esta campaña necesita ${count} correos y te quedan ${quota.monthly.remaining} este mes. ${resetsLabel(quota.monthly)}`
+          : null;
   const template = data.templates.find((item) => item.slot === slot);
-  const blocker = !data.brandSaved
+  const blocker = isAudienceLoading
+    ? null
+    : !data.brandSaved
     ? "Primero guarda tu marca en la pestaña Marca."
     : !template?.saved
       ? "Guarda al menos una plantilla para poder enviarla."
@@ -56,25 +92,42 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         ? "El envío de correos no está configurado en el servidor."
         : count === 0
           ? channel === "email"
-            ? "Ningún cliente de este grupo tiene correo."
+            ? cooldownCount > 0
+              ? `Los clientes de este grupo ya recibieron un correo en los últimos ${audience?.cooldown_days ?? 7} días.`
+              : "Ningún cliente de este grupo tiene correo."
             : "Ningún cliente de este grupo tiene un celular válido."
-          : overQuota
-            ? `Esta campaña necesita ${count} correos y te quedan ${quota?.remaining} este mes.`
-            : null;
+          : quotaBlocker;
+
+  // Un id por confirmación: si la petición se repite (doble clic, reintento) no se crea otra campaña.
+  const requestId = useRef<string | null>(null);
+  const openConfirm = () => {
+    requestId.current = crypto.randomUUID();
+    setIsConfirmOpen(true);
+  };
 
   const handleCreate = () => {
-    if (!slot) return;
+    if (!slot || !requestId.current || create.isPending) return;
     create.mutate(
-      { slot, segment, channel },
+      { slot, segment, channel, request_id: requestId.current },
       {
-        onSuccess: ({ campaign }) => {
+        onSuccess: ({ campaign, duplicate, skipped }) => {
           setIsConfirmOpen(false);
-          if (campaign.channel === "whatsapp") {
-            toast.success("Lista lista: abre cada chat desde aquí");
-            setOpenCampaign(campaign.id);
+          requestId.current = null;
+          if (duplicate) {
+            toast.info("Esta campaña ya se había creado; no se envió de nuevo.");
+          } else if (campaign.channel === "whatsapp") {
+            toast.success(
+              campaign.delivery === "whatsapp_api"
+                ? `Enviando por WhatsApp a ${campaign.total} clientes.`
+                : "Lista lista: abre cada chat desde aquí",
+            );
           } else {
-            toast.success(`Enviando a ${campaign.total} clientes. Puedes seguir trabajando.`);
+            const omitted = skipped.cooldown + skipped.suppressed;
+            toast.success(
+              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días o baja).` : ""}`,
+            );
           }
+          if (campaign.channel === "whatsapp" && campaign.delivery !== "whatsapp_api") setOpenCampaign(campaign.id);
         },
         onError: (error) => {
           setIsConfirmOpen(false);
@@ -196,7 +249,9 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
             <p className="text-xs text-muted">
               {channel === "email"
                 ? `Sale desde ${data.sender.email ?? "el correo de VendeYaOnline"} con el nombre «${data.brand.sender_name}». Cada correo lleva un enlace para darse de baja.`
-                : "Se arma una lista con un botón por cliente que abre WhatsApp con el mensaje ya escrito; lo envías tú desde el WhatsApp de tu marca."}
+                : whatsappApi
+                  ? "Se envía automáticamente desde el WhatsApp de tu marca con la plantilla aprobada por Meta."
+                  : "Se arma una lista con un botón por cliente que abre WhatsApp con el mensaje ya escrito; lo envías tú desde el WhatsApp de tu marca."}
             </p>
           </div>
 
@@ -230,31 +285,24 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
             {audience && (
               <p className="text-xs text-muted">
                 {channel === "email"
-                  ? `Solo cuentan los clientes con correo${audience.unsubscribed ? ` (${audience.unsubscribed} se dieron de baja)` : ""}.`
+                  ? `Solo cuentan los clientes con correo que pueden recibir hoy${audience.unsubscribed ? ` (${audience.unsubscribed} no reciben: baja o correo inválido)` : ""}.`
                   : "Solo cuentan los clientes con un celular colombiano válido."}
+                {cooldownCount > 0 &&
+                  ` ${formatInteger(cooldownCount)} de este grupo ${cooldownCount === 1 ? "está" : "están"} en espera: ya ${cooldownCount === 1 ? "recibió" : "recibieron"} un correo en los últimos ${audience.cooldown_days} días.`}
               </p>
             )}
           </div>
 
           {channel === "email" && quota && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted">Correos de este mes</span>
-                <span className="tabular-nums">
-                  {formatInteger(quota.used)} de {formatInteger(quota.limit)}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-secondary">
-                <div
-                  className={cn("h-full rounded-full", quota.remaining === 0 ? "bg-danger" : "bg-accent")}
-                  style={{ width: `${Math.min(100, (quota.used / Math.max(quota.limit, 1)) * 100)}%` }}
-                />
-              </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <QuotaBar label="Correos enviados hoy" window={quota.daily} />
+              <QuotaBar label="En esta hora" window={quota.hourly} />
+              <QuotaBar label="Este mes" window={quota.monthly} />
             </div>
           )}
 
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-            <Button variant="primary" isDisabled={Boolean(blocker) || create.isPending} onPress={() => setIsConfirmOpen(true)}>
+            <Button variant="primary" isDisabled={isAudienceLoading || Boolean(blocker) || create.isPending} onPress={openConfirm}>
               <Users className="size-4" />
               {channel === "email" ? `Enviar a ${clients(count)}` : `Preparar lista de ${clients(count)}`}
             </Button>
@@ -277,6 +325,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
           emptyMessage="Aún no has enviado campañas"
         />
       </Card>
+
+      <ContactsPanel />
 
       <ConfirmDialog
         isOpen={isConfirmOpen}

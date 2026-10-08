@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Monitor, Smartphone } from "lucide-react";
 import { Card, Spinner, ToggleButton, ToggleButtonGroup, cn } from "@heroui/react";
@@ -63,16 +63,7 @@ export function EmailPreview({ request, senderName }: { request: MarketingPrevie
         {isError && !data ? (
           <p className="py-24 text-sm text-muted">No se pudo generar la vista previa.</p>
         ) : data ? (
-          <iframe
-            title="Vista previa del correo"
-            srcDoc={data.html}
-            // Sin scripts ni navegación desde el correo.
-            sandbox=""
-            className={cn(
-              "h-[640px] rounded-lg border border-border bg-white shadow-sm transition-[width]",
-              device === "desktop" ? "w-full max-w-[640px]" : "w-[375px]",
-            )}
-          />
+          <AutoHeightFrame html={data.html} className={device === "desktop" ? "w-full max-w-[640px]" : "w-[375px]"} />
         ) : (
           <div className="flex h-[640px] items-center">
             <Spinner aria-label="Cargando vista previa" />
@@ -80,5 +71,53 @@ export function EmailPreview({ request, senderName }: { request: MarketingPrevie
         )}
       </div>
     </Card>
+  );
+}
+
+/**
+ * Visor del correo con la altura de su contenido (sin scroll propio): se mide
+ * al cargar y cada vez que cambia de tamaño (imágenes, ancho de celular).
+ * `allow-same-origin` solo permite medirlo; los scripts siguen bloqueados.
+ */
+function AutoHeightFrame({ html, className }: { html: string; className: string }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = useState(640);
+
+  useEffect(() => {
+    const frame = ref.current;
+    if (!frame) return;
+    let observer: ResizeObserver | undefined;
+    const measure = () => {
+      const doc = frame.contentDocument;
+      // +2: el borde de 1px arriba y abajo (border-box) no debe recortar el contenido.
+      if (doc?.documentElement) setHeight(Math.max(200, doc.documentElement.scrollHeight + 2));
+    };
+    const onLoad = () => {
+      measure();
+      observer?.disconnect();
+      const body = frame.contentDocument?.body;
+      if (body) {
+        observer = new ResizeObserver(measure);
+        observer.observe(body);
+      }
+    };
+    frame.addEventListener("load", onLoad);
+    return () => {
+      frame.removeEventListener("load", onLoad);
+      observer?.disconnect();
+    };
+  }, []);
+
+  return (
+    <iframe
+      ref={ref}
+      title="Vista previa del correo"
+      srcDoc={html}
+      // Sin scripts ni navegación desde el correo; same-origin solo para medir la altura.
+      sandbox="allow-same-origin"
+      scrolling="no"
+      style={{ height }}
+      className={cn("rounded-lg border border-border bg-white shadow-sm transition-[width]", className)}
+    />
   );
 }

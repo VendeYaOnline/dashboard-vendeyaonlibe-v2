@@ -345,7 +345,7 @@ export function MarketingView() {
             </Card>
           </div>
 
-          <div className="xl:sticky xl:top-6 xl:self-start">
+          <div className="xl:self-start">
             <EmailPreview request={previewRequest} senderName={(step === "brand" ? brand : data.brand).sender_name} />
           </div>
         </div>
