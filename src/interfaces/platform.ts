@@ -45,6 +45,10 @@ export interface PlatformCompany {
   marketing_hourly_limit: number | null;
   /** api = WhatsApp Cloud API activa; off = enlaces wa.me. */
   whatsapp: "api" | "off";
+  /** A dónde llegan los correos de prueba de la tienda; null = sin pruebas. */
+  marketing_test_email: string | null;
+  /** Correos de prueba usados (máximo 10). */
+  marketing_test_sends: number;
 }
 
 /**
@@ -105,6 +109,9 @@ export interface UpdateCompanyPayload {
   marketing_product_path?: string | null;
   marketing_daily_limit?: number | null;
   marketing_hourly_limit?: number | null;
+  marketing_test_email?: string | null;
+  /** true = la tienda vuelve a tener sus 10 correos de prueba. */
+  reset_test_sends?: boolean;
 }
 
 /** Límites de correos de Marketing por defecto (todas las tiendas sin límite propio). */

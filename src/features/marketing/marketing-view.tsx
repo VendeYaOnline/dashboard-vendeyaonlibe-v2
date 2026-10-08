@@ -12,7 +12,6 @@ import {
   useMutationSendMarketingTest,
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
-import { useAuthStore } from "@/store/auth.store";
 import type { MarketingBrand, MarketingProduct, MarketingTemplate, MarketingTemplateDraft } from "@/interfaces/marketing";
 import { BrandForm } from "./components/brand-form";
 import { CampaignsPanel } from "./components/campaigns-panel";
@@ -42,7 +41,6 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
  */
 export function MarketingView() {
   const { data, isLoading, isError } = useQueryMarketing();
-  const userEmail = useAuthStore((s) => s.user?.email);
   const [step, setStep] = useState<Step | null>(null);
   const [slot, setSlot] = useState(1);
   const [drafts, setDrafts] = useState<Record<number, MarketingTemplateDraft>>({});
@@ -140,12 +138,22 @@ export function MarketingView() {
     sendTest.mutate(
       { template: draft, ...(isBrandDirty ? { brand } : {}) },
       {
-        onSuccess: ({ to }) => toast.success(`Correo de prueba enviado a ${to}. Revisa también la carpeta de spam.`),
+        onSuccess: ({ to, test }) =>
+          toast.success(
+            `Correo de prueba enviado a ${to} (${test.used} de ${test.limit}). Revisa también la carpeta de spam.`,
+          ),
         onError: (error) => handleAxiosError(error, "No se pudo enviar el correo de prueba"),
       },
     );
 
   const canSend = Boolean(savedTemplate?.saved && !isTemplateDirty);
+  const testsLeft = Math.max(0, data.test.limit - data.test.used);
+  /** Por qué no se puede enviar una prueba (null = se puede). */
+  const testBlocker = !data.test.email
+    ? "Aún no hay un correo de prueba configurado para tu tienda. Pídeselo al equipo de VendeYaOnline."
+    : testsLeft === 0
+      ? `Ya usaste tus ${data.test.limit} correos de prueba. Pide más al equipo de VendeYaOnline.`
+      : null;
 
   return (
     <div className="space-y-6">
@@ -160,8 +168,8 @@ export function MarketingView() {
           <Card.Content className="flex items-start gap-3 p-4 text-sm">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
             <p>
-              Modo de prueba: todos los correos (pruebas y campañas) llegan solo a <strong>{data.sender.testRedirect}</strong>,
-              nunca a tus clientes.
+              Servidor local: las campañas de correo llegan solo a <strong>{data.sender.testRedirect}</strong>, nunca a tus
+              clientes.
             </p>
           </Card.Content>
         </Card>
@@ -300,10 +308,10 @@ export function MarketingView() {
                       onPress={handleSendTest}
                       isPending={sendTest.isPending}
                       pendingLabel="Enviando"
-                      isDisabled={!data.sender.configured || Boolean(incomplete)}
+                      isDisabled={!data.sender.configured || Boolean(incomplete) || Boolean(testBlocker)}
                     >
                       <Send className="size-4" />
-                      Enviarme una prueba
+                      Enviar prueba{data.test.email ? ` (${testsLeft} de ${data.test.limit})` : ""}
                     </PendingButton>
                     <Button variant="ghost" isDisabled={!canSend} onPress={() => setStep("send")}>
                       Enviar a mis clientes
@@ -337,9 +345,9 @@ export function MarketingView() {
                     ? "Se usa en todos tus correos. La vista previa muestra tu marca con la plantilla elegida."
                     : incomplete
                       ? `Para guardar: ${incomplete}`
-                      : !canSend
-                        ? "Guarda la plantilla para poder enviarla a tus clientes."
-                        : `La prueba llega a ${data.sender.testRedirect ?? userEmail ?? "tu correo"} con el asunto marcado como [Prueba].`}
+                      : testBlocker
+                        ? testBlocker
+                        : `La prueba llega a ${data.test.email} con el asunto marcado como [Prueba]. Te quedan ${testsLeft} de ${data.test.limit}; no cuentan en tus límites de envío.${canSend ? "" : " Guarda la plantilla para poder enviarla a tus clientes."}`}
                 </p>
               </Card.Content>
             </Card>

@@ -295,7 +295,7 @@ export const previewMarketingEmail = async (body: MarketingPreviewRequest) =>
   (await axiosConfig.post<{ subject: string; html: string }>("/marketing/preview", body)).data;
 
 export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
-  (await axiosConfig.post<{ message: string; to: string }>("/marketing/test-email", body)).data;
+  (await axiosConfig.post<{ message: string; to: string; test: { used: number; limit: number } }>("/marketing/test-email", body)).data;
 
 export const getMarketingAudience = async () => (await axiosConfig.get<MarketingAudience>("/marketing/audience")).data;
 

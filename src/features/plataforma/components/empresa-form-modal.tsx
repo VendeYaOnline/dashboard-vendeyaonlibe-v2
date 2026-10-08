@@ -44,6 +44,8 @@ interface EmpresaFormModalProps {
 }
 
 const DEFAULT_PRODUCTS = 50;
+/** Correos de prueba por tienda (TEST_EMAILS_LIMIT del backend). */
+const TEST_EMAILS_LIMIT = 10;
 
 const toDigits = (value: string) => value.replace(/\D/g, "");
 
@@ -76,6 +78,10 @@ export function EmpresaFormModal({
   /** Correos por día y por hora; vacío = los globales de Plataforma. */
   const [dailyLimit, setDailyLimit] = useState("");
   const [hourlyLimit, setHourlyLimit] = useState("");
+  /** Correo de prueba de la tienda; vacío = sin pruebas. */
+  const [testEmail, setTestEmail] = useState("");
+  /** Devolverle los 10 correos de prueba al guardar. */
+  const [resetTests, setResetTests] = useState(false);
   /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
   const [productPath, setProductPath] = useState("");
 
@@ -101,6 +107,8 @@ export function EmpresaFormModal({
     setProductPath(company?.marketing_product_path ?? "");
     setDailyLimit(company?.marketing_daily_limit != null ? String(company.marketing_daily_limit) : "");
     setHourlyLimit(company?.marketing_hourly_limit != null ? String(company.marketing_hourly_limit) : "");
+    setTestEmail(company?.marketing_test_email ?? "");
+    setResetTests(false);
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -143,7 +151,8 @@ export function EmpresaFormModal({
       isValidEmail(adminEmail.trim()) &&
       adminPassword.length >= MIN_PASSWORD_LENGTH);
 
-  const isValid = isNameValid && isProductsValid && isImagesValid && isAdminValid;
+  const isTestEmailValid = testEmail.trim() === "" || isValidEmail(testEmail.trim());
+  const isValid = isNameValid && isProductsValid && isImagesValid && isAdminValid && isTestEmailValid;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -163,6 +172,8 @@ export function EmpresaFormModal({
         marketing_product_path: productPath.trim() === "" ? null : productPath.trim(),
         marketing_daily_limit: dailyLimit === "" ? null : Number(dailyLimit),
         marketing_hourly_limit: hourlyLimit === "" ? null : Number(hourlyLimit),
+        marketing_test_email: testEmail.trim() === "" ? null : testEmail.trim(),
+        ...(resetTests ? { reset_test_sends: true } : {}),
       });
       return;
     }
@@ -332,6 +343,34 @@ export function EmpresaFormModal({
                             Límites de correos de campaña de esta tienda (hora de Colombia). WhatsApp no cuenta. Vacío = los
                             límites globales de Plataforma.
                           </p>
+                        </div>
+                      )}
+                      {features.includes("marketing") && (
+                        <div className="space-y-2">
+                          <TextField value={testEmail} onChange={(value) => setTestEmail(value.slice(0, 254))} type="email" isInvalid={!isTestEmailValid}>
+                            <Label>Correo para pruebas</Label>
+                            <Input placeholder="pruebas@tienda.com" autoComplete="off" maxLength={254} />
+                            <p className={cn("mt-1 text-xs", isTestEmailValid ? "text-muted" : "text-danger")}>
+                              {isTestEmailValid
+                                ? `A este correo llegan los botones «Enviar prueba» de la tienda: máximo ${TEST_EMAILS_LIMIT}, no cuentan en sus límites. Vacío = la tienda no puede enviar pruebas.`
+                                : "Escribe un correo válido."}
+                            </p>
+                          </TextField>
+                          {company && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-secondary px-3 py-2 text-xs">
+                              <span>
+                                Pruebas usadas: <strong className="tabular-nums">{Math.min(company.marketing_test_sends, TEST_EMAILS_LIMIT)} de {TEST_EMAILS_LIMIT}</strong>
+                              </span>
+                              <Switch isSelected={resetTests} onChange={setResetTests} isDisabled={company.marketing_test_sends === 0}>
+                                <Switch.Content>
+                                  <Switch.Control>
+                                    <Switch.Thumb />
+                                  </Switch.Control>
+                                  <Label className="text-xs">Devolverle las {TEST_EMAILS_LIMIT} pruebas al guardar</Label>
+                                </Switch.Content>
+                              </Switch>
+                            </div>
+                          )}
                         </div>
                       )}
                       {features.includes("marketing") && (

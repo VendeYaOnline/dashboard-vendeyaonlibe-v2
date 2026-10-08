@@ -336,7 +336,14 @@ export const useMutationSaveMarketingTemplate = () => {
   });
 };
 
-export const useMutationSendMarketingTest = () => useMutation({ mutationFn: sendMarketingTestEmail });
+export const useMutationSendMarketingTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sendMarketingTestEmail,
+    // El conteo de pruebas cambia (también si la respuesta fue "ya no quedan").
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketing"], exact: true }),
+  });
+};
 
 export const useMutationCreateCampaign = () => {
   const queryClient = useQueryClient();

@@ -68,9 +68,17 @@ export interface MarketingResponse {
   sender: {
     email: string | null;
     configured: boolean;
-    /** Modo de prueba (solo local): todo correo va a esta dirección. */
+    /** Solo local: las campañas de correo van a esta dirección, nunca a clientes. */
     testRedirect: string | null;
   };
+  /** Correos de prueba: a dónde llegan (lo fija el superadmin; null = sin configurar) y cuántos se han usado. */
+  test: MarketingTestQuota;
+}
+
+export interface MarketingTestQuota {
+  email: string | null;
+  used: number;
+  limit: number;
 }
 
 /** Plantilla tal como se edita y se envía (sin casilla ni fechas). */
