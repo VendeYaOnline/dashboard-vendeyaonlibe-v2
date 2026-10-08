@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
 import { Button, Input, Label, TextField } from "@heroui/react";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
 import { FormSection } from "@/features/productos/components/form-section";
 import type { MarketingBrand } from "@/interfaces/marketing";
-import { ColorField } from "./color-field";
 import { LIMITS } from "../constants";
 
 interface BrandFormProps {
@@ -16,7 +15,36 @@ interface BrandFormProps {
   senderEmail: string | null;
 }
 
-/** Marca de los correos: nombre, respuestas, logo, colores, enlaces y redes. */
+/**
+ * Así se ve el remitente en la bandeja de entrada (estilo Gmail en el
+ * celular): círculo con la inicial, nombre, asunto y vista previa.
+ */
+function InboxPreview({ name }: { name: string }) {
+  const sender = name.trim() || "Tu marca";
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-muted">Así lo verán tus clientes en su bandeja de entrada</p>
+      <div className="flex items-center gap-3 rounded-xl border border-border bg-surface-secondary px-3 py-2.5">
+        <span
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-400 text-lg font-medium text-amber-950"
+          aria-hidden
+        >
+          {sender.charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate font-semibold">{sender}</p>
+            <span className="shrink-0 text-xs text-muted">10:30 a. m.</span>
+          </div>
+          <p className="truncate text-sm">20 % de descuento solo esta semana</p>
+          <p className="truncate text-xs text-muted">Aprovecha antes de que se acabe…</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Marca de los correos: nombre, respuestas, logo, enlace de la tienda y redes. */
 export function BrandForm({ brand, onChange, senderEmail }: BrandFormProps) {
   const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false);
   const set = (patch: Partial<MarketingBrand>) => onChange({ ...brand, ...patch });
@@ -25,67 +53,53 @@ export function BrandForm({ brand, onChange, senderEmail }: BrandFormProps) {
     <div className="space-y-5">
       <FormSection
         title="Remitente"
-        description={`Tus clientes verán el nombre de tu marca. El correo sale desde ${senderEmail ?? "el dominio de VendeYaOnline"} y las respuestas llegan a tu correo.`}
+        description={`El correo sale desde ${senderEmail ?? "el dominio de VendeYaOnline"} con el nombre de tu marca, y las respuestas llegan a tu correo.`}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField value={brand.sender_name} onChange={(sender_name) => set({ sender_name: sender_name.slice(0, LIMITS.sender_name) })} isRequired>
-            <Label>Nombre de la marca</Label>
-            <Input maxLength={LIMITS.sender_name} placeholder="Ej: Jarameni" />
-          </TextField>
-          <TextField value={brand.reply_to} onChange={(reply_to) => set({ reply_to })} type="email">
-            <Label>Correo para respuestas</Label>
-            <Input placeholder="ventas@tumarca.com" maxLength={LIMITS.url} />
-          </TextField>
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField value={brand.sender_name} onChange={(sender_name) => set({ sender_name: sender_name.slice(0, LIMITS.sender_name) })} isRequired>
+              <Label>Nombre de la marca</Label>
+              <Input maxLength={LIMITS.sender_name} placeholder="Ej: Jarameni" />
+            </TextField>
+            <TextField value={brand.reply_to} onChange={(reply_to) => set({ reply_to })} type="email">
+              <Label>Correo para respuestas</Label>
+              <Input placeholder="ventas@tumarca.com" maxLength={LIMITS.url} />
+            </TextField>
+          </div>
+          <InboxPreview name={brand.sender_name} />
         </div>
       </FormSection>
 
-      <FormSection title="Logo y colores">
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
+      <FormSection title="Logo" description="Aparece arriba de cada correo. Si no eliges uno, se muestra el nombre de tu marca.">
+        <div className="space-y-3">
+          <div className="flex h-28 w-full items-center justify-center rounded-xl border border-border bg-white p-3 sm:w-64">
             {brand.logo_url ? (
-              <span className="flex h-16 w-40 items-center justify-center rounded-lg border border-border bg-white p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={brand.logo_url} alt="Logo" className="max-h-full max-w-full object-contain" />
-              </span>
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={brand.logo_url} alt="Logo" className="max-h-full max-w-full object-contain" />
             ) : (
-              <span className="flex h-16 w-40 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted">
-                Sin logo: se usa el nombre
-              </span>
+              <span className="text-center text-lg font-semibold text-gray-800">{brand.sender_name || "Tu marca"}</span>
             )}
-            <Button variant="outline" onPress={() => setIsLogoPickerOpen(true)}>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onPress={() => setIsLogoPickerOpen(true)}>
               <ImagePlus className="size-4" />
               {brand.logo_url ? "Cambiar logo" : "Elegir logo de la galería"}
             </Button>
             {brand.logo_url && (
-              <Button variant="ghost" onPress={() => set({ logo_url: "" })}>
-                <X className="size-4" />
-                Quitar
+              <Button variant="ghost" size="sm" className="text-danger" onPress={() => set({ logo_url: "" })}>
+                <Trash2 className="size-4" />
+                Quitar logo
               </Button>
             )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <ColorField label="Botones" value={brand.colors.primary} onChange={(primary) => set({ colors: { ...brand.colors, primary } })} />
-            <ColorField label="Fondo" value={brand.colors.background} onChange={(background) => set({ colors: { ...brand.colors, background } })} />
-            <ColorField label="Texto" value={brand.colors.text} onChange={(text) => set({ colors: { ...brand.colors, text } })} />
           </div>
         </div>
       </FormSection>
 
-      <FormSection title="Tienda" description="A dónde llevan los botones de los correos.">
-        <div className="grid gap-4">
-          <TextField value={brand.store_url} onChange={(store_url) => set({ store_url: store_url.trim() })} type="url">
-            <Label>Enlace de tu tienda</Label>
-            <Input placeholder="https://www.tumarca.com" maxLength={LIMITS.url} />
-          </TextField>
-          <TextField value={brand.product_url} onChange={(product_url) => set({ product_url: product_url.trim() })}>
-            <Label>Formato del enlace de un producto</Label>
-            <Input className="font-mono text-sm" maxLength={LIMITS.url} />
-            <p className="mt-1 text-xs text-muted">
-              {"{store_url}"} es el enlace de tu tienda, {"{id}"} el del producto y {"{slug}"} su nombre en el enlace. Si no sabes
-              cuál es, pide ayuda a VendeYaOnline.
-            </p>
-          </TextField>
-        </div>
+      <FormSection title="Tu tienda" description="A dónde llevan los botones y las imágenes de tus correos.">
+        <TextField value={brand.store_url} onChange={(store_url) => set({ store_url: store_url.trim() })} type="url">
+          <Label>Enlace de tu tienda</Label>
+          <Input placeholder="https://www.tumarca.com" maxLength={LIMITS.url} />
+        </TextField>
       </FormSection>
 
       <FormSection title="Contacto y redes" description="Aparecen al final de cada correo.">

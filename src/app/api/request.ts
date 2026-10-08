@@ -3,7 +3,12 @@ import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import type { PaidFeature } from "@/config/navigation";
 import type {
+  CampaignChannel,
+  CampaignSegment,
+  MarketingAudience,
   MarketingBrand,
+  MarketingCampaign,
+  MarketingCampaignDetail,
   MarketingPreviewRequest,
   MarketingResponse,
   MarketingTemplate,
@@ -285,6 +290,20 @@ export const previewMarketingEmail = async (body: MarketingPreviewRequest) =>
 
 export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
   (await axiosConfig.post<{ message: string; to: string }>("/marketing/test-email", body)).data;
+
+export const getMarketingAudience = async () => (await axiosConfig.get<MarketingAudience>("/marketing/audience")).data;
+
+export const getMarketingCampaigns = async () =>
+  (await axiosConfig.get<{ campaigns: MarketingCampaign[] }>("/marketing/campaigns")).data;
+
+export const getMarketingCampaign = async (id: string) =>
+  (await axiosConfig.get<MarketingCampaignDetail>(`/marketing/campaigns/${id}`)).data;
+
+export const createMarketingCampaign = async (body: { slot: number; segment: CampaignSegment; channel: CampaignChannel }) =>
+  (await axiosConfig.post<{ message: string; campaign: MarketingCampaign }>("/marketing/campaigns", body)).data;
+
+export const markCampaignRecipient = async ({ campaignId, recipientId, contacted }: { campaignId: string; recipientId: string; contacted: boolean }) =>
+  (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { contacted })).data;
 
 // * Plan / Plataforma
 

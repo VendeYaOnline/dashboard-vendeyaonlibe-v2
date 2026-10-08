@@ -71,6 +71,10 @@ export function EmpresaFormModal({
   const [freeShippingFrom, setFreeShippingFrom] = useState("");
   /** Vistas de pago activas (solo al editar). */
   const [features, setFeatures] = useState<PaidFeature[]>([]);
+  /** Correos de Marketing por mes; vacío = valor por defecto. */
+  const [monthlyLimit, setMonthlyLimit] = useState("");
+  /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
+  const [productPath, setProductPath] = useState("");
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -90,6 +94,8 @@ export function EmpresaFormModal({
     setShippingFee(company?.shipping_fee != null ? String(company.shipping_fee) : "");
     setFreeShippingFrom(company?.free_shipping_from != null ? String(company.free_shipping_from) : "");
     setFeatures(company?.features ?? []);
+    setMonthlyLimit(company?.marketing_monthly_limit != null ? String(company.marketing_monthly_limit) : "");
+    setProductPath(company?.marketing_product_path ?? "");
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -148,6 +154,8 @@ export function EmpresaFormModal({
         shipping_fee: shippingFee === "" ? null : Number(shippingFee),
         free_shipping_from: shippingFee === "" || freeShippingFrom === "" ? null : Number(freeShippingFrom),
         features,
+        marketing_monthly_limit: monthlyLimit === "" ? null : Number(monthlyLimit),
+        marketing_product_path: productPath.trim() === "" ? null : productPath.trim(),
       });
       return;
     }
@@ -297,6 +305,29 @@ export function EmpresaFormModal({
                           </Switch.Content>
                         </Switch>
                       ))}
+                      {features.includes("marketing") && (
+                        <TextField
+                          value={monthlyLimit}
+                          onChange={(value) => setMonthlyLimit(toDigits(value).slice(0, 6))}
+                          className="sm:max-w-xs"
+                        >
+                          <Label>Correos de Marketing por mes</Label>
+                          <Input inputMode="numeric" placeholder="2000 (por defecto)" />
+                          <p className="mt-1 text-xs text-muted">
+                            Tope de correos de campaña al mes (hora de Colombia). WhatsApp no cuenta. Vacío = 2.000.
+                          </p>
+                        </TextField>
+                      )}
+                      {features.includes("marketing") && (
+                        <TextField value={productPath} onChange={(value) => setProductPath(value.trim().slice(0, 120))}>
+                          <Label>Ruta de un producto en la tienda</Label>
+                          <Input className="font-mono text-sm" placeholder="/producto/{id}" />
+                          <p className="mt-1 text-xs text-muted">
+                            Para los botones «Comprar» de los correos. {"{id}"} = id del producto; {"{slug}"} = su nombre en la
+                            URL. Ej.: Jarameni /producto/{"{id}"}, Muebles /products/{"{slug}"}-{"{id}"}. Vacío = /producto/{"{id}"}.
+                          </p>
+                        </TextField>
+                      )}
                     </div>
                   </FormSection>
                 )}

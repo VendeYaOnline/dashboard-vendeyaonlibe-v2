@@ -31,6 +31,9 @@ import {
   getCustomers,
   getFeatures,
   getMarketing,
+  getMarketingAudience,
+  getMarketingCampaign,
+  getMarketingCampaigns,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -168,6 +171,27 @@ export const useQueryMarketing = () =>
     queryFn: getMarketing,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
+  });
+
+/** A cuántos clientes llega cada grupo por canal, y el cupo de correos del mes. */
+export const useQueryMarketingAudience = () =>
+  useQuery({ queryKey: ["marketing", "audience"], queryFn: getMarketingAudience, staleTime: 1000 * 60 });
+
+/** Historial de campañas; mientras alguna se está enviando, se actualiza cada 3 s. */
+export const useQueryMarketingCampaigns = () =>
+  useQuery({
+    queryKey: ["marketing", "campaigns"],
+    queryFn: getMarketingCampaigns,
+    refetchInterval: (query) =>
+      query.state.data?.campaigns.some((campaign) => campaign.status === "sending") ? 3000 : false,
+  });
+
+export const useQueryMarketingCampaign = (id: string | null) =>
+  useQuery({
+    queryKey: ["marketing", "campaign", id],
+    queryFn: () => getMarketingCampaign(id as string),
+    enabled: Boolean(id),
+    refetchInterval: (query) => (query.state.data?.campaign.status === "sending" ? 3000 : false),
   });
 
 /** Vistas de pago activas de la empresa (menú y vistas bloqueadas). */

@@ -36,6 +36,10 @@ export interface PlatformCompany {
   mercadopago: MercadoPagoSource;
   /** Vistas de pago activas. */
   features: PaidFeature[];
+  /** Correos de Marketing por mes; null = el valor por defecto (2.000). */
+  marketing_monthly_limit: number | null;
+  /** Ruta de un producto en la tienda para los correos; null = /producto/{id}. */
+  marketing_product_path: string | null;
 }
 
 /**
@@ -92,4 +96,6 @@ export interface UpdateCompanyPayload {
   shipping_fee?: number | null;
   free_shipping_from?: number | null;
   features?: PaidFeature[];
+  marketing_monthly_limit?: number | null;
+  marketing_product_path?: string | null;
 }

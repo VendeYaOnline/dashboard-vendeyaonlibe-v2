@@ -8,6 +8,8 @@ import {
   saveMarketingBrand,
   saveMarketingTemplate,
   sendMarketingTestEmail,
+  createMarketingCampaign,
+  markCampaignRecipient,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -332,6 +334,28 @@ export const useMutationSaveMarketingTemplate = () => {
 };
 
 export const useMutationSendMarketingTest = () => useMutation({ mutationFn: sendMarketingTestEmail });
+
+export const useMutationCreateCampaign = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createMarketingCampaign,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+    },
+  });
+};
+
+export const useMutationMarkRecipient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markCampaignRecipient,
+    onSuccess: (_data, { campaignId }) => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaign", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
+    },
+  });
+};
 
 // * Contacts
 
