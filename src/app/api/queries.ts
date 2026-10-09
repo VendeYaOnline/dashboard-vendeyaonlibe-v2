@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { MetaCatalogFilters } from "@/interfaces/catalog";
+import type { AuditFilters } from "@/interfaces/platform";
 import type { InventoryFilters } from "@/interfaces/inventory";
 import type { CustomersFilters } from "@/interfaces/customers";
 import type { ContactsFilter } from "@/interfaces/marketing";
@@ -29,6 +30,7 @@ const SALES_QUERY_OPTIONS = {
 } as const;
 import {
   getAnalytics,
+  getAuditLog,
   getCompanyUsers,
   getSuperadmins,
   getMetaCatalogSummary,
@@ -279,6 +281,16 @@ export const useQueryMercadoPagoSettings = (companyId: string | null) =>
     queryFn: () => getMercadoPagoSettings(companyId as string),
     refetchOnWindowFocus: false,
     enabled: Boolean(companyId),
+  });
+
+/** Registro de actividad de los superadmins (solo el propietario). La página anterior sigue visible mientras llega la nueva. */
+export const useQueryAuditLog = (filters: AuditFilters) =>
+  useQuery({
+    queryKey: ["platform", "audit-log", filters],
+    queryFn: () => getAuditLog(filters),
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 30,
   });
 
 /** Superadministradores (solo el propietario): `enabled` evita pedirlos a quien no lo es. */

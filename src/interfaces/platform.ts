@@ -183,3 +183,41 @@ export interface SuperadminPayload {
   /** Al editar, vacía o ausente = conservar la contraseña actual. */
   password?: string;
 }
+
+/** Categorías del filtro del registro de actividad (`GET /platform/audit-log`). */
+export type AuditCategory = "companies" | "users" | "superadmins" | "settings";
+
+/** Una acción de un superadministrador. Las copias de nombres y correos se conservan aunque la empresa o el usuario ya no existan. */
+export interface AuditEntry {
+  id: string;
+  created_at: string;
+  actor_name: string;
+  actor_email: string;
+  /** Código estable, p. ej. "company_user.update". */
+  action: string;
+  company_id: string | null;
+  company_name: string | null;
+  target_type: string | null;
+  target_label: string | null;
+  /** Datos no secretos: campos cambiados con su valor anterior y nuevo. */
+  details: Record<string, unknown> | null;
+}
+
+export interface AuditLogResponse {
+  items: AuditEntry[];
+  total: number;
+  page: number;
+  totalPages: number;
+  /** Quienes han actuado alguna vez (para el filtro "Quién"). */
+  actors: { email: string; name: string }[];
+}
+
+/** "all" = sin filtrar; fechas AAAA-MM-DD ("" = sin límite). */
+export interface AuditFilters {
+  page: number;
+  companyId: string;
+  actor: string;
+  category: AuditCategory | "all";
+  from: string;
+  to: string;
+}

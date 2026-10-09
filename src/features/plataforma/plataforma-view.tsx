@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
+import { AuditLogCard } from "./components/audit-log-card";
 import { EmpresaUsuariosModal } from "./components/empresa-usuarios-modal";
 import { SuperadministradoresModal } from "./components/superadministradores-modal";
 import { MarketingLimitsCard } from "./components/marketing-limits-card";
@@ -271,6 +272,8 @@ export function PlataformaView() {
           )}
         </Card>
       )}
+
+      {isOwner && <AuditLogCard companies={companies} />}
 
       <MarketingLimitsCard />
 

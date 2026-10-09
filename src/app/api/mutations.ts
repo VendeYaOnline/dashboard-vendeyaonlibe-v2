@@ -301,6 +301,7 @@ export const useMutationCreateCompany = () => {
     mutationFn: createPlatformCompany,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
     },
   });
 };
@@ -311,6 +312,7 @@ export const useMutationUpdateMercadoPagoSettings = () => {
     mutationFn: updateMercadoPagoSettings,
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
       queryClient.invalidateQueries({ queryKey: ["platform", "mercadopago", id] });
     },
   });
@@ -325,6 +327,7 @@ const useCompanyUserMutation = <TVariables extends { companyId: string }>(
     mutationFn,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["platform", "company-users", variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
     },
   });
@@ -339,7 +342,10 @@ const useSuperadminMutation = <TVariables>(mutationFn: (variables: TVariables) =
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "superadmins"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "superadmins"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
+    },
   });
 };
 
@@ -353,6 +359,7 @@ export const useMutationUpdateCompany = () => {
     mutationFn: updatePlatformCompany,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
     },
   });
@@ -413,7 +420,10 @@ export const useMutationUpdateMarketingLimits = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateMarketingLimits,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "marketing-limits"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "marketing-limits"] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
+    },
   });
 };
 
@@ -423,6 +433,7 @@ export const useMutationUpdateWhatsappSettings = () => {
     mutationFn: updateWhatsappSettings,
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "audit-log"] });
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
     },
   });
