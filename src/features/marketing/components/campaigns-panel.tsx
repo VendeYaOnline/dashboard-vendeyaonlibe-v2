@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { History, Send, Users } from "lucide-react";
+import { History, MessageCircle, Send, Users } from "lucide-react";
 import { Button, Card, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
-import { useQueryMarketingAudience, useQueryMarketingCampaigns } from "@/app/api/queries";
+import { useQueryMarketingAudience, useQueryMarketingCampaigns, useQueryMyWhatsappSettings } from "@/app/api/queries";
 import { useMutationCreateCampaign } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { formatInteger } from "@/features/analisis/utils";
@@ -19,6 +19,8 @@ import type {
 import { CampaignDetailModal } from "./campaign-detail-modal";
 import { CHANNELS, CampaignProgress, SEGMENTS, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
 import { ContactsPanel } from "./contacts-panel";
+import { WhatsappStatusBanner } from "../whatsapp/whatsapp-setup";
+import { WhatsappSetupModal } from "../whatsapp/whatsapp-setup-modal";
 
 const clients = (count: number) => `${formatInteger(count)} ${count === 1 ? "cliente" : "clientes"}`;
 
@@ -64,6 +66,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
   const [segment, setSegment] = useState<CampaignSegment>("all");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
+  const [isWhatsappOpen, setIsWhatsappOpen] = useState(false);
+  const { data: whatsapp } = useQueryMyWhatsappSettings();
 
   const { data: audience, isLoading: isAudienceLoading } = useQueryMarketingAudience();
   const { data: history, isLoading: isHistoryLoading } = useQueryMarketingCampaigns();
@@ -253,6 +257,15 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                   ? "Se envía automáticamente desde el WhatsApp de tu marca con la plantilla aprobada por Meta."
                   : "Se arma una lista con un botón por cliente que abre WhatsApp con el mensaje ya escrito; lo envías tú desde el WhatsApp de tu marca."}
             </p>
+            {channel === "whatsapp" && whatsapp && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <WhatsappStatusBanner settings={whatsapp} className="flex-1 py-2" />
+                <Button variant="outline" size="sm" className="shrink-0" onPress={() => setIsWhatsappOpen(true)}>
+                  <MessageCircle className="size-4" />
+                  {whatsapp.ready && whatsapp.verified ? "Ver configuración" : "Configurar WhatsApp Business"}
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -345,6 +358,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
       />
 
       <CampaignDetailModal campaignId={openCampaign} onClose={() => setOpenCampaign(null)} />
+      <WhatsappSetupModal isOpen={isWhatsappOpen} onClose={() => setIsWhatsappOpen(false)} />
     </div>
   );
 }

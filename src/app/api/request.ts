@@ -338,6 +338,15 @@ export const getWhatsappSettings = async (companyId: string) =>
 export const updateWhatsappSettings = async ({ id, data }: { id: string; data: WhatsappSettingsPayload }) =>
   (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>(`/platform/companies/${id}/whatsapp`, data)).data;
 
+// WhatsApp Cloud API de la propia tienda (Marketing).
+export const getMyWhatsappSettings = async () => (await axiosConfig.get<WhatsappSettings>("/marketing/whatsapp")).data;
+
+export const updateMyWhatsappSettings = async (data: WhatsappSettingsPayload) =>
+  (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>("/marketing/whatsapp", data)).data;
+
+export const testMyWhatsappSettings = async () =>
+  (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>("/marketing/whatsapp/test")).data;
+
 export const testWhatsappSettings = async (companyId: string) =>
   (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>(
     `/platform/companies/${companyId}/whatsapp/test`,

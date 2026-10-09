@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CreditCard, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, BookOpen, CreditCard, Eye, EyeOff } from "lucide-react";
 import {
   Button,
   Chip,
@@ -24,6 +24,7 @@ import { useMutationUpdateMercadoPagoSettings } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { MERCADOPAGO_SOURCE_LABELS } from "../utils";
+import { MercadoPagoGuideModal } from "./mercadopago-guide-modal";
 
 interface MercadoPagoModalProps {
   /** Empresa a configurar; null = cerrado. */
@@ -50,6 +51,7 @@ export function MercadoPagoModal({ company, onClose }: MercadoPagoModalProps) {
   const [emailFrom, setEmailFrom] = useState("");
   const [emailColor, setEmailColor] = useState("#6439ff");
   const [logoUrl, setLogoUrl] = useState("");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
@@ -122,6 +124,10 @@ export function MercadoPagoModal({ company, onClose }: MercadoPagoModalProps) {
                 ) : (
                   <>
                     <div className="flex flex-wrap items-center gap-2">
+                      <Button variant="outline" size="sm" className="order-last ml-auto" onPress={() => setIsGuideOpen(true)}>
+                        <BookOpen className="size-3.5" />
+                        Guía para la tienda
+                      </Button>
                       <Chip size="sm" variant="soft" color={settings.source === "company" ? "success" : settings.source === "legacy" ? "warning" : "default"}>
                         {MERCADOPAGO_SOURCE_LABELS[settings.source]}
                       </Chip>
@@ -251,6 +257,17 @@ export function MercadoPagoModal({ company, onClose }: MercadoPagoModalProps) {
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
+      {company && settings && (
+        <MercadoPagoGuideModal
+          isOpen={isGuideOpen}
+          onClose={() => setIsGuideOpen(false)}
+          companyName={company.name}
+          companyId={company.id}
+          // https://…/api/mercadopago-webhook?company_id=… → https://…/api
+          apiUrl={settings.webhook_url.split("/mercadopago-webhook")[0]}
+          storeUrl={(storeUrl.trim() || settings.store_url).replace(/\/+$/, "")}
+        />
+      )}
     </Modal>
   );
 }

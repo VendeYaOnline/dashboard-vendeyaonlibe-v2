@@ -38,6 +38,7 @@ import {
   getMarketingContacts,
   getMarketingLimits,
   getWhatsappSettings,
+  getMyWhatsappSettings,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -210,6 +211,10 @@ export const useQueryMarketingContacts = (filters: { page: number; search: strin
 /** Superadmin: límites globales de Marketing. */
 export const useQueryMarketingLimits = (enabled = true) =>
   useQuery({ queryKey: ["platform", "marketing-limits"], queryFn: getMarketingLimits, enabled });
+
+/** WhatsApp Cloud API de la propia tienda (Marketing). */
+export const useQueryMyWhatsappSettings = (enabled = true) =>
+  useQuery({ queryKey: ["marketing", "whatsapp"], queryFn: getMyWhatsappSettings, enabled });
 
 /** Superadmin: WhatsApp Cloud API de una tienda. */
 export const useQueryWhatsappSettings = (companyId: string | null) =>

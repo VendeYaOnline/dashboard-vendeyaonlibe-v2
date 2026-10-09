@@ -145,8 +145,12 @@ export function PlataformaView() {
       key: "whatsapp",
       label: "WhatsApp",
       render: (company) => (
-        <Chip size="sm" variant="soft" color={company.whatsapp === "api" ? "success" : "default"}>
-          {company.whatsapp === "api" ? "API" : "Enlaces"}
+        <Chip
+          size="sm"
+          variant="soft"
+          color={company.whatsapp === "verified" ? "success" : company.whatsapp === "api" ? "warning" : "default"}
+        >
+          {company.whatsapp === "verified" ? "Configurado ✓" : company.whatsapp === "api" ? "Sin verificar" : "Enlaces"}
         </Chip>
       ),
     },

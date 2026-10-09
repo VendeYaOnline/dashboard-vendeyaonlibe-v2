@@ -27,6 +27,13 @@ export const PAID_FEATURES = {
   marketing: {
     label: "Marketing",
     description: "Envía promociones a tus clientes por correo y WhatsApp con el estilo de tu marca.",
+    /** Lo que se suma al plan para desbloquearla (pesos). */
+    price: 10000,
+    highlights: [
+      "Correos con tu logo, colores y productos",
+      "Campañas por WhatsApp a tus clientes",
+      "Historial de quién recibió cada promoción",
+    ],
   },
 } as const;
 

@@ -13,6 +13,8 @@ import {
   updateMarketingLimits,
   updateWhatsappSettings,
   testWhatsappSettings,
+  updateMyWhatsappSettings,
+  testMyWhatsappSettings,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -388,11 +390,34 @@ export const useMutationUpdateWhatsappSettings = () => {
   });
 };
 
+/** La propia tienda: guardar y verificar su WhatsApp (cambia el modo de las campañas). */
+export const useMutationUpdateMyWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMyWhatsappSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "whatsapp"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+    },
+  });
+};
+
+export const useMutationTestMyWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: testMyWhatsappSettings,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketing", "whatsapp"] }),
+  });
+};
+
 export const useMutationTestWhatsapp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: testWhatsappSettings,
-    onSuccess: (_data, id) => queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] }),
+    onSettled: (_data, _error, id) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
   });
 };
 

@@ -43,8 +43,8 @@ export interface PlatformCompany {
   /** Correos de Marketing por día y por hora; null = los globales de Plataforma. */
   marketing_daily_limit: number | null;
   marketing_hourly_limit: number | null;
-  /** api = WhatsApp Cloud API activa; off = enlaces wa.me. */
-  whatsapp: "api" | "off";
+  /** verified = Cloud API activa y verificada; api = activa sin verificar; off = enlaces wa.me. */
+  whatsapp: "verified" | "api" | "off";
   /** A dónde llegan los correos de prueba de la tienda; null = sin pruebas. */
   marketing_test_email: string | null;
   /** Correos de prueba usados (máximo 10). */
@@ -131,6 +131,8 @@ export interface WhatsappSettings {
   verified_name: string | null;
   /** Lista para enviar (activa y con todo lo necesario). */
   ready: boolean;
+  /** Meta confirmó el token y el número (se pierde si cambian). */
+  verified: boolean;
   has_token: boolean;
   token_hint: string | null;
   can_store_secrets: boolean;
