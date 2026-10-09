@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, CreditCard, Edit2, Folder, Plus, ShieldCheck, ShieldOff } from "lucide-react";
+import { Building2, CreditCard, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
 import { PageHeader } from "@/components/layout/page-header";
@@ -10,10 +10,12 @@ import { useQueryPlatformCompanies, useQueryPlatformConfig } from "@/app/api/que
 import { useMutationCreateCompany, useMutationUpdateCompany } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
-import { SUPERADMIN_ROLE } from "@/config/navigation";
+import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
+import { MarketingLimitsCard } from "./components/marketing-limits-card";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
+import { WhatsappModal } from "./components/whatsapp-modal";
 import { MERCADOPAGO_SOURCE_LABELS, formatDate } from "./utils";
 
 /** "38 / 50" con color según lo cerca que esté del tope; "sin límite" si no hay. */
@@ -46,6 +48,7 @@ export function PlataformaView() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<PlatformCompany | null>(null);
   const [paymentsCompany, setPaymentsCompany] = useState<PlatformCompany | null>(null);
+  const [whatsappCompany, setWhatsappCompany] = useState<PlatformCompany | null>(null);
 
   const { data, isLoading, isError, refetch } = useQueryPlatformCompanies(isSuperadmin);
   const { data: config } = useQueryPlatformConfig(isSuperadmin);
@@ -84,6 +87,15 @@ export function PlataformaView() {
               <Folder className="size-3" />
               {company.s3_prefix ? `${company.s3_prefix}/` : "raíz del bucket"}
             </p>
+            {company.features.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {company.features.map((feature) => (
+                  <Chip key={feature} size="sm" variant="soft" color="accent">
+                    {PAID_FEATURES[feature]?.label ?? feature}
+                  </Chip>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ),
@@ -130,6 +142,19 @@ export function PlataformaView() {
       ),
     },
     {
+      key: "whatsapp",
+      label: "WhatsApp",
+      render: (company) => (
+        <Chip
+          size="sm"
+          variant="soft"
+          color={company.whatsapp === "verified" ? "success" : company.whatsapp === "api" ? "warning" : "default"}
+        >
+          {company.whatsapp === "verified" ? "Configurado ✓" : company.whatsapp === "api" ? "Sin verificar" : "Enlaces"}
+        </Chip>
+      ),
+    },
+    {
       key: "created_at",
       label: "Alta",
       render: (company) => (
@@ -148,6 +173,13 @@ export function PlataformaView() {
             onPress={() => setPaymentsCompany(company)}
           >
             <CreditCard className="size-4" />
+          </IconAction>
+          <IconAction
+            tooltip="Configurar WhatsApp"
+            aria-label={`WhatsApp de ${company.name}`}
+            onPress={() => setWhatsappCompany(company)}
+          >
+            <MessageCircle className="size-4" />
           </IconAction>
           <IconAction
             tooltip="Editar empresa"
@@ -216,7 +248,10 @@ export function PlataformaView() {
         </Card>
       )}
 
+      <MarketingLimitsCard />
+
       <MercadoPagoModal company={paymentsCompany} onClose={() => setPaymentsCompany(null)} />
+      <WhatsappModal company={whatsappCompany} onClose={() => setWhatsappCompany(null)} />
 
       <EmpresaFormModal
         company={selected}

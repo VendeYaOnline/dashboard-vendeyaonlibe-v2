@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { InventoryFilters } from "@/interfaces/inventory";
 import type { CustomersFilters } from "@/interfaces/customers";
+import type { ContactsFilter } from "@/interfaces/marketing";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -29,6 +30,15 @@ import {
   getAnalytics,
   getInventory,
   getCustomers,
+  getFeatures,
+  getMarketing,
+  getMarketingAudience,
+  getMarketingCampaign,
+  getMarketingCampaigns,
+  getMarketingContacts,
+  getMarketingLimits,
+  getWhatsappSettings,
+  getMyWhatsappSettings,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -157,6 +167,70 @@ export const useQueryCustomers = (filters: CustomersFilters) =>
     queryFn: () => getCustomers(filters),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 2,
+  });
+
+/** Marketing: marca, plantillas y productos que usan. */
+export const useQueryMarketing = () =>
+  useQuery({
+    queryKey: ["marketing"],
+    queryFn: getMarketing,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+/** A cuántos clientes llega cada grupo por canal, y el cupo de correos del mes. */
+export const useQueryMarketingAudience = () =>
+  useQuery({ queryKey: ["marketing", "audience"], queryFn: getMarketingAudience, staleTime: 1000 * 60 });
+
+/** Historial de campañas; mientras alguna se está enviando, se actualiza cada 3 s. */
+export const useQueryMarketingCampaigns = () =>
+  useQuery({
+    queryKey: ["marketing", "campaigns"],
+    queryFn: getMarketingCampaigns,
+    refetchInterval: (query) =>
+      query.state.data?.campaigns.some((campaign) => campaign.status === "sending") ? 3000 : false,
+  });
+
+export const useQueryMarketingCampaign = (id: string | null) =>
+  useQuery({
+    queryKey: ["marketing", "campaign", id],
+    queryFn: () => getMarketingCampaign(id as string),
+    enabled: Boolean(id),
+    refetchInterval: (query) => (query.state.data?.campaign.status === "sending" ? 3000 : false),
+  });
+
+/** Notificaciones por cliente (último envío por canal y espera de 7 días). */
+export const useQueryMarketingContacts = (filters: { page: number; search: string; filter: ContactsFilter }) =>
+  useQuery({
+    queryKey: ["marketing", "contacts", filters],
+    queryFn: () => getMarketingContacts(filters),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+
+/** Superadmin: límites globales de Marketing. */
+export const useQueryMarketingLimits = (enabled = true) =>
+  useQuery({ queryKey: ["platform", "marketing-limits"], queryFn: getMarketingLimits, enabled });
+
+/** WhatsApp Cloud API de la propia tienda (Marketing). */
+export const useQueryMyWhatsappSettings = (enabled = true) =>
+  useQuery({ queryKey: ["marketing", "whatsapp"], queryFn: getMyWhatsappSettings, enabled });
+
+/** Superadmin: WhatsApp Cloud API de una tienda. */
+export const useQueryWhatsappSettings = (companyId: string | null) =>
+  useQuery({
+    queryKey: ["platform", "whatsapp", companyId],
+    queryFn: () => getWhatsappSettings(companyId as string),
+    enabled: Boolean(companyId),
+  });
+
+/** Vistas de pago activas de la empresa (menú y vistas bloqueadas). */
+export const useQueryFeatures = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["features"],
+    queryFn: getFeatures,
+    enabled,
+    staleTime: 1000 * 60 * 5,
   });
 
 /** Plan y uso de la empresa (tope de productos e imágenes). */

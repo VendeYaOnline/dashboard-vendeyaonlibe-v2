@@ -4,11 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { Lock, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
 import { Button, Chip, cn } from "@heroui/react";
 import { logoutUser } from "@/app/api/request";
 import { useAuthStore } from "@/store/auth.store";
-import { getNavItemsForRole, isNewNavItem, ROLE_LABELS } from "@/config/navigation";
+import { useQueryFeatures } from "@/app/api/queries";
+import {
+  SUPERADMIN_ROLE,
+  getNavItemsForRole,
+  isLockedNavItem,
+  isNewNavItem,
+  ROLE_LABELS,
+} from "@/config/navigation";
 
 /** Etiqueta "Nuevo" para las vistas recién publicadas (ver `releasedAt` en navigation.ts). */
 function NewBadge({ onActive }: { onActive: boolean }) {
@@ -33,6 +40,8 @@ export function DashboardSidebar() {
   const { logout, user: authUser } = useAuthStore();
 
   const navItems = getNavItemsForRole(authUser?.role);
+  // Vistas de pago activas de la empresa (el superadmin no tiene empresa).
+  const { data: featuresData } = useQueryFeatures(Boolean(authUser) && authUser?.role !== SUPERADMIN_ROLE);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -103,6 +112,8 @@ export function DashboardSidebar() {
             const Icon = item.icon;
             const isActive = pathname === item.href;
             const isNew = isNewNavItem(item);
+            // Mientras carga no se muestra el candado, para no parpadear.
+            const isLocked = featuresData !== undefined && isLockedNavItem(item, featuresData.features);
 
             return (
               <Link
@@ -118,8 +129,15 @@ export function DashboardSidebar() {
                 )}
               >
                 <Icon className="size-5" />
-                <span>{item.label}</span>
-                {isNew && <NewBadge onActive={isActive} />}
+                <span className={cn(isLocked && !isActive && "text-muted")}>{item.label}</span>
+                {isLocked ? (
+                  <Lock
+                    className={cn("ml-auto size-3.5 shrink-0", !isActive && "text-muted")}
+                    aria-label="Vista de pago no activa"
+                  />
+                ) : (
+                  isNew && <NewBadge onActive={isActive} />
+                )}
               </Link>
             );
           })}

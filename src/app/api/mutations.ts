@@ -5,6 +5,16 @@ import {
   createCategory,
   createPlatformCompany,
   updatePlatformCompany,
+  saveMarketingBrand,
+  saveMarketingTemplate,
+  sendMarketingTestEmail,
+  createMarketingCampaign,
+  markCampaignRecipient,
+  updateMarketingLimits,
+  updateWhatsappSettings,
+  testWhatsappSettings,
+  updateMyWhatsappSettings,
+  testMyWhatsappSettings,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -306,6 +316,107 @@ export const useMutationUpdateCompany = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
       queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+};
+
+// * Marketing
+
+export const useMutationSaveMarketingBrand = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveMarketingBrand,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing"] }),
+  });
+};
+
+export const useMutationSaveMarketingTemplate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveMarketingTemplate,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing"] }),
+  });
+};
+
+export const useMutationSendMarketingTest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sendMarketingTestEmail,
+    // El conteo de pruebas cambia (también si la respuesta fue "ya no quedan").
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketing"], exact: true }),
+  });
+};
+
+export const useMutationCreateCampaign = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createMarketingCampaign,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
+    },
+  });
+};
+
+export const useMutationMarkRecipient = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markCampaignRecipient,
+    onSuccess: (_data, { campaignId }) => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaign", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
+    },
+  });
+};
+
+export const useMutationUpdateMarketingLimits = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMarketingLimits,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "marketing-limits"] }),
+  });
+};
+
+export const useMutationUpdateWhatsappSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateWhatsappSettings,
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
+  });
+};
+
+/** La propia tienda: guardar y verificar su WhatsApp (cambia el modo de las campañas). */
+export const useMutationUpdateMyWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMyWhatsappSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "whatsapp"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+    },
+  });
+};
+
+export const useMutationTestMyWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: testMyWhatsappSettings,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["marketing", "whatsapp"] }),
+  });
+};
+
+export const useMutationTestWhatsapp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: testWhatsappSettings,
+    onSettled: (_data, _error, id) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "whatsapp", id] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
     },
   });
 };

@@ -1,6 +1,22 @@
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
+import type { PaidFeature } from "@/config/navigation";
+import type {
+  ContactsFilter,
+  CreateCampaignResponse,
+  MarketingContactsResponse,
+  CampaignChannel,
+  CampaignSegment,
+  MarketingAudience,
+  MarketingBrand,
+  MarketingCampaign,
+  MarketingCampaignDetail,
+  MarketingPreviewRequest,
+  MarketingResponse,
+  MarketingTemplate,
+  MarketingTemplateDraft,
+} from "@/interfaces/marketing";
 import { Attribute, Attributes } from "@/interfaces/attributes";
 import { axiosConfig } from "./config";
 import { Categories, CategoryProductsResponse } from "@/interfaces/categories";
@@ -17,6 +33,9 @@ import type {
   PlatformCompaniesResponse,
   PlatformConfig,
   UpdateCompanyPayload,
+  MarketingLimits,
+  WhatsappSettings,
+  WhatsappSettingsPayload,
 } from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
@@ -262,9 +281,84 @@ export const getCustomers = async ({ page, search, segment, payment, pending, so
   return (await axiosConfig.get<CustomersResponse>(`/get-customers?${params}`)).data;
 };
 
+// * Marketing (vista de pago)
+
+export const getMarketing = async () => (await axiosConfig.get<MarketingResponse>("/marketing")).data;
+
+export const saveMarketingBrand = async (brand: MarketingBrand) =>
+  (await axiosConfig.put<{ message: string; brand: MarketingBrand }>("/marketing/brand", brand)).data;
+
+export const saveMarketingTemplate = async ({ slot, template }: { slot: number; template: MarketingTemplateDraft }) =>
+  (await axiosConfig.put<{ message: string; template: MarketingTemplate }>(`/marketing/templates/${slot}`, template)).data;
+
+export const previewMarketingEmail = async (body: MarketingPreviewRequest) =>
+  (await axiosConfig.post<{ subject: string; html: string }>("/marketing/preview", body)).data;
+
+export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
+  (await axiosConfig.post<{ message: string; to: string; test: { used: number; limit: number } }>("/marketing/test-email", body)).data;
+
+export const getMarketingAudience = async () => (await axiosConfig.get<MarketingAudience>("/marketing/audience")).data;
+
+export const getMarketingCampaigns = async () =>
+  (await axiosConfig.get<{ campaigns: MarketingCampaign[] }>("/marketing/campaigns")).data;
+
+export const getMarketingCampaign = async (id: string) =>
+  (await axiosConfig.get<MarketingCampaignDetail>(`/marketing/campaigns/${id}`)).data;
+
+/** `request_id`: uno por confirmación; repetirlo no crea otra campaña (doble clic). */
+export const createMarketingCampaign = async (body: { slot: number; segment: CampaignSegment; channel: CampaignChannel; request_id: string }) =>
+  (await axiosConfig.post<CreateCampaignResponse>("/marketing/campaigns", body)).data;
+
+export const markCampaignRecipient = async ({
+  campaignId,
+  recipientId,
+  status,
+}: {
+  campaignId: string;
+  recipientId: string;
+  status: "opened" | "contacted" | "pending";
+}) => (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { status })).data;
+
+export const getMarketingContacts = async ({ page, search, filter }: { page: number; search: string; filter: ContactsFilter }) => {
+  const params = new URLSearchParams({ page: String(page), filter });
+  if (search) params.set("search", search);
+  return (await axiosConfig.get<MarketingContactsResponse>(`/marketing/contacts?${params}`)).data;
+};
+
+// Superadmin: límites globales de Marketing y WhatsApp Cloud API por tienda.
+export const getMarketingLimits = async () =>
+  (await axiosConfig.get<{ limits: MarketingLimits }>("/platform/marketing-limits")).data;
+
+export const updateMarketingLimits = async (limits: MarketingLimits) =>
+  (await axiosConfig.put<{ message: string; limits: MarketingLimits }>("/platform/marketing-limits", limits)).data;
+
+export const getWhatsappSettings = async (companyId: string) =>
+  (await axiosConfig.get<WhatsappSettings>(`/platform/companies/${companyId}/whatsapp`)).data;
+
+export const updateWhatsappSettings = async ({ id, data }: { id: string; data: WhatsappSettingsPayload }) =>
+  (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>(`/platform/companies/${id}/whatsapp`, data)).data;
+
+// WhatsApp Cloud API de la propia tienda (Marketing).
+export const getMyWhatsappSettings = async () => (await axiosConfig.get<WhatsappSettings>("/marketing/whatsapp")).data;
+
+export const updateMyWhatsappSettings = async (data: WhatsappSettingsPayload) =>
+  (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>("/marketing/whatsapp", data)).data;
+
+export const testMyWhatsappSettings = async () =>
+  (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>("/marketing/whatsapp/test")).data;
+
+export const testWhatsappSettings = async (companyId: string) =>
+  (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>(
+    `/platform/companies/${companyId}/whatsapp/test`,
+  )).data;
+
 // * Plan / Plataforma
 
 export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-plan")).data;
+
+/** Vistas de pago activas de la propia empresa (liviano: lo usa el menú). */
+export const getFeatures = async () =>
+  (await axiosConfig.get<{ features: PaidFeature[] }>("/get-features")).data;
 
 export const getPlatformConfig = async () =>
   (await axiosConfig.get<PlatformConfig>("/platform/config")).data;

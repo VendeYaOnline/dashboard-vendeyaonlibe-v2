@@ -29,6 +29,7 @@ import type {
   PlatformConfig,
   UpdateCompanyPayload,
 } from "@/interfaces/platform";
+import { PAID_FEATURES, type PaidFeature } from "@/config/navigation";
 import { suggestedImageLimit } from "../utils";
 
 interface EmpresaFormModalProps {
@@ -43,6 +44,8 @@ interface EmpresaFormModalProps {
 }
 
 const DEFAULT_PRODUCTS = 50;
+/** Correos de prueba por tienda (TEST_EMAILS_LIMIT del backend). */
+const TEST_EMAILS_LIMIT = 10;
 
 const toDigits = (value: string) => value.replace(/\D/g, "");
 
@@ -68,6 +71,19 @@ export function EmpresaFormModal({
   /** Envío de la tienda (solo al editar); vacío = no cobra / nunca gratis. */
   const [shippingFee, setShippingFee] = useState("");
   const [freeShippingFrom, setFreeShippingFrom] = useState("");
+  /** Vistas de pago activas (solo al editar). */
+  const [features, setFeatures] = useState<PaidFeature[]>([]);
+  /** Correos de Marketing por mes; vacío = valor por defecto. */
+  const [monthlyLimit, setMonthlyLimit] = useState("");
+  /** Correos por día y por hora; vacío = los globales de Plataforma. */
+  const [dailyLimit, setDailyLimit] = useState("");
+  const [hourlyLimit, setHourlyLimit] = useState("");
+  /** Correo de prueba de la tienda; vacío = sin pruebas. */
+  const [testEmail, setTestEmail] = useState("");
+  /** Devolverle los 10 correos de prueba al guardar. */
+  const [resetTests, setResetTests] = useState(false);
+  /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
+  const [productPath, setProductPath] = useState("");
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -86,6 +102,13 @@ export function EmpresaFormModal({
     setImagesTouched(Boolean(company));
     setShippingFee(company?.shipping_fee != null ? String(company.shipping_fee) : "");
     setFreeShippingFrom(company?.free_shipping_from != null ? String(company.free_shipping_from) : "");
+    setFeatures(company?.features ?? []);
+    setMonthlyLimit(company?.marketing_monthly_limit != null ? String(company.marketing_monthly_limit) : "");
+    setProductPath(company?.marketing_product_path ?? "");
+    setDailyLimit(company?.marketing_daily_limit != null ? String(company.marketing_daily_limit) : "");
+    setHourlyLimit(company?.marketing_hourly_limit != null ? String(company.marketing_hourly_limit) : "");
+    setTestEmail(company?.marketing_test_email ?? "");
+    setResetTests(false);
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -128,7 +151,8 @@ export function EmpresaFormModal({
       isValidEmail(adminEmail.trim()) &&
       adminPassword.length >= MIN_PASSWORD_LENGTH);
 
-  const isValid = isNameValid && isProductsValid && isImagesValid && isAdminValid;
+  const isTestEmailValid = testEmail.trim() === "" || isValidEmail(testEmail.trim());
+  const isValid = isNameValid && isProductsValid && isImagesValid && isAdminValid && isTestEmailValid;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -143,6 +167,13 @@ export function EmpresaFormModal({
         ...limits,
         shipping_fee: shippingFee === "" ? null : Number(shippingFee),
         free_shipping_from: shippingFee === "" || freeShippingFrom === "" ? null : Number(freeShippingFrom),
+        features,
+        marketing_monthly_limit: monthlyLimit === "" ? null : Number(monthlyLimit),
+        marketing_product_path: productPath.trim() === "" ? null : productPath.trim(),
+        marketing_daily_limit: dailyLimit === "" ? null : Number(dailyLimit),
+        marketing_hourly_limit: hourlyLimit === "" ? null : Number(hourlyLimit),
+        marketing_test_email: testEmail.trim() === "" ? null : testEmail.trim(),
+        ...(resetTests ? { reset_test_sends: true } : {}),
       });
       return;
     }
@@ -168,7 +199,7 @@ export function EmpresaFormModal({
                 title={isEdit ? "Editar empresa" : "Nueva empresa"}
                 description={
                   isEdit
-                    ? "Cambia el nombre o los topes del plan. El uso actual no se toca."
+                    ? "Cambia el nombre, los topes del plan, el envío o las vistas de pago. El uso actual no se toca."
                     : "Crea el cliente, su plan y el usuario administrador con el que entrará al panel."
                 }
               />
@@ -261,6 +292,97 @@ export function EmpresaFormModal({
                           Valor de los productos antes del código promocional. Vacío = nunca gratis.
                         </p>
                       </TextField>
+                    </div>
+                  </FormSection>
+                )}
+
+                {isEdit && (
+                  <FormSection
+                    title="Vistas de pago"
+                    description="Actívalas cuando la tienda haya pagado en vendeyaonline.com. Si se desactiva una, la tienda la ve con candado; sus datos no se borran."
+                  >
+                    <div className="space-y-3">
+                      {(Object.keys(PAID_FEATURES) as PaidFeature[]).map((key) => (
+                        <Switch
+                          key={key}
+                          isSelected={features.includes(key)}
+                          onChange={(isSelected) =>
+                            setFeatures((current) =>
+                              isSelected ? [...current, key] : current.filter((feature) => feature !== key),
+                            )
+                          }
+                        >
+                          <Switch.Content>
+                            <Switch.Control>
+                              <Switch.Thumb />
+                            </Switch.Control>
+                            <div>
+                              <Label>{PAID_FEATURES[key].label}</Label>
+                              <p className="text-xs text-muted">{PAID_FEATURES[key].description}</p>
+                            </div>
+                          </Switch.Content>
+                        </Switch>
+                      ))}
+                      {features.includes("marketing") && (
+                        <div className="space-y-1">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <TextField value={dailyLimit} onChange={(value) => setDailyLimit(toDigits(value).slice(0, 5))}>
+                              <Label>Correos por día</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                            <TextField value={hourlyLimit} onChange={(value) => setHourlyLimit(toDigits(value).slice(0, 5))}>
+                              <Label>Correos por hora</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                            <TextField value={monthlyLimit} onChange={(value) => setMonthlyLimit(toDigits(value).slice(0, 6))}>
+                              <Label>Correos por mes</Label>
+                              <Input inputMode="numeric" placeholder="Global" />
+                            </TextField>
+                          </div>
+                          <p className="text-xs text-muted">
+                            Límites de correos de campaña de esta tienda (hora de Colombia). WhatsApp no cuenta. Vacío = los
+                            límites globales de Plataforma.
+                          </p>
+                        </div>
+                      )}
+                      {features.includes("marketing") && (
+                        <div className="space-y-2">
+                          <TextField value={testEmail} onChange={(value) => setTestEmail(value.slice(0, 254))} type="email" isInvalid={!isTestEmailValid}>
+                            <Label>Correo para pruebas</Label>
+                            <Input placeholder="pruebas@tienda.com" autoComplete="off" maxLength={254} />
+                            <p className={cn("mt-1 text-xs", isTestEmailValid ? "text-muted" : "text-danger")}>
+                              {isTestEmailValid
+                                ? `A este correo llegan los botones «Enviar prueba» de la tienda: máximo ${TEST_EMAILS_LIMIT}, no cuentan en sus límites. Vacío = la tienda no puede enviar pruebas.`
+                                : "Escribe un correo válido."}
+                            </p>
+                          </TextField>
+                          {company && (
+                            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-secondary px-3 py-2 text-xs">
+                              <span>
+                                Pruebas usadas: <strong className="tabular-nums">{Math.min(company.marketing_test_sends, TEST_EMAILS_LIMIT)} de {TEST_EMAILS_LIMIT}</strong>
+                              </span>
+                              <Switch isSelected={resetTests} onChange={setResetTests} isDisabled={company.marketing_test_sends === 0}>
+                                <Switch.Content>
+                                  <Switch.Control>
+                                    <Switch.Thumb />
+                                  </Switch.Control>
+                                  <Label className="text-xs">Devolverle las {TEST_EMAILS_LIMIT} pruebas al guardar</Label>
+                                </Switch.Content>
+                              </Switch>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {features.includes("marketing") && (
+                        <TextField value={productPath} onChange={(value) => setProductPath(value.trim().slice(0, 120))}>
+                          <Label>Ruta de un producto en la tienda</Label>
+                          <Input className="font-mono text-sm" placeholder="/producto/{id}" />
+                          <p className="mt-1 text-xs text-muted">
+                            Para los botones «Comprar» de los correos. {"{id}"} = id del producto; {"{slug}"} = su nombre en la
+                            URL. Ej.: Jarameni /producto/{"{id}"}, Muebles /products/{"{slug}"}-{"{id}"}. Vacío = /producto/{"{id}"}.
+                          </p>
+                        </TextField>
+                      )}
                     </div>
                   </FormSection>
                 )}

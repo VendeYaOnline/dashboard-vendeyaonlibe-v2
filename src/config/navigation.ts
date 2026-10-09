@@ -4,6 +4,7 @@ import {
   Contact,
   FolderTree,
   ImageIcon,
+  Megaphone,
   Images,
   LayoutTemplate,
   MessageSquare,
@@ -17,6 +18,30 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/**
+ * Vistas de pago: la tienda las paga en vendeyaonline.com y el superadmin las
+ * activa en Plataforma. Deben coincidir con PAID_FEATURES del backend
+ * (src/modules/platform/features.js), que también bloquea sus endpoints.
+ */
+export const PAID_FEATURES = {
+  marketing: {
+    label: "Marketing",
+    description: "Envía promociones a tus clientes por correo y WhatsApp con el estilo de tu marca.",
+    /** Lo que se suma a la mensualidad del plan para desbloquearla (pesos al mes). */
+    price: 10000,
+    highlights: [
+      "Correos con tu logo, colores y productos",
+      "Campañas por WhatsApp a tus clientes",
+      "Historial de quién recibió cada promoción",
+    ],
+  },
+} as const;
+
+export type PaidFeature = keyof typeof PAID_FEATURES;
+
+/** Dónde se contratan las vistas de pago. */
+export const PAID_FEATURES_URL = "https://vendeyaonline.com";
+
 export interface NavItem {
   href: string;
   label: string;
@@ -29,6 +54,8 @@ export interface NavItem {
    * etiqueta desaparece sola. Ponerlo en toda vista nueva.
    */
   releasedAt?: string;
+  /** Vista de pago: si la empresa no la tiene activa, se muestra con candado. */
+  feature?: PaidFeature;
 }
 
 /** Días que una vista nueva lleva la etiqueta "Nuevo". */
@@ -38,6 +65,7 @@ export const NEW_BADGE_DAYS = 3;
 export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
   { href: "/clientes", label: "Clientes", icon: Contact, roles: ["admin", "editor"], releasedAt: "2026-10-06" },
+  { href: "/marketing", label: "Marketing", icon: Megaphone, roles: ["admin", "editor"], feature: "marketing" },
   { href: "/productos", label: "Productos", icon: Package },
   { href: "/inventario", label: "Inventario", icon: Boxes, releasedAt: "2026-10-06" },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },
@@ -69,6 +97,10 @@ export const ROLE_LABELS: Record<string, string> = {
   editor: "Editor",
   viewer: "Espectador",
 };
+
+/** true si la vista es de pago y la empresa no la tiene activa. */
+export const isLockedNavItem = (item: NavItem, features: readonly string[] | undefined) =>
+  Boolean(item.feature) && !(features ?? []).includes(item.feature as string);
 
 /** true mientras la vista esté dentro de sus NEW_BADGE_DAYS días desde `releasedAt`. */
 export const isNewNavItem = (item: NavItem, now = new Date()) => {

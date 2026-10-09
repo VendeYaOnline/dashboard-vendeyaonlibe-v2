@@ -13,6 +13,8 @@ export interface PlatformConfig {
   imagesExtra: number;
 }
 
+import type { PaidFeature } from "@/config/navigation";
+
 export interface PlatformCompany {
   id: string;
   name: string;
@@ -32,6 +34,21 @@ export interface PlatformCompany {
   admin: { email: string; username: string } | null;
   /** Con qué cuenta cobra en Mercado Pago (ver MercadoPagoSource). */
   mercadopago: MercadoPagoSource;
+  /** Vistas de pago activas. */
+  features: PaidFeature[];
+  /** Correos de Marketing por mes; null = el valor por defecto (2.000). */
+  marketing_monthly_limit: number | null;
+  /** Ruta de un producto en la tienda para los correos; null = /producto/{id}. */
+  marketing_product_path: string | null;
+  /** Correos de Marketing por día y por hora; null = los globales de Plataforma. */
+  marketing_daily_limit: number | null;
+  marketing_hourly_limit: number | null;
+  /** verified = Cloud API activa y verificada; api = activa sin verificar; off = enlaces wa.me. */
+  whatsapp: "verified" | "api" | "off";
+  /** A dónde llegan los correos de prueba de la tienda; null = sin pruebas. */
+  marketing_test_email: string | null;
+  /** Correos de prueba usados (máximo 10). */
+  marketing_test_sends: number;
 }
 
 /**
@@ -87,4 +104,45 @@ export interface UpdateCompanyPayload {
   max_images?: number | null;
   shipping_fee?: number | null;
   free_shipping_from?: number | null;
+  features?: PaidFeature[];
+  marketing_monthly_limit?: number | null;
+  marketing_product_path?: string | null;
+  marketing_daily_limit?: number | null;
+  marketing_hourly_limit?: number | null;
+  marketing_test_email?: string | null;
+  /** true = la tienda vuelve a tener sus 10 correos de prueba. */
+  reset_test_sends?: boolean;
+}
+
+/** Límites de correos de Marketing por defecto (todas las tiendas sin límite propio). */
+export interface MarketingLimits {
+  monthly: number;
+  daily: number;
+  hourly: number;
+}
+
+/** WhatsApp Cloud API de una tienda (el token nunca llega al navegador). */
+export interface WhatsappSettings {
+  enabled: boolean;
+  phone_number_id: string;
+  template_name: string;
+  template_language: string;
+  display_phone: string | null;
+  verified_name: string | null;
+  /** Lista para enviar (activa y con todo lo necesario). */
+  ready: boolean;
+  /** Meta confirmó el token y el número (se pierde si cambian). */
+  verified: boolean;
+  has_token: boolean;
+  token_hint: string | null;
+  can_store_secrets: boolean;
+}
+
+export interface WhatsappSettingsPayload {
+  enabled?: boolean;
+  phone_number_id?: string;
+  template_name?: string;
+  template_language?: string;
+  /** Texto = reemplazar; ausente = conservar; null = borrar. */
+  access_token?: string | null;
 }
