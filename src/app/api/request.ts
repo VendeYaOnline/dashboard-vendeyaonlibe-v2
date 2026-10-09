@@ -28,6 +28,8 @@ import { UserRequest } from "@/interfaces/users";
 import { ContactRequest, ContactStatusFilter, Contacts } from "@/interfaces/contacts";
 import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics";
 import type {
+  AuditFilters,
+  AuditLogResponse,
   CompanyUserPayload,
   CompanyUsersResponse,
   SuperadminPayload,
@@ -419,6 +421,16 @@ export const createPlatformCompany = async (data: CreateCompanyPayload) =>
 
 export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
   axiosConfig.put(`/platform/companies/${id}`, data);
+
+export const getAuditLog = async ({ page, companyId, actor, category, from, to }: AuditFilters) => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (companyId !== "all") params.set("companyId", companyId);
+  if (actor !== "all") params.set("actor", actor);
+  if (category !== "all") params.set("category", category);
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+  return (await axiosConfig.get<AuditLogResponse>(`/platform/audit-log?${params}`)).data;
+};
 
 export const getSuperadmins = async () =>
   (await axiosConfig.get<SuperadminsResponse>("/platform/superadmins")).data;
