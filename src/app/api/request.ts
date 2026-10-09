@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+import type { MetaCatalogFilters, MetaCatalogSummary } from "@/interfaces/catalog";
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
@@ -279,6 +281,48 @@ export const getCustomers = async ({ page, search, segment, payment, pending, so
   if (payment !== "all") params.set("payment", payment);
   if (pending) params.set("pending", "1");
   return (await axiosConfig.get<CustomersResponse>(`/get-customers?${params}`)).data;
+};
+
+// * Catálogo para Meta
+
+const metaCatalogParams = (filters: MetaCatalogFilters) => {
+  const params = new URLSearchParams();
+  filters.categoryIds.forEach((id) => params.append("categoryId", id));
+  if (filters.includeOutOfStock) params.set("includeOutOfStock", "true");
+  if (filters.discountedOnly) params.set("discountedOnly", "true");
+  if (filters.minPrice) params.set("minPrice", filters.minPrice);
+  if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
+  if (filters.storeUrl.trim()) params.set("storeUrl", filters.storeUrl.trim());
+  if (filters.brand.trim()) params.set("brand", filters.brand.trim());
+  return params;
+};
+
+export const getMetaCatalogSummary = async (filters: MetaCatalogFilters) =>
+  (await axiosConfig.get<MetaCatalogSummary>(`/catalog/meta/summary?${metaCatalogParams(filters)}`)).data;
+
+/**
+ * Descarga el CSV (con la sesión del panel). Con `responseType: "blob"` un
+ * error llega como Blob: se lee su JSON para que `handleAxiosError` muestre el
+ * mensaje del servidor.
+ */
+export const downloadMetaCatalog = async (filters: MetaCatalogFilters) => {
+  try {
+    const response = await axiosConfig.get<Blob>(`/catalog/meta/export?${metaCatalogParams(filters)}`, {
+      responseType: "blob",
+      // Un catálogo grande tarda más que las consultas normales.
+      timeout: 120_000,
+    });
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.data instanceof Blob) {
+      try {
+        error.response.data = JSON.parse(await error.response.data.text());
+      } catch {
+        // No era JSON: se deja el error tal cual.
+      }
+    }
+    throw error;
+  }
 };
 
 // * Marketing (vista de pago)

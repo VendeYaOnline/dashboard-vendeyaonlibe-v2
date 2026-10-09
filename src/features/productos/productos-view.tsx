@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card, Chip, toast } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
-import { ArrowUpDown, Boxes, Edit2, Eye, EyeOff, Package, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowUpDown, Boxes, Edit2, Eye, EyeOff, FileSpreadsheet, Package, Plus, Star, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ImageWithSkeleton } from "@/components/shared/image-with-skeleton";
@@ -25,6 +25,7 @@ import type { Products } from "@/interfaces/products";
 import { ProductoFormModal } from "./components/producto-form-modal";
 import { StockQuickModal } from "./components/stock-quick-modal";
 import { OrdenarProductosModal } from "./components/ordenar-productos-modal";
+import { ExportarCatalogoModal } from "./components/exportar-catalogo-modal";
 import { formatCOP } from "./utils";
 
 /** Color del número de unidades: verde > 10, naranja 5–10, rojo 0–4. */
@@ -43,6 +44,7 @@ export function ProductosView() {
   const [toDelete, setToDelete] = useState<Products | null>(null);
   const [stockTarget, setStockTarget] = useState<Products | null>(null);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch]);
 
@@ -269,6 +271,14 @@ export function ProductosView() {
             <PlanUsage kind="products" plan={plan} />
             <Button
               variant="outline"
+              isDisabled={(data?.grandTotal ?? 0) < 1}
+              onPress={() => setIsExportOpen(true)}
+            >
+              <FileSpreadsheet className="size-4" />
+              Exportar catálogo
+            </Button>
+            <Button
+              variant="outline"
               isDisabled={!canManage || (data?.grandTotal ?? 0) < 2}
               onPress={() => setIsOrderOpen(true)}
             >
@@ -356,6 +366,8 @@ export function ProductosView() {
       {isOrderOpen && (
         <OrdenarProductosModal isOpen={isOrderOpen} onOpenChange={setIsOrderOpen} />
       )}
+
+      {isExportOpen && <ExportarCatalogoModal isOpen={isExportOpen} onOpenChange={setIsExportOpen} />}
 
       <ConfirmDialog
         isOpen={toDelete !== null}
