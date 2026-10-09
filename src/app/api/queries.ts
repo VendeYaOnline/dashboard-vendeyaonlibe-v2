@@ -29,6 +29,7 @@ const SALES_QUERY_OPTIONS = {
 } as const;
 import {
   getAnalytics,
+  getCompanyUsers,
   getMetaCatalogSummary,
   getInventory,
   getCustomers,
@@ -277,6 +278,16 @@ export const useQueryMercadoPagoSettings = (companyId: string | null) =>
     queryFn: () => getMercadoPagoSettings(companyId as string),
     refetchOnWindowFocus: false,
     enabled: Boolean(companyId),
+  });
+
+/** Usuarios de una empresa (superadmin); null = sin consultar. */
+export const useQueryCompanyUsers = (companyId: string | null) =>
+  useQuery({
+    queryKey: ["platform", "company-users", companyId],
+    queryFn: () => getCompanyUsers(companyId as string),
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    enabled: companyId !== null,
   });
 
 export const useQueryPlatformCompanies = (enabled: boolean = true) =>

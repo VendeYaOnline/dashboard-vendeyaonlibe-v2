@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, CreditCard, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff } from "lucide-react";
+import { Building2, CreditCard, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff, Users } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
+import { EmpresaUsuariosModal } from "./components/empresa-usuarios-modal";
 import { MarketingLimitsCard } from "./components/marketing-limits-card";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
 import { WhatsappModal } from "./components/whatsapp-modal";
@@ -49,6 +50,7 @@ export function PlataformaView() {
   const [selected, setSelected] = useState<PlatformCompany | null>(null);
   const [paymentsCompany, setPaymentsCompany] = useState<PlatformCompany | null>(null);
   const [whatsappCompany, setWhatsappCompany] = useState<PlatformCompany | null>(null);
+  const [usersCompany, setUsersCompany] = useState<PlatformCompany | null>(null);
 
   const { data, isLoading, isError, refetch } = useQueryPlatformCompanies(isSuperadmin);
   const { data: config } = useQueryPlatformConfig(isSuperadmin);
@@ -108,9 +110,12 @@ export function PlataformaView() {
           <div className="min-w-0">
             <p className="truncate">{company.admin.username}</p>
             <p className="truncate text-xs text-muted">{company.admin.email}</p>
+            {company.admins > 1 && <p className="text-xs text-muted">+{company.admins - 1} más</p>}
           </div>
         ) : (
-          <span className="text-muted">Sin admin</span>
+          <Chip size="sm" variant="soft" color="danger">
+            Sin admin
+          </Chip>
         ),
     },
     {
@@ -167,6 +172,13 @@ export function PlataformaView() {
       align: "end",
       render: (company) => (
         <div className="flex justify-end gap-1">
+          <IconAction
+            tooltip="Usuarios de la empresa"
+            aria-label={`Usuarios de ${company.name}`}
+            onPress={() => setUsersCompany(company)}
+          >
+            <Users className="size-4" />
+          </IconAction>
           <IconAction
             tooltip="Configurar Mercado Pago"
             aria-label={`Mercado Pago de ${company.name}`}
@@ -252,6 +264,7 @@ export function PlataformaView() {
 
       <MercadoPagoModal company={paymentsCompany} onClose={() => setPaymentsCompany(null)} />
       <WhatsappModal company={whatsappCompany} onClose={() => setWhatsappCompany(null)} />
+      <EmpresaUsuariosModal company={usersCompany} onClose={() => setUsersCompany(null)} />
 
       <EmpresaFormModal
         company={selected}

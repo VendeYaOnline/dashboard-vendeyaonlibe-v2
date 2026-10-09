@@ -1,6 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
+  createCompanyUser,
+  updateCompanyUser,
+  deleteCompanyUser,
   downloadMetaCatalog,
   createCarousel,
   createCategory,
@@ -309,6 +312,24 @@ export const useMutationUpdateMercadoPagoSettings = () => {
     },
   });
 };
+
+/** Crear, editar o eliminar usuarios de una empresa (superadmin): refresca su lista y el listado de empresas. */
+const useCompanyUserMutation = <TVariables extends { companyId: string }>(
+  mutationFn: (variables: TVariables) => Promise<unknown>,
+) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "company-users", variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ["platform", "companies"] });
+    },
+  });
+};
+
+export const useMutationCreateCompanyUser = () => useCompanyUserMutation(createCompanyUser);
+export const useMutationUpdateCompanyUser = () => useCompanyUserMutation(updateCompanyUser);
+export const useMutationDeleteCompanyUser = () => useCompanyUserMutation(deleteCompanyUser);
 
 export const useMutationUpdateCompany = () => {
   const queryClient = useQueryClient();
