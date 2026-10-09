@@ -292,7 +292,7 @@ export const getCustomers = async ({ page, search, segment, payment, pending, so
 // * Catálogo para Meta
 
 const metaCatalogParams = (filters: MetaCatalogFilters) => {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ grouping: filters.grouping });
   filters.categoryIds.forEach((id) => params.append("categoryId", id));
   if (filters.includeOutOfStock) params.set("includeOutOfStock", "true");
   if (filters.discountedOnly) params.set("discountedOnly", "true");
