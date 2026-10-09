@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "@heroui/react";
 import { useAuthStore } from "@/store/auth.store";
 
 export const axiosConfig = axios.create({
@@ -35,6 +36,10 @@ axiosConfig.interceptors.response.use(
       status === 401 || code === "AUTH_TOKEN_EXPIRED" || code === "AUTH_TOKEN_INVALID";
 
     if (isInvalidSession && typeof window !== "undefined") {
+      // El aviso sale una vez: varias peticiones en curso reciben el mismo 401.
+      if (code === "AUTH_SESSION_REVOKED" && useAuthStore.getState().isAuthenticated) {
+        toast.info(error.response?.data?.message ?? "Tu sesión se cerró porque cambió tu acceso.");
+      }
       useAuthStore.getState().logout();
     }
 

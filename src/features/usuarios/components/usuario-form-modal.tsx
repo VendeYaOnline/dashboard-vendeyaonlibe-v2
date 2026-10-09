@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, UserPlus } from "lucide-react";
+import { Copy, Eye, EyeOff, UserPlus, Wand2 } from "lucide-react";
 import {
   Button,
   Input,
@@ -13,11 +13,13 @@ import {
   Select,
   TextField,
   cn,
+  toast,
   useOverlayState,
 } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { PendingButton } from "@/components/shared/pending-button";
 import { ROLE_LABELS } from "@/config/navigation";
+import { generatePassword } from "@/lib/password";
 import type { Users } from "@/interfaces/users";
 import {
   MAX_USERNAME_LENGTH,
@@ -36,15 +38,24 @@ export interface UsuarioFormValues {
   role: string;
 }
 
+/** Lo que el formulario necesita de un usuario (un superadmin no tiene rol editable). */
+type FormUser = Pick<Users, "username" | "email"> & { role?: string };
+
 interface UsuarioFormModalProps {
   /** null = crear, con valor = editar */
-  user: Users | null;
+  user: FormUser | null;
   /** true cuando el usuario editado es el que ha iniciado sesión. */
   isSelf?: boolean;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onSubmit: (values: UsuarioFormValues) => void;
   isPending: boolean;
+  /** Muestra "Generar" (contraseña segura aleatoria) y "Copiar" junto a la contraseña. */
+  allowGenerate?: boolean;
+  /** Sin selector de rol (superadministradores: el rol es siempre el mismo). */
+  hideRole?: boolean;
+  /** El correo no se puede cambiar (propietario de la plataforma). */
+  lockEmail?: boolean;
 }
 
 export function UsuarioFormModal({
@@ -54,6 +65,9 @@ export function UsuarioFormModal({
   onOpenChange,
   onSubmit,
   isPending,
+  allowGenerate = false,
+  hideRole = false,
+  lockEmail = false,
 }: UsuarioFormModalProps) {
   const isEdit = user !== null;
   const state = useOverlayState({ isOpen, onOpenChange });
@@ -88,6 +102,24 @@ export function UsuarioFormModal({
     onSubmit({ username: usernameTrimmed, email: emailTrimmed, password, role });
   };
 
+  // Con los botones Generar/Copiar la contraseña necesita todo el ancho para verse.
+  const fullWidthRows = isEdit || allowGenerate;
+
+  const handleGenerate = () => {
+    setPassword(generatePassword());
+    // Visible para poder copiarla antes de guardar.
+    setShowPassword(true);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(password);
+      toast.success("Contraseña copiada");
+    } catch {
+      toast.danger("No se pudo copiar. Selecciónala y cópiala a mano.");
+    }
+  };
+
   const passwordField = (
     <TextField
       value={password}
@@ -95,7 +127,7 @@ export function UsuarioFormModal({
       type={showPassword ? "text" : "password"}
       isRequired={!isEdit}
       isInvalid={password !== "" && password.length < MIN_PASSWORD_LENGTH}
-      className={cn("min-w-0", isEdit && "sm:col-span-2")}
+      className={cn("min-w-0", fullWidthRows && "sm:col-span-2")}
     >
       <Label>{isEdit ? "Nueva contraseña" : "Contraseña"}</Label>
       <InputGroup className="w-full min-w-0">
@@ -105,7 +137,20 @@ export function UsuarioFormModal({
           autoComplete="new-password"
           maxLength={72}
         />
-        <InputGroup.Suffix>
+        <InputGroup.Suffix className="flex items-center gap-1">
+          {allowGenerate && (
+            <>
+              <Button type="button" size="sm" variant="ghost" onPress={handleGenerate}>
+                <Wand2 className="size-4" />
+                Generar
+              </Button>
+              {password !== "" && (
+                <Button type="button" size="sm" variant="ghost" isIconOnly aria-label="Copiar contraseña" onPress={handleCopy}>
+                  <Copy className="size-4" />
+                </Button>
+              )}
+            </>
+          )}
           <button
             type="button"
             onClick={() => setShowPassword((visible) => !visible)}
@@ -134,11 +179,13 @@ export function UsuarioFormModal({
             <form onSubmit={handleSubmit}>
               <ModalFormHeader
                 icon={UserPlus}
-                title={isEdit ? "Editar usuario" : "Crear usuario"}
+                title={`${isEdit ? "Editar" : "Crear"} ${hideRole ? "superadministrador" : "usuario"}`}
                 description={
-                  isEdit
-                    ? "Actualiza sus datos y el rol con el que accede al panel."
-                    : "Da acceso al panel y define qué podrá gestionar según su rol."
+                  hideRole
+                    ? "Tendrá acceso a la vista Plataforma: ve y gestiona todas las empresas."
+                    : isEdit
+                      ? "Actualiza sus datos y el rol con el que accede al panel."
+                      : "Da acceso al panel y define qué podrá gestionar según su rol."
                 }
               />
 
@@ -150,6 +197,7 @@ export function UsuarioFormModal({
                     isRequired
                     isInvalid={username !== "" && !isUsernameValid}
                     autoFocus
+                    className={hideRole ? "sm:col-span-2" : undefined}
                   >
                     <Label>Nombre de usuario</Label>
                     <Input placeholder="Ej: maria.gomez" maxLength={MAX_USERNAME_LENGTH} />
@@ -160,6 +208,7 @@ export function UsuarioFormModal({
                     </p>
                   </TextField>
 
+                  {!hideRole && (
                   <Select
                     selectedKey={role}
                     onSelectionChange={(key) => setRole(String(key))}
@@ -183,17 +232,22 @@ export function UsuarioFormModal({
                       {isSelf ? "No puedes cambiar tu propio rol." : ROLE_DESCRIPTIONS[role]}
                     </p>
                   </Select>
+                  )}
 
                   <TextField
                     value={email}
+                    isDisabled={lockEmail}
                     onChange={setEmail}
                     type="email"
                     isRequired
                     isInvalid={email !== "" && !isEmailValid}
-                    className={isEdit ? "sm:col-span-2" : undefined}
+                    className={fullWidthRows ? "sm:col-span-2" : undefined}
                   >
                     <Label>Correo electrónico</Label>
                     <Input placeholder="usuario@empresa.com" autoComplete="off" maxLength={120} />
+                    {lockEmail && (
+                      <p className="mt-1 text-xs text-muted">El correo del propietario no se puede cambiar.</p>
+                    )}
                     {email !== "" && !isEmailValid && (
                       <p className="mt-1 text-xs text-danger">Escribe un correo válido.</p>
                     )}
@@ -219,7 +273,7 @@ export function UsuarioFormModal({
                   isPending={isPending}
                   pendingLabel="Guardando"
                 >
-                  {isEdit ? "Guardar cambios" : "Crear usuario"}
+                  {isEdit ? "Guardar cambios" : hideRole ? "Crear superadministrador" : "Crear usuario"}
                 </PendingButton>
               </Modal.Footer>
             </form>

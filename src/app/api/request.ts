@@ -28,6 +28,10 @@ import { UserRequest } from "@/interfaces/users";
 import { ContactRequest, ContactStatusFilter, Contacts } from "@/interfaces/contacts";
 import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics";
 import type {
+  CompanyUserPayload,
+  CompanyUsersResponse,
+  SuperadminPayload,
+  SuperadminsResponse,
   CreateCompanyPayload,
   PlanResponse,
   MercadoPagoSettings,
@@ -415,6 +419,35 @@ export const createPlatformCompany = async (data: CreateCompanyPayload) =>
 
 export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
   axiosConfig.put(`/platform/companies/${id}`, data);
+
+export const getSuperadmins = async () =>
+  (await axiosConfig.get<SuperadminsResponse>("/platform/superadmins")).data;
+
+export const createSuperadmin = async (data: SuperadminPayload) => axiosConfig.post("/platform/superadmins", data);
+
+export const updateSuperadmin = async ({ id, data }: { id: string; data: Partial<SuperadminPayload> }) =>
+  axiosConfig.put(`/platform/superadmins/${id}`, data);
+
+export const deleteSuperadmin = async (id: string) => axiosConfig.delete(`/platform/superadmins/${id}`);
+
+export const getCompanyUsers = async (companyId: string) =>
+  (await axiosConfig.get<CompanyUsersResponse>(`/platform/companies/${companyId}/users`)).data;
+
+export const createCompanyUser = async ({ companyId, data }: { companyId: string; data: CompanyUserPayload }) =>
+  axiosConfig.post(`/platform/companies/${companyId}/users`, data);
+
+export const updateCompanyUser = async ({
+  companyId,
+  id,
+  data,
+}: {
+  companyId: string;
+  id: string;
+  data: Partial<CompanyUserPayload>;
+}) => axiosConfig.put(`/platform/companies/${companyId}/users/${id}`, data);
+
+export const deleteCompanyUser = async ({ companyId, id }: { companyId: string; id: string }) =>
+  axiosConfig.delete(`/platform/companies/${companyId}/users/${id}`);
 
 export const getMercadoPagoSettings = async (companyId: string) =>
   (await axiosConfig.get<MercadoPagoSettings>(`/platform/companies/${companyId}/mercadopago`)).data;

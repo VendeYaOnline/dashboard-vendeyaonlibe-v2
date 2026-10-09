@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, CreditCard, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff } from "lucide-react";
+import { Building2, CreditCard, Crown, Edit2, Folder, MessageCircle, Plus, ShieldCheck, ShieldOff, Users } from "lucide-react";
 import { Button, Card, Chip, Spinner, cn, toast } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
 import { PageHeader } from "@/components/layout/page-header";
@@ -13,6 +13,8 @@ import { useAuthStore } from "@/store/auth.store";
 import { PAID_FEATURES, SUPERADMIN_ROLE } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import { EmpresaFormModal } from "./components/empresa-form-modal";
+import { EmpresaUsuariosModal } from "./components/empresa-usuarios-modal";
+import { SuperadministradoresModal } from "./components/superadministradores-modal";
 import { MarketingLimitsCard } from "./components/marketing-limits-card";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
 import { WhatsappModal } from "./components/whatsapp-modal";
@@ -44,11 +46,15 @@ function Usage({ used, limit }: { used: number | null; limit: number | null }) {
 export function PlataformaView() {
   const role = useAuthStore((s) => s.user?.role);
   const isSuperadmin = role === SUPERADMIN_ROLE;
+  // Solo el propietario de la plataforma gestiona a los demás superadmins (el backend también lo exige).
+  const isOwner = useAuthStore((s) => s.user?.is_owner) === true;
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<PlatformCompany | null>(null);
   const [paymentsCompany, setPaymentsCompany] = useState<PlatformCompany | null>(null);
   const [whatsappCompany, setWhatsappCompany] = useState<PlatformCompany | null>(null);
+  const [usersCompany, setUsersCompany] = useState<PlatformCompany | null>(null);
+  const [isSuperadminsOpen, setIsSuperadminsOpen] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQueryPlatformCompanies(isSuperadmin);
   const { data: config } = useQueryPlatformConfig(isSuperadmin);
@@ -108,9 +114,12 @@ export function PlataformaView() {
           <div className="min-w-0">
             <p className="truncate">{company.admin.username}</p>
             <p className="truncate text-xs text-muted">{company.admin.email}</p>
+            {company.admins > 1 && <p className="text-xs text-muted">+{company.admins - 1} más</p>}
           </div>
         ) : (
-          <span className="text-muted">Sin admin</span>
+          <Chip size="sm" variant="soft" color="danger">
+            Sin admin
+          </Chip>
         ),
     },
     {
@@ -168,6 +177,13 @@ export function PlataformaView() {
       render: (company) => (
         <div className="flex justify-end gap-1">
           <IconAction
+            tooltip="Usuarios de la empresa"
+            aria-label={`Usuarios de ${company.name}`}
+            onPress={() => setUsersCompany(company)}
+          >
+            <Users className="size-4" />
+          </IconAction>
+          <IconAction
             tooltip="Configurar Mercado Pago"
             aria-label={`Mercado Pago de ${company.name}`}
             onPress={() => setPaymentsCompany(company)}
@@ -207,16 +223,24 @@ export function PlataformaView() {
             : `${companies.length} ${companies.length === 1 ? "empresa" : "empresas"} en la plataforma`
         }
         actions={
-          <Button
-            variant="primary"
-            onPress={() => {
-              setSelected(null);
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            Nueva empresa
-          </Button>
+          <>
+            {isOwner && (
+              <Button variant="outline" onPress={() => setIsSuperadminsOpen(true)}>
+                <Crown className="size-4" />
+                Superadministradores
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              onPress={() => {
+                setSelected(null);
+                setIsFormOpen(true);
+              }}
+            >
+              <Plus className="size-4" />
+              Nueva empresa
+            </Button>
+          </>
         }
       />
 
@@ -252,6 +276,8 @@ export function PlataformaView() {
 
       <MercadoPagoModal company={paymentsCompany} onClose={() => setPaymentsCompany(null)} />
       <WhatsappModal company={whatsappCompany} onClose={() => setWhatsappCompany(null)} />
+      <EmpresaUsuariosModal company={usersCompany} onClose={() => setUsersCompany(null)} />
+      {isOwner && <SuperadministradoresModal isOpen={isSuperadminsOpen} onClose={() => setIsSuperadminsOpen(false)} />}
 
       <EmpresaFormModal
         company={selected}

@@ -14,6 +14,7 @@ export interface PlatformConfig {
 }
 
 import type { PaidFeature } from "@/config/navigation";
+import type { Users } from "./users";
 
 export interface PlatformCompany {
   id: string;
@@ -32,6 +33,8 @@ export interface PlatformCompany {
   /** null cuando no se puede atribuir (varias empresas comparten la raíz). */
   images: number | null;
   admin: { email: string; username: string } | null;
+  /** Cuántos administradores tiene la empresa (`admin` muestra solo el primero). */
+  admins: number;
   /** Con qué cuenta cobra en Mercado Pago (ver MercadoPagoSource). */
   mercadopago: MercadoPagoSource;
   /** Vistas de pago activas. */
@@ -145,4 +148,38 @@ export interface WhatsappSettingsPayload {
   template_language?: string;
   /** Texto = reemplazar; ausente = conservar; null = borrar. */
   access_token?: string | null;
+}
+
+/** Usuarios de una empresa (`GET /platform/companies/:id/users`), administradores primero. */
+export interface CompanyUsersResponse {
+  company: { id: string; name: string };
+  users: Users[];
+}
+
+export interface CompanyUserPayload {
+  username: string;
+  email: string;
+  role: string;
+  /** Al editar, vacía o ausente = conservar la contraseña actual. */
+  password?: string;
+}
+
+/** Superadministrador de la plataforma (`GET /platform/superadmins`, solo el propietario). */
+export interface Superadmin {
+  id: string;
+  username: string;
+  email: string;
+  /** El propietario no se elimina ni cambia de correo. */
+  is_owner: boolean;
+}
+
+export interface SuperadminsResponse {
+  superadmins: Superadmin[];
+}
+
+export interface SuperadminPayload {
+  username: string;
+  email: string;
+  /** Al editar, vacía o ausente = conservar la contraseña actual. */
+  password?: string;
 }
