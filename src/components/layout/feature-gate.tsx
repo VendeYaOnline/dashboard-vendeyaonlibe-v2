@@ -63,8 +63,9 @@ function LockedFeature({ feature }: { feature: PaidFeature }) {
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Desbloquéalo agregándolo a tu plan</p>
             <p className="mt-1 flex items-baseline justify-center gap-1.5">
               <span className="text-3xl font-bold tabular-nums">+{formatMoney(price)}</span>
+              <span className="text-sm font-medium text-muted">al mes</span>
             </p>
-            <p className="text-xs text-muted">Se suma al valor de tu plan actual</p>
+            <p className="text-xs text-muted">Se suma a la mensualidad de tu plan actual</p>
             <ul className="mt-4 space-y-2 text-left text-sm">
               {highlights.map((item) => (
                 <li key={item} className="flex items-start gap-2">
@@ -82,7 +83,7 @@ function LockedFeature({ feature }: { feature: PaidFeature }) {
             className={buttonVariants({ variant: "primary", fullWidth: true })}
           >
             <Sparkles className="size-4" aria-hidden />
-            Desbloquear {label} por +{formatMoney(price)}
+            Desbloquear {label} por +{formatMoney(price)} al mes
             <ExternalLink className="size-4" aria-hidden />
           </a>
           <p className="text-xs text-muted">
