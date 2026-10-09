@@ -163,3 +163,23 @@ export interface CompanyUserPayload {
   /** Al editar, vacía o ausente = conservar la contraseña actual. */
   password?: string;
 }
+
+/** Superadministrador de la plataforma (`GET /platform/superadmins`, solo el propietario). */
+export interface Superadmin {
+  id: string;
+  username: string;
+  email: string;
+  /** El propietario no se elimina ni cambia de correo. */
+  is_owner: boolean;
+}
+
+export interface SuperadminsResponse {
+  superadmins: Superadmin[];
+}
+
+export interface SuperadminPayload {
+  username: string;
+  email: string;
+  /** Al editar, vacía o ausente = conservar la contraseña actual. */
+  password?: string;
+}

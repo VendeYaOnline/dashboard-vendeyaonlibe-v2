@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CheckCircle2, Copy, Edit2, Plus, Trash2, Users as UsersIcon, X } from "lucide-react";
+import { AlertTriangle, Edit2, Plus, Trash2, Users as UsersIcon } from "lucide-react";
 import { Button, Chip, Modal, Spinner, toast, useOverlayState } from "@heroui/react";
 import { IconAction } from "@/components/shared/icon-action";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -17,6 +17,7 @@ import { ROLE_LABELS } from "@/config/navigation";
 import type { PlatformCompany } from "@/interfaces/platform";
 import type { Users } from "@/interfaces/users";
 import { UsuarioFormModal, type UsuarioFormValues } from "@/features/usuarios/components/usuario-form-modal";
+import { IssuedCredentialsNotice, type IssuedCredentials } from "./issued-credentials";
 
 interface EmpresaUsuariosModalProps {
   /** Empresa cuyos usuarios se gestionan; null = cerrado. */
@@ -25,13 +26,6 @@ interface EmpresaUsuariosModalProps {
 }
 
 const ROLE_COLOR = { admin: "accent", editor: "success", viewer: "default" } as const;
-
-/** Contraseña que se acaba de fijar: se muestra una vez para copiarla y entregarla. */
-interface IssuedCredentials {
-  title: string;
-  email: string;
-  password: string;
-}
 
 /**
  * Usuarios de una empresa vistos por el superadmin: reemplazar a un
@@ -61,15 +55,6 @@ export function EmpresaUsuariosModal({ company, onClose }: EmpresaUsuariosModalP
     setToDelete(null);
     setIssued(null);
     onClose();
-  };
-
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copiado");
-    } catch {
-      toast.danger("No se pudo copiar. Selecciónalo y cópialo a mano.");
-    }
   };
 
   const handleSubmit = (values: UsuarioFormValues) => {
@@ -116,6 +101,7 @@ export function EmpresaUsuariosModal({ company, onClose }: EmpresaUsuariosModalP
         onSuccess: () => {
           toast.success("Usuario eliminado. Su sesión se cerró.");
           setToDelete(null);
+          setIssued(null);
         },
         onError: (error) => handleAxiosError(error, "No se pudo eliminar el usuario"),
       },
@@ -148,39 +134,7 @@ export function EmpresaUsuariosModal({ company, onClose }: EmpresaUsuariosModalP
               />
 
               <Modal.Body className="space-y-4">
-                {issued && (
-                  <section className="space-y-2 rounded-xl border border-success/30 bg-success/10 p-4 text-sm" aria-live="polite">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="flex items-center gap-2 font-medium text-success">
-                        <CheckCircle2 className="size-4 shrink-0" />
-                        {issued.title}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setIssued(null)}
-                        aria-label="Cerrar aviso"
-                        className="text-muted transition-colors hover:text-foreground"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                    <p className="text-muted">
-                      Copia la contraseña y entrégala por un medio seguro: <strong>no se vuelve a mostrar</strong>.
-                    </p>
-                    <dl className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1">
-                      <dt className="text-muted">Correo</dt>
-                      <dd className="min-w-0 truncate font-medium">{issued.email}</dd>
-                      <Button size="sm" variant="ghost" isIconOnly aria-label="Copiar correo" onPress={() => handleCopy(issued.email)}>
-                        <Copy className="size-4" />
-                      </Button>
-                      <dt className="text-muted">Contraseña</dt>
-                      <dd className="min-w-0 break-all font-mono font-medium">{issued.password}</dd>
-                      <Button size="sm" variant="ghost" isIconOnly aria-label="Copiar contraseña" onPress={() => handleCopy(issued.password)}>
-                        <Copy className="size-4" />
-                      </Button>
-                    </dl>
-                  </section>
-                )}
+                {issued && <IssuedCredentialsNotice credentials={issued} onDismiss={() => setIssued(null)} />}
 
                 {data && adminCount === 0 && (
                   <p className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm text-warning">

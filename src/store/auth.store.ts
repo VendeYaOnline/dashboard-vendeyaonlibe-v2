@@ -5,6 +5,8 @@ interface User {
   username: string;
   email: string;
   role: string;
+  /** Solo el propietario de la plataforma (PLATFORM_OWNER_EMAIL del backend) lo trae en true. */
+  is_owner?: boolean;
 }
 
 interface AuthState {

@@ -30,6 +30,8 @@ import type { AnalyticsPeriod, AnalyticsResponse } from "@/interfaces/analytics"
 import type {
   CompanyUserPayload,
   CompanyUsersResponse,
+  SuperadminPayload,
+  SuperadminsResponse,
   CreateCompanyPayload,
   PlanResponse,
   MercadoPagoSettings,
@@ -417,6 +419,16 @@ export const createPlatformCompany = async (data: CreateCompanyPayload) =>
 
 export const updatePlatformCompany = async ({ id, data }: { id: string; data: UpdateCompanyPayload }) =>
   axiosConfig.put(`/platform/companies/${id}`, data);
+
+export const getSuperadmins = async () =>
+  (await axiosConfig.get<SuperadminsResponse>("/platform/superadmins")).data;
+
+export const createSuperadmin = async (data: SuperadminPayload) => axiosConfig.post("/platform/superadmins", data);
+
+export const updateSuperadmin = async ({ id, data }: { id: string; data: Partial<SuperadminPayload> }) =>
+  axiosConfig.put(`/platform/superadmins/${id}`, data);
+
+export const deleteSuperadmin = async (id: string) => axiosConfig.delete(`/platform/superadmins/${id}`);
 
 export const getCompanyUsers = async (companyId: string) =>
   (await axiosConfig.get<CompanyUsersResponse>(`/platform/companies/${companyId}/users`)).data;

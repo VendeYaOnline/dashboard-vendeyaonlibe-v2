@@ -2,8 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
   createCompanyUser,
+  createSuperadmin,
   updateCompanyUser,
+  updateSuperadmin,
   deleteCompanyUser,
+  deleteSuperadmin,
   downloadMetaCatalog,
   createCarousel,
   createCategory,
@@ -330,6 +333,19 @@ const useCompanyUserMutation = <TVariables extends { companyId: string }>(
 export const useMutationCreateCompanyUser = () => useCompanyUserMutation(createCompanyUser);
 export const useMutationUpdateCompanyUser = () => useCompanyUserMutation(updateCompanyUser);
 export const useMutationDeleteCompanyUser = () => useCompanyUserMutation(deleteCompanyUser);
+
+/** Superadministradores (solo el propietario). */
+const useSuperadminMutation = <TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["platform", "superadmins"] }),
+  });
+};
+
+export const useMutationCreateSuperadmin = () => useSuperadminMutation(createSuperadmin);
+export const useMutationUpdateSuperadmin = () => useSuperadminMutation(updateSuperadmin);
+export const useMutationDeleteSuperadmin = () => useSuperadminMutation(deleteSuperadmin);
 
 export const useMutationUpdateCompany = () => {
   const queryClient = useQueryClient();

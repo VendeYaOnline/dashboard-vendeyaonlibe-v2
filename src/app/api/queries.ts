@@ -30,6 +30,7 @@ const SALES_QUERY_OPTIONS = {
 import {
   getAnalytics,
   getCompanyUsers,
+  getSuperadmins,
   getMetaCatalogSummary,
   getInventory,
   getCustomers,
@@ -278,6 +279,16 @@ export const useQueryMercadoPagoSettings = (companyId: string | null) =>
     queryFn: () => getMercadoPagoSettings(companyId as string),
     refetchOnWindowFocus: false,
     enabled: Boolean(companyId),
+  });
+
+/** Superadministradores (solo el propietario): `enabled` evita pedirlos a quien no lo es. */
+export const useQuerySuperadmins = (enabled: boolean) =>
+  useQuery({
+    queryKey: ["platform", "superadmins"],
+    queryFn: getSuperadmins,
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    enabled,
   });
 
 /** Usuarios de una empresa (superadmin); null = sin consultar. */
