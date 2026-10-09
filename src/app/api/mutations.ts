@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import {
   createAttribute,
+  downloadMetaCatalog,
   createCarousel,
   createCategory,
   createPlatformCompany,
@@ -600,3 +601,7 @@ export const useMutationDeleteSale = () => {
     },
   });
 };
+
+/** Descarga el CSV del catálogo para Meta (solo lee: no invalida nada). */
+export const useMutationDownloadMetaCatalog = () =>
+  useMutation({ mutationFn: downloadMetaCatalog });

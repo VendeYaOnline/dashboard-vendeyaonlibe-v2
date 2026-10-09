@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { MetaCatalogFilters } from "@/interfaces/catalog";
 import type { InventoryFilters } from "@/interfaces/inventory";
 import type { CustomersFilters } from "@/interfaces/customers";
 import type { ContactsFilter } from "@/interfaces/marketing";
@@ -28,6 +29,7 @@ const SALES_QUERY_OPTIONS = {
 } as const;
 import {
   getAnalytics,
+  getMetaCatalogSummary,
   getInventory,
   getCustomers,
   getFeatures,
@@ -158,6 +160,22 @@ export const useQueryInventory = (filters: InventoryFilters) =>
     queryFn: () => getInventory(filters),
     ...LIST_QUERY_OPTIONS,
     staleTime: 1000 * 60 * 2,
+  });
+
+/**
+ * Cuántos productos saldrán en el catálogo para Meta con esos filtros. Sin
+ * caché útil: el inventario cambia, así que cada vez que se abre se vuelve a calcular.
+ */
+export const useQueryMetaCatalogSummary = (filters: MetaCatalogFilters, enabled: boolean) =>
+  useQuery({
+    queryKey: ["meta-catalog-summary", filters],
+    queryFn: () => getMetaCatalogSummary(filters),
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+    staleTime: 0,
+    gcTime: 1000 * 30,
+    retry: false,
+    enabled,
   });
 
 /** Clientes armados a partir de las ventas (admin y editor). */
