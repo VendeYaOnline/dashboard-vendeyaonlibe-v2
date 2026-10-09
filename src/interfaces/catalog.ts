@@ -1,5 +1,13 @@
+/**
+ * Cómo salen los productos con tallas o colores:
+ * product = una fila por producto (anuncios que llevan a tu tienda);
+ * variant = una fila por talla/color (vender dentro de Facebook e Instagram Shops).
+ */
+export type CatalogGrouping = "product" | "variant";
+
 /** Filtros de la exportación del catálogo para Meta (todos opcionales). */
 export interface MetaCatalogFilters {
+  grouping: CatalogGrouping;
   categoryIds: string[];
   /** Por defecto solo salen productos con unidades en alguna variante. */
   includeOutOfStock: boolean;
@@ -21,6 +29,7 @@ export interface MetaCatalogProblemProduct {
 
 /** Vista previa de lo que saldrá con los filtros elegidos. */
 export interface MetaCatalogSummary {
+  grouping: CatalogGrouping;
   /** Productos que se exportan. */
   products: number;
   /** Filas del archivo: una por producto, o una por variante. */

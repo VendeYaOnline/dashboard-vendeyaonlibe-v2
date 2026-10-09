@@ -5,12 +5,14 @@ import { isAxiosError } from "axios";
 import { AlertTriangle, CheckCircle2, ChevronDown, Download, FileSpreadsheet, RotateCcw } from "lucide-react";
 import {
   Button,
+  Chip,
   InputGroup,
   Label,
   Modal,
   Spinner,
   Switch,
   TextField,
+  cn,
   toast,
   useOverlayState,
 } from "@heroui/react";
@@ -20,7 +22,7 @@ import { useQueryAllCategories, useQueryMetaCatalogSummary } from "@/app/api/que
 import { useMutationDownloadMetaCatalog } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import type { MetaCatalogFilters } from "@/interfaces/catalog";
+import type { CatalogGrouping, MetaCatalogFilters } from "@/interfaces/catalog";
 import { formatThousands, toDigits } from "../utils";
 import { FormSection } from "./form-section";
 import { MultiSelectPopover } from "./multi-select-popover";
@@ -32,6 +34,7 @@ interface ExportarCatalogoModalProps {
 
 /** Sin filtros: productos visibles en la tienda con unidades en alguna variante. */
 const DEFAULT_FILTERS: MetaCatalogFilters = {
+  grouping: "product",
   categoryIds: [],
   includeOutOfStock: false,
   discountedOnly: false,
@@ -45,6 +48,22 @@ const DEFAULT_FILTERS: MetaCatalogFilters = {
 const MAX_PRICE_DIGITS = 100_000_000;
 const clampPrice = (digits: string) =>
   Number(digits) > MAX_PRICE_DIGITS ? String(MAX_PRICE_DIGITS) : digits;
+
+const GROUPING_OPTIONS: { id: CatalogGrouping; title: string; description: string; recommended?: boolean }[] = [
+  {
+    id: "product",
+    title: "Una fila por producto",
+    description:
+      "Cada producto sale una sola vez, con las fotos de todos sus colores. Ideal para anuncios que llevan a tu tienda: evita que el mismo producto se repita por cada talla.",
+    recommended: true,
+  },
+  {
+    id: "variant",
+    title: "Una fila por talla o color",
+    description:
+      "Cada variante sale por separado, con su disponibilidad. Solo si vendes dentro de Facebook e Instagram Shops, donde se elige la talla en Meta.",
+  },
+];
 
 const plural = (count: number, singular: string, pluralForm: string) =>
   `${count.toLocaleString("es-CO")} ${count === 1 ? singular : pluralForm}`;
@@ -181,9 +200,11 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                         )}
                         {summary.outOfStockItems > 0 && (
                           <li>
-                            {plural(summary.outOfStockItems, "variante sin unidades", "variantes sin unidades")} se
-                            marca{summary.outOfStockItems === 1 ? "" : "n"} como agotada
-                            {summary.outOfStockItems === 1 ? "" : "s"}: Meta no la{summary.outOfStockItems === 1 ? "" : "s"}{" "}
+                            {summary.grouping === "variant"
+                              ? plural(summary.outOfStockItems, "variante sin unidades", "variantes sin unidades")
+                              : plural(summary.outOfStockItems, "producto sin unidades", "productos sin unidades")}{" "}
+                            se marca{summary.outOfStockItems === 1 ? "" : "n"} como agotado
+                            {summary.outOfStockItems === 1 ? "" : "s"}: Meta no lo{summary.outOfStockItems === 1 ? "" : "s"}{" "}
                             anuncia.
                           </li>
                         )}
@@ -258,6 +279,44 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                     . Ábrelo para comprobar que lleva al producto; si no, escribe a VendeYaOnline para ajustar la ruta.
                   </p>
                 )}
+              </FormSection>
+
+              <FormSection
+                title="Productos con tallas o colores"
+                description="Elige cómo aparecen en el archivo los productos que tienen variantes."
+              >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Variantes en el archivo">
+                  {GROUPING_OPTIONS.map((option) => {
+                    const isActive = filters.grouping === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isActive}
+                        onClick={() => set("grouping", option.id)}
+                        className={cn(
+                          "flex flex-col gap-1 rounded-xl border bg-surface p-3 text-left transition-colors hover:bg-surface-secondary",
+                          isActive ? "border-accent ring-1 ring-accent" : "border-border",
+                        )}
+                      >
+                        <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                          {option.title}
+                          {option.recommended && (
+                            <Chip size="sm" variant="soft" color="accent">
+                              Recomendado
+                            </Chip>
+                          )}
+                        </span>
+                        <span className="text-xs text-muted">{option.description}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted">
+                  Si ya subiste el catálogo a Meta con la otra opción, súbelo reemplazando el anterior (o elimina
+                  los productos viejos): los productos cambian de identificador y, si no, quedarían repetidos.
+                </p>
               </FormSection>
 
               <FormSection
@@ -353,8 +412,9 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                   <li>Selecciona el archivo CSV descargado. Meta reconoce las columnas solo: no tienes que editar nada.</li>
                 </ol>
                 <p className="mt-3 text-xs text-muted">
-                  Para actualizar precios o unidades, descarga el archivo de nuevo y súbelo otra vez: cada producto
-                  conserva siempre el mismo id, así que se actualiza sin duplicarse.
+                  Para actualizar precios o unidades, descarga el archivo de nuevo y súbelo otra vez con la misma
+                  opción de variantes: cada producto conserva siempre el mismo id, así que se actualiza sin
+                  duplicarse. Si cambias de opción, reemplaza el catálogo anterior.
                 </p>
               </details>
             </Modal.Body>
