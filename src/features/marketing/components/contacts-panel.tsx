@@ -54,6 +54,11 @@ export function ContactsPanel() {
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{contact.name}</p>
           <p className="max-w-56 truncate text-xs text-muted">{contact.email ?? contact.phone ?? "Sin contacto"}</p>
+          {contact.marketing_consent === false && (
+            <Chip size="sm" variant="soft" color="danger" className="mt-1">
+              No acepta promociones
+            </Chip>
+          )}
         </div>
       ),
     },

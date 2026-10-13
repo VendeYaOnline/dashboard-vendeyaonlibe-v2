@@ -124,7 +124,8 @@ export interface MarketingQuota {
 
 export interface MarketingAudience {
   /** Clientes alcanzables por grupo; email_cooldown = con correo pero en espera de 7 días. */
-  segments: Record<CampaignSegment, { email: number; email_cooldown: number; whatsapp: number }>;
+  /** declined = no aceptaron promociones en su última compra (no reciben por ningún canal). */
+  segments: Record<CampaignSegment, { email: number; email_cooldown: number; whatsapp: number; declined: number }>;
   customers: number;
   /** Correos que no reciben (baja, rebote o spam). */
   unsubscribed: number;
@@ -206,6 +207,8 @@ export interface MarketingContact {
   } | null;
   /** null = sin celular válido. */
   whatsapp_state: { last: ContactLastSend | null } | null;
+  /** "Acepto recibir promociones" en su última compra; null = nunca se le preguntó (recibe). */
+  marketing_consent: boolean | null;
 }
 
 export type ContactsFilter = "all" | "never" | "notified" | "email_cooldown";
