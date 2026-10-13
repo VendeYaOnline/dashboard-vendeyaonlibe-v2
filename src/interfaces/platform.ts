@@ -52,6 +52,10 @@ export interface PlatformCompany {
   marketing_test_email: string | null;
   /** Correos de prueba usados (máximo 10). */
   marketing_test_sends: number;
+  /** Correo de su cuenta de VendeYaOnline: con él la tienda suma vistas a su plan. */
+  vendeya_account_email: string | null;
+  /** Vistas cobradas en su suscripción (las demás se activaron a mano). */
+  feature_billing: FeatureBillingMap | null;
 }
 
 /**
@@ -115,6 +119,7 @@ export interface UpdateCompanyPayload {
   marketing_test_email?: string | null;
   /** true = la tienda vuelve a tener sus 10 correos de prueba. */
   reset_test_sends?: boolean;
+  vendeya_account_email?: string | null;
 }
 
 /** Límites de correos de Marketing por defecto (todas las tiendas sin límite propio). */
@@ -220,4 +225,41 @@ export interface AuditFilters {
   category: AuditCategory | "all";
   from: string;
   to: string;
+}
+
+/** Cómo se cobra cada vista activa: "subscription" = sumada al plan de VendeYaOnline. */
+export type FeatureBillingMap = Partial<Record<string, { source: "subscription"; since: string }>>;
+
+/**
+ * Por qué la tienda no puede activar o cancelar la vista ella misma:
+ * cuenta sin vincular, sin plan, plan inactivo, activada a mano o servicio caído.
+ */
+export type FeatureBillingReason =
+  | "BILLING_NOT_CONFIGURED"
+  | "ACCOUNT_NOT_LINKED"
+  | "ACCOUNT_NOT_FOUND"
+  | "NO_SUBSCRIPTION"
+  | "SUBSCRIPTION_NOT_ACTIVE"
+  | "MANAGED_BY_PLATFORM"
+  | "BILLING_UNAVAILABLE";
+
+/** GET /features/:feature/billing — lo que ve la tienda antes de activar o cancelar. */
+export interface FeatureBilling {
+  feature: string;
+  label: string;
+  active: boolean;
+  /** Se cobra en su suscripción (la activó ella desde el panel). */
+  billed: boolean;
+  since: string | null;
+  self_service: boolean;
+  reason: FeatureBillingReason | null;
+  addon_price?: number;
+  plan: {
+    type: string;
+    plan_price: number;
+    current_total: number;
+    /** Con la vista (si ya está activa: lo que pagará al cancelarla). */
+    new_total: number;
+    next_payment_date: string | null;
+  } | null;
 }

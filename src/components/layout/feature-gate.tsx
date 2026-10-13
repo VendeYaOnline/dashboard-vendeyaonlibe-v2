@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, ExternalLink, Lock, Sparkles } from "lucide-react";
-import { Card, Spinner, buttonVariants } from "@heroui/react";
+import { Button, Card, Spinner, buttonVariants } from "@heroui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useQueryFeatures } from "@/app/api/queries";
+import { useQueryFeatureBilling, useQueryFeatures } from "@/app/api/queries";
 import { PAID_FEATURES, PAID_FEATURES_URL, type PaidFeature } from "@/config/navigation";
 import { formatMoney } from "@/features/analisis/utils";
+import { useAuthStore } from "@/store/auth.store";
+import { FEATURE_BILLING_REASONS, UnlockFeatureModal } from "./feature-billing-dialogs";
 
 /**
  * Muestra la vista solo si la empresa tiene activa la vista de pago; si no,
@@ -31,6 +33,10 @@ export function FeatureGate({ feature, children }: { feature: PaidFeature; child
 function LockedFeature({ feature }: { feature: PaidFeature }) {
   const { label, description, price, highlights } = PAID_FEATURES[feature];
   const queryClient = useQueryClient();
+  const isAdmin = useAuthStore((s) => s.user?.role) === "admin";
+  // Solo el admin puede sumarla al plan: los demás no consultan el cobro.
+  const { data: billing, isLoading: isBillingLoading } = useQueryFeatureBilling(feature, isAdmin);
+  const [isUnlockOpen, setIsUnlockOpen] = useState(false);
 
   // Al volver a la pestaña (p. ej. después de pagar) se consulta de nuevo: si ya
   // está activa, la vista se desbloquea sola.
@@ -76,21 +82,46 @@ function LockedFeature({ feature }: { feature: PaidFeature }) {
             </ul>
           </div>
 
-          <a
-            href={PAID_FEATURES_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "primary", fullWidth: true })}
-          >
-            <Sparkles className="size-4" aria-hidden />
-            Desbloquear {label} por +{formatMoney(price)} al mes
-            <ExternalLink className="size-4" aria-hidden />
-          </a>
-          <p className="text-xs text-muted">
-            Cuando el pago se confirme, {label} se desbloquea aquí automáticamente, sin que tengas que hacer nada más.
-          </p>
+          {!isAdmin ? (
+            <p className="rounded-lg bg-surface-secondary px-3 py-2 text-sm text-muted">
+              Pídele al administrador de tu tienda que desbloquee {label}.
+            </p>
+          ) : isBillingLoading ? (
+            <Button variant="primary" fullWidth isDisabled>
+              <Spinner size="sm" />
+              Consultando tu plan...
+            </Button>
+          ) : billing?.self_service ? (
+            <>
+              <Button variant="primary" fullWidth onPress={() => setIsUnlockOpen(true)}>
+                <Sparkles className="size-4" aria-hidden />
+                Desbloquear {label} por +{formatMoney(price)} al mes
+              </Button>
+              <p className="text-xs text-muted">
+                Se activa al instante. Hoy no se te cobra nada: el valor se suma desde tu próxima mensualidad.
+              </p>
+            </>
+          ) : (
+            <>
+              <a
+                href={PAID_FEATURES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "primary", fullWidth: true })}
+              >
+                <Sparkles className="size-4" aria-hidden />
+                Desbloquear {label} en vendeyaonline.com
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+              <p className="text-xs text-muted">
+                {billing?.reason ? `${FEATURE_BILLING_REASONS[billing.reason]} ` : ""}
+                Cuando se active, {label} se desbloquea aquí automáticamente.
+              </p>
+            </>
+          )}
         </Card.Content>
       </Card>
+      <UnlockFeatureModal feature={feature} isOpen={isUnlockOpen} onClose={() => setIsUnlockOpen(false)} />
     </div>
   );
 }

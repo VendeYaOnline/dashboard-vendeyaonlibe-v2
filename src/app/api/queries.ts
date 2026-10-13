@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { PaidFeature } from "@/config/navigation";
 import type { MetaCatalogFilters } from "@/interfaces/catalog";
 import type { AuditFilters } from "@/interfaces/platform";
 import type { InventoryFilters } from "@/interfaces/inventory";
@@ -37,6 +38,7 @@ import {
   getInventory,
   getCustomers,
   getFeatures,
+  getFeatureBilling,
   getMarketing,
   getMarketingAudience,
   getMarketingCampaign,
@@ -254,6 +256,10 @@ export const useQueryFeatures = (enabled: boolean = true) =>
     enabled,
     staleTime: 1000 * 60 * 5,
   });
+
+/** Plan de VendeYaOnline y costo de una vista de pago (para desbloquearla o cancelarla). */
+export const useQueryFeatureBilling = (feature: PaidFeature, enabled = true) =>
+  useQuery({ queryKey: ["feature-billing", feature], queryFn: () => getFeatureBilling(feature), enabled, staleTime: 60_000 });
 
 /** Plan y uso de la empresa (tope de productos e imágenes). */
 export const useQueryPlan = (enabled: boolean = true) =>
