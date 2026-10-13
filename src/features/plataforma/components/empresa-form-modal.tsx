@@ -84,6 +84,8 @@ export function EmpresaFormModal({
   const [resetTests, setResetTests] = useState(false);
   /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
   const [productPath, setProductPath] = useState("");
+  /** Correo de su cuenta de VendeYaOnline: con él la tienda suma vistas a su plan. */
+  const [accountEmail, setAccountEmail] = useState("");
 
   const [adminUsername, setAdminUsername] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -108,6 +110,7 @@ export function EmpresaFormModal({
     setDailyLimit(company?.marketing_daily_limit != null ? String(company.marketing_daily_limit) : "");
     setHourlyLimit(company?.marketing_hourly_limit != null ? String(company.marketing_hourly_limit) : "");
     setTestEmail(company?.marketing_test_email ?? "");
+    setAccountEmail(company?.vendeya_account_email ?? "");
     setResetTests(false);
     setAdminUsername("");
     setAdminEmail("");
@@ -152,7 +155,11 @@ export function EmpresaFormModal({
       adminPassword.length >= MIN_PASSWORD_LENGTH);
 
   const isTestEmailValid = testEmail.trim() === "" || isValidEmail(testEmail.trim());
-  const isValid = isNameValid && isProductsValid && isImagesValid && isAdminValid && isTestEmailValid;
+  const isAccountEmailValid = accountEmail.trim() === "" || isValidEmail(accountEmail.trim());
+  /** Vistas que la tienda sumó a su suscripción (quitarlas también las quita del cobro). */
+  const billedFeatures = Object.keys(company?.feature_billing ?? {});
+  const isValid =
+    isNameValid && isProductsValid && isImagesValid && isAdminValid && isTestEmailValid && isAccountEmailValid;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -168,6 +175,7 @@ export function EmpresaFormModal({
         shipping_fee: shippingFee === "" ? null : Number(shippingFee),
         free_shipping_from: shippingFee === "" || freeShippingFrom === "" ? null : Number(freeShippingFrom),
         features,
+        vendeya_account_email: accountEmail.trim() === "" ? null : accountEmail.trim(),
         marketing_monthly_limit: monthlyLimit === "" ? null : Number(monthlyLimit),
         marketing_product_path: productPath.trim() === "" ? null : productPath.trim(),
         marketing_daily_limit: dailyLimit === "" ? null : Number(dailyLimit),
@@ -299,9 +307,26 @@ export function EmpresaFormModal({
                 {isEdit && (
                   <FormSection
                     title="Vistas de pago"
-                    description="Actívalas cuando la tienda haya pagado en vendeyaonline.com. Si se desactiva una, la tienda la ve con candado; sus datos no se borran."
+                    description="La tienda puede desbloquearlas sola desde su panel (se suman a su plan de VendeYaOnline) o puedes activarlas aquí a mano. Si se desactiva una, la ve con candado; sus datos no se borran."
                   >
                     <div className="space-y-3">
+                      <TextField
+                        value={accountEmail}
+                        onChange={(value) => setAccountEmail(value.slice(0, 254))}
+                        type="email"
+                        isInvalid={!isAccountEmailValid}
+                        isDisabled={billedFeatures.length > 0}
+                      >
+                        <Label>Correo de su cuenta en vendeyaonline.com</Label>
+                        <Input placeholder="dueno@tienda.com" autoComplete="off" maxLength={254} />
+                        <p className={cn("mt-1 text-xs", isAccountEmailValid ? "text-muted" : "text-danger")}>
+                          {!isAccountEmailValid
+                            ? "Escribe un correo válido."
+                            : billedFeatures.length > 0
+                              ? "No se puede cambiar mientras tenga vistas cobradas en su suscripción."
+                              : "Con este correo la tienda suma vistas a su suscripción desde su panel. Vacío = solo tú las activas."}
+                        </p>
+                      </TextField>
                       {(Object.keys(PAID_FEATURES) as PaidFeature[]).map((key) => (
                         <Switch
                           key={key}
@@ -319,6 +344,13 @@ export function EmpresaFormModal({
                             <div>
                               <Label>{PAID_FEATURES[key].label}</Label>
                               <p className="text-xs text-muted">{PAID_FEATURES[key].description}</p>
+                              {billedFeatures.includes(key) && (
+                                <p className={cn("text-xs", features.includes(key) ? "text-success" : "text-danger")}>
+                                  {features.includes(key)
+                                    ? `La activó la tienda: se cobra en su suscripción (+${PAID_FEATURES[key].price.toLocaleString("es-CO")} al mes).`
+                                    : "Al guardar se quitará también de su suscripción."}
+                                </p>
+                              )}
                             </div>
                           </Switch.Content>
                         </Switch>

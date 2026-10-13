@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowRight, Check, Megaphone, Send } from "lucide-react";
 import { Button, Card, Input, Label, Spinner, TextField, cn, toast } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
+import { FeaturePlanButton } from "@/components/layout/feature-billing-dialogs";
 import { PendingButton } from "@/components/shared/pending-button";
 import { useQueryMarketing } from "@/app/api/queries";
 import {
@@ -161,6 +162,7 @@ export function MarketingView() {
         icon={Megaphone}
         title="Marketing"
         description="Envía promociones a tus clientes por correo o WhatsApp con el estilo de tu marca"
+        actions={<FeaturePlanButton feature="marketing" />}
       />
 
       {data.sender.testRedirect && (

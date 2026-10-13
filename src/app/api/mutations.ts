@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import type { PaidFeature } from "@/config/navigation";
 import {
   createAttribute,
   createCompanyUser,
@@ -18,6 +19,8 @@ import {
   createMarketingCampaign,
   markCampaignRecipient,
   updateMarketingLimits,
+  activateFeature,
+  cancelFeature,
   updateWhatsappSettings,
   testWhatsappSettings,
   updateMyWhatsappSettings,
@@ -415,6 +418,21 @@ export const useMutationMarkRecipient = () => {
     },
   });
 };
+
+/** Desbloquear o cancelar una vista de pago: cambia el menú, la vista y el plan. */
+const useFeatureBillingMutation = (mutationFn: (feature: PaidFeature) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (_data, feature) => {
+      queryClient.invalidateQueries({ queryKey: ["features"] });
+      queryClient.invalidateQueries({ queryKey: ["feature-billing", feature] });
+    },
+  });
+};
+
+export const useMutationActivateFeature = () => useFeatureBillingMutation(activateFeature);
+export const useMutationCancelFeature = () => useFeatureBillingMutation(cancelFeature);
 
 export const useMutationUpdateMarketingLimits = () => {
   const queryClient = useQueryClient();

@@ -44,6 +44,7 @@ import type {
   MarketingLimits,
   WhatsappSettings,
   WhatsappSettingsPayload,
+  FeatureBilling,
 } from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
@@ -409,6 +410,18 @@ export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-pl
 /** Vistas de pago activas de la propia empresa (liviano: lo usa el menú). */
 export const getFeatures = async () =>
   (await axiosConfig.get<{ features: PaidFeature[] }>("/get-features")).data;
+
+/** Plan de VendeYaOnline y lo que costaría sumar (o quitar) una vista de pago. */
+export const getFeatureBilling = async (feature: PaidFeature) =>
+  (await axiosConfig.get<FeatureBilling>(`/features/${feature}/billing`)).data;
+
+/** Suma la vista a la mensualidad y la activa al instante (solo admin). */
+export const activateFeature = async (feature: PaidFeature) =>
+  (await axiosConfig.post<{ message: string; active: boolean; changed: boolean }>(`/features/${feature}/activate`)).data;
+
+/** La quita de la mensualidad y la desactiva (solo admin). */
+export const cancelFeature = async (feature: PaidFeature) =>
+  (await axiosConfig.post<{ message: string; active: boolean; changed: boolean }>(`/features/${feature}/cancel`)).data;
 
 export const getPlatformConfig = async () =>
   (await axiosConfig.get<PlatformConfig>("/platform/config")).data;
