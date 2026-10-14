@@ -96,6 +96,11 @@ export function PlataformaView() {
             </p>
             {company.features.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
+                {company.marketing_pause && (
+                  <Chip size="sm" variant="soft" color="danger" title="Muchos rebotes o quejas de spam: reactívala en Editar empresa">
+                    Correo pausado
+                  </Chip>
+                )}
                 {company.features.map((feature) => (
                   <Chip key={feature} size="sm" variant="soft" color="accent">
                     {PAID_FEATURES[feature]?.label ?? feature}

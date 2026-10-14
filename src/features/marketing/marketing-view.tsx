@@ -176,6 +176,24 @@ export function MarketingView() {
           </Card.Content>
         </Card>
       )}
+      {data.pause && (
+        <Card>
+          <Card.Content className="flex items-start gap-3 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" />
+            <div className="space-y-1">
+              <p className="font-semibold">Tus campañas de correo están pausadas</p>
+              <p className="text-muted">
+                En tus últimos {data.pause.sends} correos,{" "}
+                {data.pause.reason === "bounces"
+                  ? `el ${(data.pause.bounce_rate * 100).toLocaleString("es-CO", { maximumFractionDigits: 1 })} % rebotó (direcciones que no existen)`
+                  : `el ${(data.pause.complaint_rate * 100).toLocaleString("es-CO", { maximumFractionDigits: 1 })} % se marcó como spam`}
+                . Lo pausamos para proteger la entrega de tus correos. WhatsApp sigue funcionando. Revisa tu lista de clientes
+                (correos mal escritos o que ya no se usan) y escríbenos para reactivarlo.
+              </p>
+            </div>
+          </Card.Content>
+        </Card>
+      )}
       {!data.sender.configured && (
         <Card>
           <Card.Content className="flex items-start gap-3 p-4 text-sm">

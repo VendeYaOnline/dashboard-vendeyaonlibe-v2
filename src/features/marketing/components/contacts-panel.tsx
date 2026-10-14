@@ -20,6 +20,7 @@ const BLOCKED: Record<NonNullable<NonNullable<MarketingContact["email_state"]>["
   unsubscribed: "Se dio de baja",
   bounced: "Correo inválido (rebotó)",
   complained: "Lo marcó como spam",
+  invalid: "Correo inválido (mal escrito o sin servidor de correo)",
 };
 
 const formatDay = (iso: string) =>
