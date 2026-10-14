@@ -86,6 +86,11 @@ export function CampaignProgress({ campaign }: { campaign: MarketingCampaign }) 
   const delivered = count(campaign, "delivered");
   return (
     <span className="flex flex-wrap items-center gap-1.5 text-sm tabular-nums">
+      {campaign.status === "stopped" && (
+        <Chip size="sm" variant="soft" color="warning">
+          Detenida: envíos de correo pausados
+        </Chip>
+      )}
       <StatusChip value={accepted} label={["enviado", "enviados"]} color="success" />
       <StatusChip value={delivered} label={["entregado", "entregados"]} color="success" />
       <StatusChip value={count(campaign, "bounced")} label={["rebote", "rebotes"]} color="danger" />

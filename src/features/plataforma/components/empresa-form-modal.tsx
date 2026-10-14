@@ -82,6 +82,8 @@ export function EmpresaFormModal({
   const [testEmail, setTestEmail] = useState("");
   /** Devolverle los 10 correos de prueba al guardar. */
   const [resetTests, setResetTests] = useState(false);
+  /** Reactivar las campañas de correo pausadas por rebotes o quejas al guardar. */
+  const [resumeMarketing, setResumeMarketing] = useState(false);
   /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
   const [productPath, setProductPath] = useState("");
   /** Correo de su cuenta de VendeYaOnline: con él la tienda suma vistas a su plan. */
@@ -112,6 +114,7 @@ export function EmpresaFormModal({
     setTestEmail(company?.marketing_test_email ?? "");
     setAccountEmail(company?.vendeya_account_email ?? "");
     setResetTests(false);
+    setResumeMarketing(false);
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -182,6 +185,7 @@ export function EmpresaFormModal({
         marketing_hourly_limit: hourlyLimit === "" ? null : Number(hourlyLimit),
         marketing_test_email: testEmail.trim() === "" ? null : testEmail.trim(),
         ...(resetTests ? { reset_test_sends: true } : {}),
+        ...(resumeMarketing ? { marketing_resume: true } : {}),
       });
       return;
     }
@@ -375,6 +379,26 @@ export function EmpresaFormModal({
                             Límites de correos de campaña de esta tienda (hora de Colombia). WhatsApp no cuenta. Vacío = los
                             límites globales de Plataforma.
                           </p>
+                        </div>
+                      )}
+                      {features.includes("marketing") && company?.marketing_pause && (
+                        <div className="space-y-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-3 text-xs">
+                          <p className="font-semibold text-danger">Campañas de correo pausadas</p>
+                          <p className="text-muted">
+                            Desde el {new Date(company.marketing_pause.at).toLocaleDateString("es-CO", { timeZone: "America/Bogota" })}:{" "}
+                            {company.marketing_pause.sends} envíos, {company.marketing_pause.bounced} rebotes (
+                            {(company.marketing_pause.bounce_rate * 100).toLocaleString("es-CO", { maximumFractionDigits: 1 })} %) y {company.marketing_pause.complained} quejas de spam (
+                            {(company.marketing_pause.complaint_rate * 100).toLocaleString("es-CO", { maximumFractionDigits: 2 })} %). Se pausa con 2 % de rebotes o 0,3 % de quejas.
+                            Reactívala cuando la tienda haya limpiado su lista; los rebotes anteriores dejan de contar.
+                          </p>
+                          <Switch isSelected={resumeMarketing} onChange={setResumeMarketing}>
+                            <Switch.Content>
+                              <Switch.Control>
+                                <Switch.Thumb />
+                              </Switch.Control>
+                              <Label className="text-xs">Reactivar las campañas de correo al guardar</Label>
+                            </Switch.Content>
+                          </Switch>
                         </div>
                       )}
                       {features.includes("marketing") && (

@@ -94,6 +94,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
     ? "Primero guarda tu marca en la pestaña Marca."
     : !template?.saved
       ? "Guarda al menos una plantilla para poder enviarla."
+      : channel === "email" && data.pause
+        ? "Tus campañas de correo están pausadas. Puedes seguir enviando por WhatsApp."
       : channel === "email" && !data.sender.configured
         ? "El envío de correos no está configurado en el servidor."
         : count === 0
@@ -128,9 +130,9 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                 : "Lista lista: abre cada chat desde aquí",
             );
           } else {
-            const omitted = skipped.cooldown + skipped.suppressed + (skipped.opted_out ?? 0);
+            const omitted = skipped.cooldown + skipped.suppressed + (skipped.opted_out ?? 0) + (skipped.invalid ?? 0);
             toast.success(
-              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días, baja o sin permiso).` : ""}`,
+              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días, baja, sin permiso o correo inválido).` : ""}`,
             );
           }
           if (campaign.channel === "whatsapp" && campaign.delivery !== "whatsapp_api") setOpenCampaign(campaign.id);

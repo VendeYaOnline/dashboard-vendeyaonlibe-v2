@@ -52,6 +52,8 @@ export interface PlatformCompany {
   marketing_test_email: string | null;
   /** Correos de prueba usados (máximo 10). */
   marketing_test_sends: number;
+  /** Campañas de correo pausadas por rebotes o quejas (null = envía normal). */
+  marketing_pause: import("./marketing").MarketingPause | null;
   /** Correo de su cuenta de VendeYaOnline: con él la tienda suma vistas a su plan. */
   vendeya_account_email: string | null;
   /** Vistas cobradas en su suscripción (las demás se activaron a mano). */
@@ -119,6 +121,8 @@ export interface UpdateCompanyPayload {
   marketing_test_email?: string | null;
   /** true = la tienda vuelve a tener sus 10 correos de prueba. */
   reset_test_sends?: boolean;
+  /** true = reactiva las campañas de correo pausadas por reputación. */
+  marketing_resume?: boolean;
   vendeya_account_email?: string | null;
 }
 

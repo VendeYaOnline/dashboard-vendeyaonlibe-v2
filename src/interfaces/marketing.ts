@@ -73,6 +73,8 @@ export interface MarketingResponse {
   };
   /** Correos de prueba: a dónde llegan (lo fija el superadmin; null = sin configurar) y cuántos se han usado. */
   test: MarketingTestQuota;
+  /** Campañas de correo pausadas por muchos rebotes o quejas de spam (null = puede enviar). */
+  pause: MarketingPause | null;
 }
 
 export interface MarketingTestQuota {
@@ -96,7 +98,19 @@ export type CampaignChannel = "email" | "whatsapp";
 /** Grupos de clientes (los segmentos de Clientes, más "todos"). */
 export type CampaignSegment = "all" | "recurring" | "new" | "inactive";
 /** sending → sent | failed (correo y WhatsApp por API); ready = lista de WhatsApp manual. */
-export type CampaignStatus = "sending" | "sent" | "failed" | "ready";
+/** stopped = detenida a mitad del envío porque la tienda quedó pausada (rebotes o quejas). */
+export type CampaignStatus = "sending" | "sent" | "failed" | "ready" | "stopped";
+
+/** Pausa por reputación: motivo y cifras de los últimos envíos. */
+export interface MarketingPause {
+  reason: "bounces" | "complaints";
+  at: string;
+  sends: number;
+  bounced: number;
+  complained: number;
+  bounce_rate: number;
+  complaint_rate: number;
+}
 /** whatsapp_api = enviada por la API de Meta; manual = enlaces wa.me; null en correo. */
 export type CampaignDelivery = "whatsapp_api" | "manual" | null;
 
@@ -181,7 +195,7 @@ export interface CreateCampaignResponse {
   /** true si ese request_id ya había creado la campaña (doble clic). */
   duplicate: boolean;
   /** Descartados: sin permiso (no aceptó o de baja), correo bloqueado (rebote/spam) y en espera de 7 días. */
-  skipped: { opted_out: number; suppressed: number; cooldown: number };
+  skipped: { opted_out: number; suppressed: number; cooldown: number; invalid?: number };
 }
 
 // * Notificaciones por cliente
@@ -202,8 +216,8 @@ export interface MarketingContact {
     last: ContactLastSend | null;
     /** Desde cuándo puede recibir otro correo (null = ya puede). */
     available_at: string | null;
-    /** unsubscribed | bounced | complained (null = puede recibir). */
-    blocked: "unsubscribed" | "bounced" | "complained" | null;
+    /** unsubscribed | bounced | complained | invalid (mal escrito o sin servidor de correo); null = puede recibir. */
+    blocked: "unsubscribed" | "bounced" | "complained" | "invalid" | null;
   } | null;
   /** null = sin celular válido. */
   whatsapp_state: { last: ContactLastSend | null } | null;
