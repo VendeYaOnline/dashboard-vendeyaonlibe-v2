@@ -35,7 +35,7 @@ const cartState = (cart: AbandonedCart): { label: string; color: "default" | "su
   if (cart.status === "reminded") return { label: "Correo enviado", color: "accent" };
   if (cart.status === "contacted") return { label: "WhatsApp enviado", color: "accent" };
   if (cart.status === "dismissed") return { label: "Descartado", color: "default" };
-  if (cart.promotions === "declined" || cart.promotions === "unsubscribed") return { label: "Sin permiso", color: "danger" };
+  if (cart.promotions === "declined" || cart.promotions === "unsubscribed") return { label: "No recibe promociones", color: "danger" };
   return { label: "Sin recordar", color: "warning" };
 };
 
