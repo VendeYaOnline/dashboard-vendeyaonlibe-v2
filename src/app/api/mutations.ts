@@ -18,6 +18,8 @@ import {
   sendMarketingTestEmail,
   createMarketingCampaign,
   markCampaignRecipient,
+  optOutMarketingContact,
+  undoOptOutMarketingContact,
   updateMarketingLimits,
   activateFeature,
   cancelFeature,
@@ -433,6 +435,21 @@ const useFeatureBillingMutation = (mutationFn: (feature: PaidFeature) => Promise
 
 export const useMutationActivateFeature = () => useFeatureBillingMutation(activateFeature);
 export const useMutationCancelFeature = () => useFeatureBillingMutation(cancelFeature);
+
+/** Bajas que registra la tienda: cambian la lista de clientes y la audiencia. */
+const useContactOptOutMutation = (mutationFn: (key: string) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
+    },
+  });
+};
+
+export const useMutationOptOutContact = () => useContactOptOutMutation(optOutMarketingContact);
+export const useMutationUndoOptOutContact = () => useContactOptOutMutation(undoOptOutMarketingContact);
 
 export const useMutationUpdateMarketingLimits = () => {
   const queryClient = useQueryClient();

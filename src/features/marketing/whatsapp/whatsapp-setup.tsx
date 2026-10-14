@@ -19,7 +19,7 @@ const TEMPLATE_PATTERN = /^[a-z0-9_]{1,512}$/;
 const LANGUAGE_PATTERN = /^[a-z]{2,3}(_[A-Z]{2})?$/;
 
 /** Cuerpo sugerido para la plantilla de Meta (las 3 variables que llena VendeYaOnline). */
-export const WHATSAPP_TEMPLATE_BODY = "¡Hola {{1}}! 👋\n\n{{2}}\n\nMíralo aquí: {{3}}";
+export const WHATSAPP_TEMPLATE_BODY = "¡Hola {{1}}! 👋\n\n{{2}}\n\nMíralo aquí: {{3}}\n\nSi no quieres recibir más promociones, responde BAJA.";
 
 type Tone = "success" | "warning" | "muted";
 
