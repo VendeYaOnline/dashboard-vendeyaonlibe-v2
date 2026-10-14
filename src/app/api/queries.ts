@@ -4,7 +4,7 @@ import type { MetaCatalogFilters } from "@/interfaces/catalog";
 import type { AuditFilters } from "@/interfaces/platform";
 import type { InventoryFilters } from "@/interfaces/inventory";
 import type { CustomersFilters } from "@/interfaces/customers";
-import type { ContactsFilter } from "@/interfaces/marketing";
+import type { AbandonedCartsFilter, ContactsFilter } from "@/interfaces/marketing";
 import type { ContactStatusFilter } from "@/interfaces/contacts";
 import type { AnalyticsPeriod } from "@/interfaces/analytics";
 
@@ -44,6 +44,7 @@ import {
   getMarketingCampaign,
   getMarketingCampaigns,
   getMarketingContacts,
+  getAbandonedCarts,
   getMarketingLimits,
   getWhatsappSettings,
   getMyWhatsappSettings,
@@ -228,6 +229,15 @@ export const useQueryMarketingContacts = (filters: { page: number; search: strin
   useQuery({
     queryKey: ["marketing", "contacts", filters],
     queryFn: () => getMarketingContacts(filters),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+
+/** Carritos abandonados de los últimos 30 días. */
+export const useQueryAbandonedCarts = (filters: { page: number; status: AbandonedCartsFilter }) =>
+  useQuery({
+    queryKey: ["marketing", "abandoned-carts", filters],
+    queryFn: () => getAbandonedCarts(filters),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });

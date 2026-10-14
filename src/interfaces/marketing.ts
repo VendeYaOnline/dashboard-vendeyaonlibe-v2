@@ -252,3 +252,45 @@ export interface MarketingContactsResponse {
   totalPages: number;
   summary: { total: number; notified: number; never: number; email_cooldown: number; accepted: number; opted_out: number };
 }
+
+// * Carritos abandonados
+
+/** open (sin recordar) | reminded (correo enviado) | contacted (WhatsApp) | recovered (compró) | dismissed */
+export type AbandonedCartStatus = "open" | "reminded" | "contacted" | "recovered" | "dismissed";
+
+export interface AbandonedCart {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  products: { id: string; title: string; image: string; price: number; quantity: number }[];
+  total: number;
+  status: AbandonedCartStatus;
+  /** Ya pasó el tiempo de espera y no compró. */
+  abandoned: boolean;
+  created_at: string;
+  updated_at: string;
+  reminded_at: string | null;
+  reminder_channel: "email" | "whatsapp" | null;
+  recovered_at: string | null;
+  promotions: PromotionsStatus;
+  /** Chat con el mensaje listo (null = sin celular, sin permiso o ya compró). */
+  whatsapp_url: string | null;
+}
+
+export interface AbandonedCartConfig {
+  email_enabled: boolean;
+  delay_hours: number;
+}
+
+export type AbandonedCartsFilter = "abandoned" | "recovered" | "all";
+
+export interface AbandonedCartsResponse {
+  items: AbandonedCart[];
+  total: number;
+  page: number;
+  totalPages: number;
+  summary: { abandoned: number; recovered: number; recovered_total: number };
+  config: AbandonedCartConfig;
+  delay_options: number[];
+}

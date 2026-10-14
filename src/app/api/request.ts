@@ -5,6 +5,9 @@ import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
 import type { PaidFeature } from "@/config/navigation";
 import type {
+  AbandonedCartConfig,
+  AbandonedCartsFilter,
+  AbandonedCartsResponse,
   ContactsFilter,
   CreateCampaignResponse,
   MarketingContactsResponse,
@@ -377,6 +380,15 @@ export const optOutMarketingContact = async (key: string) =>
 /** Deshace una baja que registró la tienda. */
 export const undoOptOutMarketingContact = async (key: string) =>
   (await axiosConfig.post<{ message: string; status: string }>("/marketing/contacts/opt-out/undo", { key })).data;
+
+export const getAbandonedCarts = async ({ page, status }: { page: number; status: AbandonedCartsFilter }) =>
+  (await axiosConfig.get<AbandonedCartsResponse>(`/marketing/abandoned-carts?page=${page}&status=${status}`)).data;
+
+export const updateAbandonedCart = async ({ id, status }: { id: string; status: "contacted" | "dismissed" | "open" }) =>
+  (await axiosConfig.patch<{ id: string; status: string }>(`/marketing/abandoned-carts/${id}`, { status })).data;
+
+export const updateAbandonedCartSettings = async (config: AbandonedCartConfig) =>
+  (await axiosConfig.put<{ message: string; config: AbandonedCartConfig }>("/marketing/abandoned-carts/settings", config)).data;
 
 export const getMarketingContacts = async ({ page, search, filter }: { page: number; search: string; filter: ContactsFilter }) => {
   const params = new URLSearchParams({ page: String(page), filter });
