@@ -19,6 +19,8 @@ import {
   createMarketingCampaign,
   markCampaignRecipient,
   optOutMarketingContact,
+  updateAbandonedCart,
+  updateAbandonedCartSettings,
   undoOptOutMarketingContact,
   updateMarketingLimits,
   activateFeature,
@@ -447,6 +449,18 @@ const useContactOptOutMutation = (mutationFn: (key: string) => Promise<unknown>)
     },
   });
 };
+
+/** Carritos abandonados: estado de un carrito o la configuración del correo automático. */
+const useAbandonedCartsMutation = <T,>(mutationFn: (value: T) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing", "abandoned-carts"] }),
+  });
+};
+
+export const useMutationUpdateAbandonedCart = () => useAbandonedCartsMutation(updateAbandonedCart);
+export const useMutationUpdateAbandonedCartSettings = () => useAbandonedCartsMutation(updateAbandonedCartSettings);
 
 export const useMutationOptOutContact = () => useContactOptOutMutation(optOutMarketingContact);
 export const useMutationUndoOptOutContact = () => useContactOptOutMutation(undoOptOutMarketingContact);
