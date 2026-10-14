@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mail, MessageCircle, UserCheck } from "lucide-react";
-import { Card, Chip, ToggleButton, ToggleButtonGroup, cn } from "@heroui/react";
+import { Mail, MessageCircle, RotateCcw, UserCheck, UserX } from "lucide-react";
+import { Button, Card, Chip, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
 import { SearchField } from "@/components/shared/search-field";
 import { TablePagination } from "@/components/shared/table-pagination";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useQueryMarketingContacts } from "@/app/api/queries";
-import type { ContactLastSend, ContactsFilter, MarketingContact } from "@/interfaces/marketing";
+import { useMutationOptOutContact, useMutationUndoOptOutContact } from "@/app/api/mutations";
+import { handleAxiosError } from "@/lib/error-handler";
+import type { ContactLastSend, ContactPromotions, ContactsFilter, MarketingContact, PromotionsStatus } from "@/interfaces/marketing";
 import { RECIPIENT_STATUS, formatDateTime } from "./campaign-shared";
 
 const PAGE_SIZE = 10;
@@ -18,6 +21,48 @@ const BLOCKED: Record<NonNullable<NonNullable<MarketingContact["email_state"]>["
   bounced: "Correo inválido (rebotó)",
   complained: "Lo marcó como spam",
 };
+
+const formatDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Bogota" });
+
+const PROMOTIONS: Record<PromotionsStatus, { label: string; color: "success" | "default" | "danger" | "warning" }> = {
+  accepted: { label: "Habilitado", color: "success" },
+  no_answer: { label: "Sin respuesta", color: "default" },
+  declined: { label: "No aceptó", color: "danger" },
+  unsubscribed: { label: "De baja", color: "danger" },
+};
+
+const UNSUBSCRIBE_SOURCES: Record<string, string> = {
+  link: "con el enlace del correo",
+  panel: "registrada por la tienda",
+  spam: "marcó un correo como spam",
+  ses: "marcó un correo como spam",
+};
+
+/** Permiso para promociones: estado y desde cuándo. */
+function PromotionsState({ promotions }: { promotions: ContactPromotions }) {
+  const { label, color } = PROMOTIONS[promotions.status];
+  const detail =
+    promotions.status === "accepted" && promotions.at
+      ? `Aceptó el ${formatDay(promotions.at)}`
+      : promotions.status === "no_answer"
+        ? "Compró antes de la casilla; recibe"
+        : promotions.status === "declined" && promotions.at
+          ? `No marcó la casilla el ${formatDay(promotions.at)}`
+          : promotions.status === "unsubscribed"
+            ? [promotions.at && `Desde el ${formatDay(promotions.at)}`, promotions.source && UNSUBSCRIBE_SOURCES[promotions.source]]
+                .filter(Boolean)
+                .join(", ")
+            : "";
+  return (
+    <div className="space-y-1">
+      <Chip size="sm" variant="soft" color={color}>
+        {label}
+      </Chip>
+      {detail && <p className="text-xs text-muted">{detail}</p>}
+    </div>
+  );
+}
 
 /** Último envío por un canal: estado y fecha. */
 function LastSend({ last }: { last: ContactLastSend | null }) {
@@ -44,6 +89,25 @@ export function ContactsPanel() {
   const { data, isLoading, isPlaceholderData } = useQueryMarketingContacts({ page, search: debouncedSearch, filter });
   const summary = data?.summary;
   const rows = data?.items ?? [];
+  const optOut = useMutationOptOutContact();
+  const undoOptOut = useMutationUndoOptOutContact();
+  const [toOptOut, setToOptOut] = useState<MarketingContact | null>(null);
+
+  const confirmOptOut = () =>
+    toOptOut &&
+    optOut.mutate(toOptOut.key, {
+      onSuccess: () => {
+        toast.success(`${toOptOut.name} no recibirá más promociones`);
+        setToOptOut(null);
+      },
+      onError: (error) => handleAxiosError(error, "No se pudo dar de baja"),
+    });
+
+  const handleUndo = (contact: MarketingContact) =>
+    undoOptOut.mutate(contact.key, {
+      onSuccess: () => toast.success(`Baja de ${contact.name} deshecha`),
+      onError: (error) => handleAxiosError(error, "No se pudo deshacer la baja"),
+    });
 
   const columns: DataTableColumn<MarketingContact>[] = [
     {
@@ -54,13 +118,13 @@ export function ContactsPanel() {
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{contact.name}</p>
           <p className="max-w-56 truncate text-xs text-muted">{contact.email ?? contact.phone ?? "Sin contacto"}</p>
-          {contact.marketing_consent === false && (
-            <Chip size="sm" variant="soft" color="danger" className="mt-1">
-              No acepta promociones
-            </Chip>
-          )}
         </div>
       ),
+    },
+    {
+      key: "promotions",
+      label: "Promociones",
+      render: (contact) => <PromotionsState promotions={contact.promotions} />,
     },
     {
       key: "email",
@@ -87,6 +151,23 @@ export function ContactsPanel() {
       render: ({ whatsapp_state: state }) =>
         state ? <LastSend last={state.last} /> : <span className="text-xs text-muted">Sin celular</span>,
     },
+    {
+      key: "actions",
+      label: "Acciones",
+      align: "end",
+      render: (contact) =>
+        contact.promotions.can_undo ? (
+          <Button variant="ghost" size="sm" isDisabled={undoOptOut.isPending} onPress={() => handleUndo(contact)}>
+            <RotateCcw className="size-3.5" />
+            Deshacer baja
+          </Button>
+        ) : contact.promotions.status === "accepted" || contact.promotions.status === "no_answer" ? (
+          <Button variant="ghost" size="sm" className="text-danger" onPress={() => setToOptOut(contact)}>
+            <UserX className="size-3.5" />
+            Dar de baja
+          </Button>
+        ) : null,
+    },
   ];
 
   const options: { id: ContactsFilter; label: string }[] = [
@@ -94,6 +175,7 @@ export function ContactsPanel() {
     { id: "never", label: `Sin notificar${summary ? ` (${summary.never})` : ""}` },
     { id: "notified", label: `Notificados${summary ? ` (${summary.notified})` : ""}` },
     { id: "email_cooldown", label: `En espera de correo${summary ? ` (${summary.email_cooldown})` : ""}` },
+    { id: "opted_out", label: `Sin permiso${summary ? ` (${summary.opted_out})` : ""}` },
   ];
 
   return (
@@ -105,7 +187,7 @@ export function ContactsPanel() {
           </h2>
           <p className="text-xs text-muted">
             Último mensaje de cada cliente por canal. Un cliente recibe máximo un correo cada 7 días; WhatsApp no tiene
-            espera.
+            espera. Si alguien responde BAJA por WhatsApp, usa «Dar de baja»: no recibirá más correos ni mensajes.
           </p>
         </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -155,6 +237,16 @@ export function ContactsPanel() {
         itemLabel="clientes"
         pageSize={PAGE_SIZE}
         onPageChange={setPage}
+      />
+      <ConfirmDialog
+        isOpen={toOptOut !== null}
+        onOpenChange={(open) => !open && setToOptOut(null)}
+        onConfirm={confirmOptOut}
+        title="¿Dar de baja a este cliente?"
+        description={`${toOptOut?.name ?? ""} no recibirá más promociones de tu tienda, ni por correo ni por WhatsApp. Úsalo cuando el cliente lo pida (por ejemplo, si respondió BAJA).`}
+        confirmLabel="Dar de baja"
+        pendingLabel="Guardando"
+        isPending={optOut.isPending}
       />
     </Card>
   );

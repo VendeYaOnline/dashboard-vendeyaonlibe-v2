@@ -124,8 +124,8 @@ export interface MarketingQuota {
 
 export interface MarketingAudience {
   /** Clientes alcanzables por grupo; email_cooldown = con correo pero en espera de 7 días. */
-  /** declined = no aceptaron promociones en su última compra (no reciben por ningún canal). */
-  segments: Record<CampaignSegment, { email: number; email_cooldown: number; whatsapp: number; declined: number }>;
+  /** opted_out = sin permiso: no aceptaron promociones o se dieron de baja (no reciben por ningún canal). */
+  segments: Record<CampaignSegment, { email: number; email_cooldown: number; whatsapp: number; opted_out: number }>;
   customers: number;
   /** Correos que no reciben (baja, rebote o spam). */
   unsubscribed: number;
@@ -180,8 +180,8 @@ export interface CreateCampaignResponse {
   campaign: MarketingCampaign;
   /** true si ese request_id ya había creado la campaña (doble clic). */
   duplicate: boolean;
-  /** Descartados: baja/rebote y en espera de 7 días. */
-  skipped: { suppressed: number; cooldown: number };
+  /** Descartados: sin permiso (no aceptó o de baja), correo bloqueado (rebote/spam) y en espera de 7 días. */
+  skipped: { opted_out: number; suppressed: number; cooldown: number };
 }
 
 // * Notificaciones por cliente
@@ -207,16 +207,34 @@ export interface MarketingContact {
   } | null;
   /** null = sin celular válido. */
   whatsapp_state: { last: ContactLastSend | null } | null;
-  /** "Acepto recibir promociones" en su última compra; null = nunca se le preguntó (recibe). */
-  marketing_consent: boolean | null;
+  /** Permiso para promociones (correo y WhatsApp). */
+  promotions: ContactPromotions;
 }
 
-export type ContactsFilter = "all" | "never" | "notified" | "email_cooldown";
+/**
+ * accepted: marcó la casilla (con la fecha) · no_answer: compró antes de la
+ * casilla (recibe) · declined: no la marcó · unsubscribed: se dio de baja.
+ * Solo accepted y no_answer reciben.
+ */
+export type PromotionsStatus = "accepted" | "no_answer" | "declined" | "unsubscribed";
+
+export interface ContactPromotions {
+  status: PromotionsStatus;
+  /** Cuándo aceptó, no aceptó o se dio de baja. */
+  at: string | null;
+  /** Origen de la baja: link (enlace del correo) | panel (la tienda) | ses | spam. */
+  source: string | null;
+  /** La tienda puede deshacer la baja (solo las que registró ella). */
+  can_undo: boolean;
+}
+
+/** opted_out = sin permiso: no aceptaron o se dieron de baja. */
+export type ContactsFilter = "all" | "never" | "notified" | "email_cooldown" | "opted_out";
 
 export interface MarketingContactsResponse {
   items: MarketingContact[];
   total: number;
   page: number;
   totalPages: number;
-  summary: { total: number; notified: number; never: number; email_cooldown: number };
+  summary: { total: number; notified: number; never: number; email_cooldown: number; accepted: number; opted_out: number };
 }

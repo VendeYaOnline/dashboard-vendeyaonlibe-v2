@@ -76,7 +76,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
   const count = audience?.segments[segment][channel] ?? 0;
   const cooldownCount = channel === "email" ? (audience?.segments[segment].email_cooldown ?? 0) : 0;
   /** No aceptaron promociones en su última compra: no reciben por ningún canal. */
-  const declinedCount = audience?.segments[segment].declined ?? 0;
+  const optedOutCount = audience?.segments[segment].opted_out ?? 0;
   const quota = audience?.quota;
   const whatsappApi = audience?.whatsapp_mode === "api";
   const quotaBlocker =
@@ -128,9 +128,9 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                 : "Lista lista: abre cada chat desde aquí",
             );
           } else {
-            const omitted = skipped.cooldown + skipped.suppressed;
+            const omitted = skipped.cooldown + skipped.suppressed + (skipped.opted_out ?? 0);
             toast.success(
-              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días o baja).` : ""}`,
+              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días, baja o sin permiso).` : ""}`,
             );
           }
           if (campaign.channel === "whatsapp" && campaign.delivery !== "whatsapp_api") setOpenCampaign(campaign.id);
@@ -304,8 +304,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                   : "Solo cuentan los clientes con un celular colombiano válido."}
                 {cooldownCount > 0 &&
                   ` ${formatInteger(cooldownCount)} de este grupo ${cooldownCount === 1 ? "está" : "están"} en espera: ya ${cooldownCount === 1 ? "recibió" : "recibieron"} un correo en los últimos ${audience.cooldown_days} días.`}
-                {declinedCount > 0 &&
-                  ` ${formatInteger(declinedCount)} ${declinedCount === 1 ? "no aceptó" : "no aceptaron"} recibir promociones al comprar.`}
+                {optedOutCount > 0 &&
+                  ` ${formatInteger(optedOutCount)} no ${optedOutCount === 1 ? "recibe" : "reciben"} promociones: no aceptaron al comprar o se dieron de baja.`}
               </p>
             )}
           </div>

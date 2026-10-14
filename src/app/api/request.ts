@@ -370,6 +370,14 @@ export const markCampaignRecipient = async ({
   status: "opened" | "contacted" | "pending";
 }) => (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { status })).data;
 
+/** La tienda registra una baja (el cliente respondió BAJA): no recibe más correo ni WhatsApp. */
+export const optOutMarketingContact = async (key: string) =>
+  (await axiosConfig.post<{ message: string; status: string }>("/marketing/contacts/opt-out", { key })).data;
+
+/** Deshace una baja que registró la tienda. */
+export const undoOptOutMarketingContact = async (key: string) =>
+  (await axiosConfig.post<{ message: string; status: string }>("/marketing/contacts/opt-out/undo", { key })).data;
+
 export const getMarketingContacts = async ({ page, search, filter }: { page: number; search: string; filter: ContactsFilter }) => {
   const params = new URLSearchParams({ page: String(page), filter });
   if (search) params.set("search", search);
