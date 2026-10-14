@@ -26,16 +26,17 @@ const BLOCKED: Record<NonNullable<NonNullable<MarketingContact["email_state"]>["
 const formatDay = (iso: string) =>
   new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Bogota" });
 
+/** La etiqueta dice si recibe promociones; el detalle, por qué. */
 const PROMOTIONS: Record<PromotionsStatus, { label: string; color: "success" | "default" | "danger" | "warning" }> = {
-  accepted: { label: "Habilitado", color: "success" },
-  no_answer: { label: "Sin respuesta", color: "default" },
-  declined: { label: "No aceptó", color: "danger" },
-  unsubscribed: { label: "De baja", color: "danger" },
+  accepted: { label: "Recibe", color: "success" },
+  no_answer: { label: "Recibe", color: "success" },
+  declined: { label: "No recibe", color: "default" },
+  unsubscribed: { label: "No recibe", color: "danger" },
 };
 
 const UNSUBSCRIBE_SOURCES: Record<string, string> = {
   link: "con el enlace del correo",
-  panel: "registrada por la tienda",
+  panel: "la registró la tienda",
   spam: "marcó un correo como spam",
   ses: "marcó un correo como spam",
 };
@@ -45,13 +46,13 @@ function PromotionsState({ promotions }: { promotions: ContactPromotions }) {
   const { label, color } = PROMOTIONS[promotions.status];
   const detail =
     promotions.status === "accepted" && promotions.at
-      ? `Aceptó el ${formatDay(promotions.at)}`
+      ? `Aceptó la casilla el ${formatDay(promotions.at)}`
       : promotions.status === "no_answer"
-        ? "Compró antes de la casilla; recibe"
-        : promotions.status === "declined" && promotions.at
-          ? `No marcó la casilla el ${formatDay(promotions.at)}`
+        ? "Compró antes de que existiera la casilla"
+        : promotions.status === "declined"
+          ? `No aceptó la casilla${promotions.at ? ` el ${formatDay(promotions.at)}` : ""}`
           : promotions.status === "unsubscribed"
-            ? [promotions.at && `Desde el ${formatDay(promotions.at)}`, promotions.source && UNSUBSCRIBE_SOURCES[promotions.source]]
+            ? [`Se dio de baja${promotions.at ? ` el ${formatDay(promotions.at)}` : ""}`, promotions.source && UNSUBSCRIBE_SOURCES[promotions.source]]
                 .filter(Boolean)
                 .join(", ")
             : "";
@@ -176,7 +177,7 @@ export function ContactsPanel() {
     { id: "never", label: `Sin notificar${summary ? ` (${summary.never})` : ""}` },
     { id: "notified", label: `Notificados${summary ? ` (${summary.notified})` : ""}` },
     { id: "email_cooldown", label: `En espera de correo${summary ? ` (${summary.email_cooldown})` : ""}` },
-    { id: "opted_out", label: `Sin permiso${summary ? ` (${summary.opted_out})` : ""}` },
+    { id: "opted_out", label: `No reciben${summary ? ` (${summary.opted_out})` : ""}` },
   ];
 
   return (
@@ -212,6 +213,10 @@ export function ContactsPanel() {
           </ToggleButtonGroup>
         </div>
         <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+          <span className="flex items-center gap-1">
+            <UserCheck className="size-3.5" /> Promociones: recibe quien aceptó la casilla al comprar o compró antes de que
+            existiera; no recibe quien no la aceptó o se dio de baja.
+          </span>
           <span className="flex items-center gap-1">
             <Mail className="size-3.5" /> Enviado = el servidor de correo lo aceptó; Entregado = llegó al buzón.
           </span>

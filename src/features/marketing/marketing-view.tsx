@@ -243,9 +243,17 @@ export function MarketingView() {
           <div className="space-y-4">
             {step === "design" && (
               <Card>
-                <Card.Content className="space-y-3 p-4">
+                <Card.Content className="space-y-4 p-4">
+                  <TextField
+                    value={draft.name}
+                    onChange={(name) => setDrafts((current) => ({ ...current, [slot]: { ...draft, name: name.slice(0, LIMITS.name) } }))}
+                    isRequired
+                  >
+                    <Label>Nombre de esta plantilla</Label>
+                    <Input maxLength={LIMITS.name} placeholder="Ej: Descuento camisetas" />
+                  </TextField>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">Tus plantillas</p>
+                    <p className="text-sm font-semibold">Tipos de plantillas</p>
                     <p className="text-xs text-muted">Guarda hasta 3 diseños para reutilizarlos cuando quieras.</p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Plantillas">
@@ -277,14 +285,6 @@ export function MarketingView() {
                       );
                     })}
                   </div>
-                  <TextField
-                    value={draft.name}
-                    onChange={(name) => setDrafts((current) => ({ ...current, [slot]: { ...draft, name: name.slice(0, LIMITS.name) } }))}
-                    isRequired
-                  >
-                    <Label>Nombre de esta plantilla</Label>
-                    <Input maxLength={LIMITS.name} placeholder="Ej: Descuento camisetas" />
-                  </TextField>
                 </Card.Content>
               </Card>
             )}
