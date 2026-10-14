@@ -195,12 +195,10 @@ export function MarketingView() {
         </Card>
       )}
       {!data.sender.configured && (
-        <Card>
-          <Card.Content className="flex items-start gap-3 p-4 text-sm">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-            <p>El envío de correos aún no está configurado en el servidor. Puedes diseñar y ver tus correos, pero no enviarlos.</p>
-          </Card.Content>
-        </Card>
+        <p className="flex items-start gap-2 text-sm text-muted">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+          El envío de correos aún no está configurado en el servidor. Puedes diseñar y ver tus correos, pero no enviarlos.
+        </p>
       )}
 
       {/* Los 3 pasos */}
