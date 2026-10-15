@@ -32,7 +32,8 @@ export const PAID_FEATURES = {
     highlights: [
       "Correos con tu logo, colores y productos",
       "Campañas por WhatsApp a tus clientes",
-      "Historial de quién recibió cada promoción",
+      "Recordatorio de carritos abandonados",
+      "Catálogo de Facebook e Instagram que se actualiza solo",
     ],
   },
 } as const;

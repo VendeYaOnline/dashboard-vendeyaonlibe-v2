@@ -20,6 +20,7 @@ import { CampaignDetailModal } from "./campaign-detail-modal";
 import { CHANNELS, CampaignProgress, SEGMENTS, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
 import { ContactsPanel } from "./contacts-panel";
 import { AbandonedCartsPanel } from "./abandoned-carts-panel";
+import { MetaFeedPanel } from "./meta-feed-panel";
 import { WhatsappStatusBanner } from "../whatsapp/whatsapp-setup";
 import { WhatsappSetupModal } from "../whatsapp/whatsapp-setup-modal";
 
@@ -349,6 +350,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
       <ContactsPanel />
 
       <AbandonedCartsPanel />
+
+      <MetaFeedPanel />
 
       <ConfirmDialog
         isOpen={isConfirmOpen}

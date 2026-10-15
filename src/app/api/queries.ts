@@ -35,6 +35,7 @@ import {
   getCompanyUsers,
   getSuperadmins,
   getMetaCatalogSummary,
+  getMetaFeed,
   getInventory,
   getCustomers,
   getFeatures,
@@ -184,6 +185,10 @@ export const useQueryMetaCatalogSummary = (filters: MetaCatalogFilters, enabled:
     retry: false,
     enabled,
   });
+
+/** Catálogo automático para Meta (Marketing). */
+export const useQueryMetaFeed = () =>
+  useQuery({ queryKey: ["marketing", "meta-feed"], queryFn: getMetaFeed, staleTime: 30_000 });
 
 /** Clientes armados a partir de las ventas (admin y editor). */
 export const useQueryCustomers = (filters: CustomersFilters) =>

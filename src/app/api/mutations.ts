@@ -9,6 +9,9 @@ import {
   deleteCompanyUser,
   deleteSuperadmin,
   downloadMetaCatalog,
+  saveMetaFeed,
+  rotateMetaFeed,
+  disableMetaFeed,
   createCarousel,
   createCategory,
   createPlatformCompany,
@@ -458,6 +461,18 @@ const useAbandonedCartsMutation = <T,>(mutationFn: (value: T) => Promise<unknown
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing", "abandoned-carts"] }),
   });
 };
+
+const useMetaFeedMutation = <T,>(mutationFn: (value: T) => Promise<unknown>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["marketing", "meta-feed"] }),
+  });
+};
+
+export const useMutationSaveMetaFeed = () => useMetaFeedMutation(saveMetaFeed);
+export const useMutationRotateMetaFeed = () => useMetaFeedMutation(rotateMetaFeed);
+export const useMutationDisableMetaFeed = () => useMetaFeedMutation(disableMetaFeed);
 
 export const useMutationUpdateAbandonedCart = () => useAbandonedCartsMutation(updateAbandonedCart);
 export const useMutationUpdateAbandonedCartSettings = () => useAbandonedCartsMutation(updateAbandonedCartSettings);

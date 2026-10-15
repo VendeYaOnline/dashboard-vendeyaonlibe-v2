@@ -1,5 +1,5 @@
 import { isAxiosError } from "axios";
-import type { MetaCatalogFilters, MetaCatalogSummary } from "@/interfaces/catalog";
+import type { MetaCatalogFilters, MetaCatalogSummary, MetaFeedSettings } from "@/interfaces/catalog";
 import type { CoverPayload, Covers } from "@/interfaces/covers";
 import type { InventoryFilters, InventoryResponse } from "@/interfaces/inventory";
 import type { CustomersFilters, CustomersResponse } from "@/interfaces/customers";
@@ -334,6 +334,29 @@ export const downloadMetaCatalog = async (filters: MetaCatalogFilters) => {
     throw error;
   }
 };
+
+/** Catálogo automático (Marketing): los mismos filtros, enviados en el cuerpo. */
+const metaCatalogBody = (filters: MetaCatalogFilters) => ({
+  grouping: filters.grouping,
+  categoryId: filters.categoryIds,
+  includeOutOfStock: String(filters.includeOutOfStock),
+  discountedOnly: String(filters.discountedOnly),
+  minPrice: filters.minPrice || undefined,
+  maxPrice: filters.maxPrice || undefined,
+  storeUrl: filters.storeUrl.trim() || undefined,
+  brand: filters.brand.trim() || undefined,
+});
+
+export const getMetaFeed = async () => (await axiosConfig.get<MetaFeedSettings>("/catalog/meta/feed-settings")).data;
+
+export const saveMetaFeed = async (filters: MetaCatalogFilters) =>
+  (await axiosConfig.put<MetaFeedSettings>("/catalog/meta/feed-settings", metaCatalogBody(filters))).data;
+
+export const rotateMetaFeed = async () =>
+  (await axiosConfig.post<MetaFeedSettings>("/catalog/meta/feed-settings/rotate")).data;
+
+export const disableMetaFeed = async () =>
+  (await axiosConfig.delete<MetaFeedSettings>("/catalog/meta/feed-settings")).data;
 
 // * Marketing (vista de pago)
 
