@@ -45,13 +45,24 @@ function InboxPreview({ name }: { name: string }) {
 }
 
 /** Marca de los correos: nombre, respuestas, logo, enlace de la tienda y redes. */
+/** http(s)://dominio: lo mínimo para que el servidor lo acepte. */
+export const isValidStoreUrl = (value: string) => {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+};
+
 export function BrandForm({ brand, onChange, senderEmail }: BrandFormProps) {
   const [isLogoPickerOpen, setIsLogoPickerOpen] = useState(false);
   const set = (patch: Partial<MarketingBrand>) => onChange({ ...brand, ...patch });
+  const storeUrlInvalid = brand.store_url !== "" && !isValidStoreUrl(brand.store_url);
 
   return (
     <div className="space-y-5">
       <FormSection
+        tour="brand-sender"
         title="Remitente"
         description={`El correo sale desde ${senderEmail ?? "el dominio de VendeYaOnline"} con el nombre de tu marca, y las respuestas llegan a tu correo.`}
       >
@@ -70,7 +81,7 @@ export function BrandForm({ brand, onChange, senderEmail }: BrandFormProps) {
         </div>
       </FormSection>
 
-      <FormSection title="Logo" description="Aparece arriba de cada correo. Si no eliges uno, se muestra el nombre de tu marca.">
+      <FormSection tour="brand-logo" title="Logo" description="Aparece arriba de cada correo. Si no eliges uno, se muestra el nombre de tu marca.">
         <div className="space-y-3">
           <div className="flex h-28 w-full items-center justify-center rounded-xl border border-border bg-white p-3 sm:w-64">
             {brand.logo_url ? (
@@ -95,10 +106,21 @@ export function BrandForm({ brand, onChange, senderEmail }: BrandFormProps) {
         </div>
       </FormSection>
 
-      <FormSection title="Tu tienda" description="A dónde llevan los botones y las imágenes de tus correos.">
-        <TextField value={brand.store_url} onChange={(store_url) => set({ store_url: store_url.trim() })} type="url">
+      <FormSection tour="brand-store" title="Tu tienda" description="A dónde llevan los botones y las imágenes de tus correos.">
+        <TextField
+          value={brand.store_url}
+          onChange={(store_url) => set({ store_url: store_url.trim() })}
+          type="url"
+          isRequired
+          isInvalid={storeUrlInvalid}
+        >
           <Label>Enlace de tu tienda</Label>
           <Input placeholder="https://www.tumarca.com" maxLength={LIMITS.url} />
+          <p className={`mt-1 text-xs ${storeUrlInvalid ? "text-danger" : "text-muted"}`}>
+            {storeUrlInvalid
+              ? "Escríbelo completo, empezando por https:// (ejemplo: https://www.tumarca.com)."
+              : "Obligatorio: sin él, tus clientes no podrían comprar desde el correo."}
+          </p>
         </TextField>
       </FormSection>
 

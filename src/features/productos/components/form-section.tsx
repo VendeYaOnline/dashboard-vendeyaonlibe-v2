@@ -5,6 +5,8 @@ interface FormSectionProps {
   description?: string;
   /** Acción a la derecha del título (p. ej. el botón "Agregar"). */
   action?: ReactNode;
+  /** Ancla de la guía interactiva (`data-tour`). */
+  tour?: string;
   children: ReactNode;
 }
 
@@ -12,9 +14,9 @@ interface FormSectionProps {
  * Bloque del formulario de producto: tarjeta blanca sobre el fondo gris del
  * modal con título, descripción opcional y una acción alineada a la derecha.
  */
-export function FormSection({ title, description, action, children }: FormSectionProps) {
+export function FormSection({ title, description, action, tour, children }: FormSectionProps) {
   return (
-    <section className="space-y-4 rounded-xl border border-border bg-surface p-4">
+    <section data-tour={tour} className="space-y-4 rounded-xl border border-border bg-surface p-4">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>

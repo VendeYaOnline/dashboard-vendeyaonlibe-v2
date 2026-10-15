@@ -212,7 +212,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card data-tour="send-new">
         <Card.Content className="space-y-5 p-5">
           <h2 className="flex items-center gap-2 font-semibold">
             <Send className="size-4" /> Nueva campaña
@@ -250,7 +250,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2" data-tour="send-channel">
             <p className="text-sm font-medium">2. Canal</p>
             <ToggleButtonGroup
               aria-label="Canal"
@@ -280,9 +280,9 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                   : "Se arma una lista con un botón por cliente que abre WhatsApp con el mensaje ya escrito; lo envías tú desde el WhatsApp de tu marca."}
             </p>
             {channel === "whatsapp" && whatsapp && (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <WhatsappStatusBanner settings={whatsapp} className="flex-1 py-2" />
-                <Button variant="outline" size="sm" className="shrink-0" onPress={() => setIsWhatsappOpen(true)}>
+              <div className="space-y-2">
+                <WhatsappStatusBanner settings={whatsapp} className="py-2" />
+                <Button variant="outline" size="sm" onPress={() => setIsWhatsappOpen(true)}>
                   <MessageCircle className="size-4" />
                   {whatsapp.ready && whatsapp.verified ? "Ver configuración" : "Configurar WhatsApp Business"}
                 </Button>
@@ -348,7 +348,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         </Card.Content>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" data-tour="send-history">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
           <div>
             <h2 className="flex items-center gap-2 font-semibold">
@@ -384,11 +384,17 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         />
       </Card>
 
-      <ContactsPanel />
+      <div data-tour="send-contacts">
+        <ContactsPanel />
+      </div>
 
-      <AbandonedCartsPanel />
+      <div data-tour="send-carts">
+        <AbandonedCartsPanel />
+      </div>
 
-      <MetaFeedPanel />
+      <div data-tour="send-meta">
+        <MetaFeedPanel />
+      </div>
 
       <ConfirmDialog
         isOpen={isConfirmOpen}
