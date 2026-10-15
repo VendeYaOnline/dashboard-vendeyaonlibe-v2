@@ -48,3 +48,26 @@ export interface MetaCatalogSummary {
   storeUrlSource: "request" | "saved" | null;
   productPath: string;
 }
+
+/** Filtros del catálogo automático tal como los guarda el servidor. */
+export interface MetaFeedSavedFilters {
+  grouping: CatalogGrouping;
+  categoryIds: string[];
+  includeOutOfStock: boolean;
+  discountedOnly: boolean;
+  minPrice: number | null;
+  maxPrice: number | null;
+  storeUrl: string | null;
+  brand: string;
+}
+
+/** Catálogo automático para Meta (parte de Marketing): URL secreta que Meta lee cada cierto tiempo. */
+export interface MetaFeedSettings {
+  enabled: boolean;
+  url: string | null;
+  filters: MetaFeedSavedFilters | null;
+  created_at: string | null;
+  /** Última vez que Meta (u otro) leyó la URL, y cuántas filas recibió. */
+  last_fetched_at: string | null;
+  last_rows: number | null;
+}

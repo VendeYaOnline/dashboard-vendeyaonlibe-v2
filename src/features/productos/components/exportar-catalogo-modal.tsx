@@ -19,7 +19,7 @@ import {
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { PendingButton } from "@/components/shared/pending-button";
 import { useQueryAllCategories, useQueryMetaCatalogSummary } from "@/app/api/queries";
-import { useMutationDownloadMetaCatalog } from "@/app/api/mutations";
+import { useMutationDownloadMetaCatalog, useMutationSaveMetaFeed } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { CatalogGrouping, MetaCatalogFilters } from "@/interfaces/catalog";
@@ -30,6 +30,13 @@ import { MultiSelectPopover } from "./multi-select-popover";
 interface ExportarCatalogoModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  /**
+   * download = descarga el CSV (por defecto). feed = guarda los filtros del
+   * catálogo automático de Marketing (la URL que Meta lee sola).
+   */
+  mode?: "download" | "feed";
+  /** Filtros con los que abre (los guardados del catálogo automático). */
+  initialFilters?: MetaCatalogFilters;
 }
 
 /** Sin filtros: productos visibles en la tienda con unidades en alguna variante. */
@@ -43,6 +50,8 @@ const DEFAULT_FILTERS: MetaCatalogFilters = {
   storeUrl: "",
   brand: "",
 };
+
+const FEED_DEFAULT_FILTERS: MetaCatalogFilters = { ...DEFAULT_FILTERS, includeOutOfStock: true };
 
 /** Mismo tope de precio que el servidor (100 millones), para no pedir un resumen que fallaría. */
 const MAX_PRICE_DIGITS = 100_000_000;
@@ -98,9 +107,13 @@ const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota
  * resumen se recalcula en el servidor al cambiar cualquier filtro, así lo que
  * se ve es exactamente lo que trae el archivo.
  */
-export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogoModalProps) {
+export function ExportarCatalogoModal({ isOpen, onOpenChange, mode = "download", initialFilters }: ExportarCatalogoModalProps) {
   const state = useOverlayState({ isOpen, onOpenChange });
-  const [filters, setFilters] = useState<MetaCatalogFilters>(DEFAULT_FILTERS);
+  const isFeed = mode === "feed";
+  // En el catálogo automático los agotados salen por defecto: Meta los marca como
+  // agotados y no los anuncia. Si se quitan, desaparecen del catálogo y pierden su historial.
+  const defaults = isFeed ? FEED_DEFAULT_FILTERS : DEFAULT_FILTERS;
+  const [filters, setFilters] = useState<MetaCatalogFilters>(initialFilters ?? defaults);
   // Una dirección a medio escribir no se envía: no tiene sentido pedir un resumen con ella.
   const storeUrlInvalid = filters.storeUrl !== "" && !isValidStoreUrl(filters.storeUrl);
   const queryFilters = useMemo(
@@ -124,12 +137,14 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
     isFetching,
   } = useQueryMetaCatalogSummary(debounced, isOpen && !rangeInvalid);
   const downloadMutation = useMutationDownloadMetaCatalog();
+  const saveFeed = useMutationSaveMetaFeed();
+  const isPending = downloadMutation.isPending || saveFeed.isPending;
 
   const isCalculating = !rangeInvalid && (debounced !== queryFilters || isFetching);
   const errorMessage = error
     ? (isAxiosError(error) && error.response?.data?.message) || "No se pudo calcular el catálogo. Inténtalo de nuevo."
     : null;
-  const isDefault = JSON.stringify({ ...filters, storeUrl: "" }) === JSON.stringify({ ...DEFAULT_FILTERS });
+  const isDefault = JSON.stringify({ ...filters, storeUrl: "" }) === JSON.stringify({ ...defaults });
   // La dirección de la tienda solo se pide si la empresa no la tiene guardada.
   const showStoreUrlInput = summary ? summary.storeUrlSource !== "saved" : filters.storeUrl !== "";
   const canDownload =
@@ -144,15 +159,28 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
       onError: (downloadError) => handleAxiosError(downloadError, "No se pudo generar el archivo del catálogo"),
     });
 
+  const handleSaveFeed = () =>
+    saveFeed.mutate(queryFilters, {
+      onSuccess: () => {
+        toast.success(initialFilters ? "Catálogo automático actualizado. Meta lo verá en su próxima lectura." : "Catálogo automático activado. Copia la URL y pégala en Meta.");
+        onOpenChange(false);
+      },
+      onError: (saveError) => handleAxiosError(saveError, "No se pudo guardar el catálogo automático"),
+    });
+
   return (
     <Modal state={state}>
-      <Modal.Backdrop isDismissable={!downloadMutation.isPending}>
+      <Modal.Backdrop isDismissable={!isPending}>
         <Modal.Container size="lg" scroll="inside">
           <Modal.Dialog className="max-w-2xl">
             <ModalFormHeader
               icon={FileSpreadsheet}
-              title="Exportar catálogo para Meta"
-              description="Descarga un archivo listo para importar en Meta Commerce Manager y crear anuncios de Facebook e Instagram que llevan a cada producto."
+              title={isFeed ? "Productos del catálogo automático" : "Exportar catálogo para Meta"}
+              description={
+                isFeed
+                  ? "Elige qué productos lee Meta. Puedes cambiarlo cuando quieras: la URL sigue siendo la misma."
+                  : "Descarga un archivo listo para importar en Meta Commerce Manager y crear anuncios de Facebook e Instagram que llevan a cada producto."
+              }
             />
 
             <Modal.Body className="space-y-4">
@@ -186,7 +214,7 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                         <AlertTriangle className="size-5 shrink-0 text-warning" />
                       )}
                       {summary.items > 0
-                        ? `Se exportarán ${plural(summary.products, "producto", "productos")}`
+                        ? `${isFeed ? "Meta recibirá" : "Se exportarán"} ${plural(summary.products, "producto", "productos")}`
                         : "Ningún producto cumple estos filtros"}
                       {isCalculating && <Spinner size="sm" />}
                     </p>
@@ -225,7 +253,7 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                             "producto no se puede exportar",
                             "productos no se pueden exportar",
                           )}
-                          . Corrígelos y vuelve a descargar:
+                          {isFeed ? ". Cuando los corrijas, Meta los recibirá en su próxima lectura:" : ". Corrígelos y vuelve a descargar:"}
                         </p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-9">
                           {summary.problemProducts.slice(0, 5).map((problem) => (
@@ -321,13 +349,17 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
 
               <FormSection
                 title="Filtros (opcionales)"
-                description="Sin filtros se exportan todos los productos visibles en tu tienda que tengan unidades disponibles."
+                description={
+                  isFeed
+                    ? "Sin filtros, Meta recibe todos los productos visibles en tu tienda (los agotados, marcados como agotados)."
+                    : "Sin filtros se exportan todos los productos visibles en tu tienda que tengan unidades disponibles."
+                }
                 action={
                   <Button
                     size="sm"
                     variant="ghost"
                     isDisabled={isDefault}
-                    onPress={() => setFilters((current) => ({ ...DEFAULT_FILTERS, storeUrl: current.storeUrl }))}
+                    onPress={() => setFilters((current) => ({ ...defaults, storeUrl: current.storeUrl }))}
                   >
                     <RotateCcw className="size-3.5" />
                     Restablecer
@@ -387,6 +419,12 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                       <Label>Incluir productos agotados</Label>
                     </Switch.Content>
                   </Switch>
+                  {isFeed && (
+                    <p className="-mt-1 text-xs text-muted">
+                      Recomendado: Meta los marca como agotados y no los anuncia. Si los quitas, desaparecen del
+                      catálogo y vuelven como nuevos cuando tengas unidades.
+                    </p>
+                  )}
                 </div>
 
                 <TextField value={filters.brand} onChange={(value) => set("brand", value.slice(0, 100))}>
@@ -398,6 +436,7 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                 </TextField>
               </FormSection>
 
+              {!isFeed && (
               <details className="group rounded-xl border border-border bg-surface p-4 text-sm">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-medium">
                   ¿Cómo lo subo a Meta?
@@ -416,23 +455,41 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange }: ExportarCatalogo
                   opción de variantes: cada producto conserva siempre el mismo id, así que se actualiza sin
                   duplicarse. Si cambias de opción, reemplaza el catálogo anterior.
                 </p>
+                <p className="mt-2 text-xs text-muted">
+                  ¿Prefieres que se actualice solo? Con Marketing activo puedes darle a Meta una URL que lee cada
+                  hora: <span className="font-medium text-foreground">Marketing → Envía → Catálogo automático para Meta</span>.
+                </p>
               </details>
+              )}
             </Modal.Body>
 
             <Modal.Footer>
-              <Button variant="ghost" isDisabled={downloadMutation.isPending} onPress={() => onOpenChange(false)}>
+              <Button variant="ghost" isDisabled={isPending} onPress={() => onOpenChange(false)}>
                 Cerrar
               </Button>
-              <PendingButton
-                variant="primary"
-                isDisabled={!canDownload}
-                isPending={downloadMutation.isPending}
-                pendingLabel="Generando archivo"
-                onPress={handleDownload}
-              >
-                <Download className="size-4" />
-                Descargar CSV
-              </PendingButton>
+              {isFeed ? (
+                <PendingButton
+                  variant="primary"
+                  isDisabled={!canDownload}
+                  isPending={saveFeed.isPending}
+                  pendingLabel="Guardando"
+                  onPress={handleSaveFeed}
+                >
+                  <CheckCircle2 className="size-4" />
+                  {initialFilters ? "Guardar cambios" : "Activar catálogo automático"}
+                </PendingButton>
+              ) : (
+                <PendingButton
+                  variant="primary"
+                  isDisabled={!canDownload}
+                  isPending={downloadMutation.isPending}
+                  pendingLabel="Generando archivo"
+                  onPress={handleDownload}
+                >
+                  <Download className="size-4" />
+                  Descargar CSV
+                </PendingButton>
+              )}
             </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>
