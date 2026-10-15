@@ -116,7 +116,7 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
 
   return (
     <div className="space-y-5">
-      <FormSection title="1. ¿Qué quieres promocionar?">
+      <FormSection tour="editor-goal" title="1. ¿Qué quieres promocionar?">
         <div className="grid gap-3 sm:grid-cols-2">
           {GOALS.map((goal) => {
             const Icon = goal.icon;
@@ -199,7 +199,7 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
         </FormSection>
       )}
 
-      <FormSection title="3. Tu mensaje" description="Todo es opcional, pero un título y un mensaje ayudan a que no llegue a spam.">
+      <FormSection tour="editor-message" title="3. Tu mensaje" description="Todo es opcional, pero un título y un mensaje ayudan a que no llegue a spam.">
         <div className="grid gap-4">
           <TextField value={content.heading} onChange={(heading) => setContent({ heading: heading.slice(0, LIMITS.heading) })}>
             <Label>Título</Label>
@@ -236,7 +236,7 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
         </div>
       </FormSection>
 
-      <FormSection title="4. Bandeja de entrada" description="Lo primero que ve tu cliente, antes de abrir el correo.">
+      <FormSection tour="editor-inbox" title="4. Bandeja de entrada" description="Lo primero que ve tu cliente, antes de abrir el correo.">
         <div className="grid gap-4">
           <TextField value={content.subject} onChange={(subject) => setContent({ subject: subject.slice(0, LIMITS.subject) })} isRequired>
             <Label>Asunto</Label>

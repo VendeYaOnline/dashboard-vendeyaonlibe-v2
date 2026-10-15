@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, Megaphone, Send } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Compass, Megaphone, Send } from "lucide-react";
 import { Button, Card, Input, Label, Spinner, TextField, cn, toast } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import { FeaturePlanButton } from "@/components/layout/feature-billing-dialogs";
@@ -14,7 +14,8 @@ import {
 } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
 import type { MarketingBrand, MarketingProduct, MarketingTemplate, MarketingTemplateDraft } from "@/interfaces/marketing";
-import { BrandForm } from "./components/brand-form";
+import { BrandForm, isValidStoreUrl } from "./components/brand-form";
+import { useMarketingTour } from "./marketing-tour";
 import { CampaignsPanel } from "./components/campaigns-panel";
 import { EmailPreview } from "./components/email-preview";
 import { TemplateEditor } from "./components/template-editor";
@@ -91,6 +92,18 @@ export function MarketingView() {
           : !draft.name.trim()
             ? "ponle un nombre a la plantilla."
             : null;
+
+  // Guía interactiva de cada paso: sola la primera vez, y con «Ver guía».
+  const tour = useMarketingTour(step, Boolean(data && draft && brand));
+  const brandIncomplete = !brand
+    ? null
+    : !brand.sender_name.trim()
+      ? "escribe el nombre de tu marca."
+      : !brand.store_url.trim()
+        ? "escribe el enlace de tu tienda."
+        : !isValidStoreUrl(brand.store_url)
+          ? "revisa el enlace de tu tienda (debe empezar por https://)."
+          : null;
 
   const previewRequest = useMemo(
     () => (draft ? { template: draft, ...(step === "brand" && brand ? { brand } : {}) } : null),
@@ -202,7 +215,13 @@ export function MarketingView() {
       )}
 
       {/* Los 3 pasos */}
-      <nav aria-label="Pasos" className="grid gap-2 sm:grid-cols-3">
+      <div className="flex justify-end">
+        <Button variant="ghost" size="sm" onPress={tour.start}>
+          <Compass className="size-4" />
+          Ver guía de este paso
+        </Button>
+      </div>
+      <nav aria-label="Pasos" data-tour="steps" className="-mt-4 grid gap-2 sm:grid-cols-3">
         {STEPS.map((item, index) => {
           const isActive = step === item.id;
           const isDone = stepDone[item.id];
@@ -240,7 +259,7 @@ export function MarketingView() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-4">
             {step === "design" && (
-              <Card>
+              <Card data-tour="templates">
                 <Card.Content className="space-y-4 p-4">
                   <TextField
                     value={draft.name}
@@ -308,7 +327,7 @@ export function MarketingView() {
             )}
 
             {/* Acciones del paso */}
-            <Card>
+            <Card data-tour="actions">
               <Card.Content className="flex flex-wrap items-center gap-3 p-4">
                 {step === "design" ? (
                   <>
@@ -348,7 +367,7 @@ export function MarketingView() {
                       onPress={handleSaveBrand}
                       isPending={saveBrand.isPending}
                       pendingLabel="Guardando"
-                      isDisabled={(!isBrandDirty && data.brandSaved) || !brand.sender_name.trim()}
+                      isDisabled={(!isBrandDirty && data.brandSaved) || Boolean(brandIncomplete)}
                     >
                       Guardar marca
                     </PendingButton>
@@ -360,7 +379,9 @@ export function MarketingView() {
                 )}
                 <p className="w-full text-xs text-muted">
                   {step === "brand"
-                    ? "Se usa en todos tus correos. La vista previa muestra tu marca con la plantilla elegida."
+                    ? brandIncomplete
+                      ? `Para guardar: ${brandIncomplete}`
+                      : "Se usa en todos tus correos. La vista previa muestra tu marca con la plantilla elegida."
                     : incomplete
                       ? `Para guardar: ${incomplete}`
                       : testBlocker
@@ -371,7 +392,7 @@ export function MarketingView() {
             </Card>
           </div>
 
-          <div className="xl:self-start">
+          <div className="xl:self-start" data-tour="preview">
             <EmailPreview request={previewRequest} senderName={(step === "brand" ? brand : data.brand).sender_name} />
           </div>
         </div>

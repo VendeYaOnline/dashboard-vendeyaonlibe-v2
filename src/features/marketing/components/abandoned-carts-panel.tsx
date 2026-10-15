@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExternalLink, ShoppingCart, X } from "lucide-react";
+import { MessageCircle, RotateCcw, ShoppingCart, X } from "lucide-react";
 import {
   Button,
   Card,
@@ -128,30 +128,42 @@ export function AbandonedCartsPanel() {
       label: "Acciones",
       align: "end",
       render: (cart) =>
-        cart.status === "recovered" ? null : (
-          <div className="flex justify-end gap-1">
-            {cart.whatsapp_url && cart.status !== "dismissed" && (
+        cart.status === "recovered" ? (
+          <span className="text-xs text-muted">Sin acciones</span>
+        ) : cart.status === "dismissed" ? (
+          <Button variant="outline" size="sm" onPress={() => setStatus(cart, "open")}>
+            <RotateCcw className="size-3.5" />
+            Restaurar
+          </Button>
+        ) : (
+          <div className="flex items-center justify-end gap-2">
+            {cart.whatsapp_url ? (
               <a
                 href={cart.whatsapp_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 // Abrir el chat lo deja como "WhatsApp enviado".
                 onClick={() => cart.status !== "contacted" && setStatus(cart, "contacted")}
-                className={cn(buttonVariants({ variant: cart.status === "contacted" ? "ghost" : "primary", size: "sm" }))}
+                className={cn(
+                  buttonVariants({ variant: cart.status === "contacted" ? "outline" : "primary", size: "sm" }),
+                  "whitespace-nowrap",
+                )}
               >
-                <ExternalLink className="size-3.5" />
-                {cart.status === "contacted" ? "Abrir otra vez" : "Abrir WhatsApp"}
+                <MessageCircle className="size-3.5" />
+                {cart.status === "contacted" ? "Escribir otra vez" : "Escribir por WhatsApp"}
               </a>
-            )}
-            {cart.status === "dismissed" ? (
-              <Button variant="ghost" size="sm" onPress={() => setStatus(cart, "open")}>
-                Restaurar
-              </Button>
             ) : (
-              <Button variant="ghost" size="sm" isIconOnly aria-label={`Descartar el carrito de ${cart.name}`} onPress={() => setStatus(cart, "dismissed")}>
-                <X className="size-3.5" />
-              </Button>
+              <span className="text-xs text-muted">{cart.phone ? "No recibe promociones" : "Sin celular"}</span>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              isIconOnly
+              aria-label={`Descartar el carrito de ${cart.name}`}
+              onPress={() => setStatus(cart, "dismissed")}
+            >
+              <X className="size-4" />
+            </Button>
           </div>
         ),
     },
@@ -185,7 +197,8 @@ export function AbandonedCartsPanel() {
         </div>
 
         {config && (
-          <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-secondary px-4 py-3 sm:flex-row sm:items-center">
+          <div className="grid gap-4 rounded-lg border border-border bg-surface-secondary px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="space-y-1">
             <Switch
               isSelected={config.email_enabled}
               isDisabled={!isAdmin || settings.isPending}
@@ -195,11 +208,17 @@ export function AbandonedCartsPanel() {
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
-                <Label className="text-sm">Recordatorio automático por correo</Label>
+                <Label className="text-sm font-medium">Recordatorio automático por correo</Label>
               </Switch.Content>
             </Switch>
-            <div className="flex items-center gap-2 sm:ml-auto">
-              <span className="text-xs text-muted">Esperar</span>
+            <p className="text-xs text-muted">
+              {config.email_enabled
+                ? `Si no compra en ${config.delay_hours} ${config.delay_hours === 1 ? "hora" : "horas"}, se le envía un solo correo con sus productos. Por WhatsApp, escríbele desde la tabla.`
+                : "El correo automático está desactivado: escríbeles por WhatsApp desde la tabla."}
+            </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted">Enviar después de</span>
               <Select
                 aria-label="Horas de espera"
                 selectedKey={String(config.delay_hours)}
@@ -222,11 +241,6 @@ export function AbandonedCartsPanel() {
                 </Select.Popover>
               </Select>
             </div>
-            <p className="text-xs text-muted sm:basis-full">
-              {config.email_enabled
-                ? `Si no compra en ${config.delay_hours} ${config.delay_hours === 1 ? "hora" : "horas"}, se le envía un solo correo con sus productos. Por WhatsApp, ábrelo desde aquí.`
-                : "El correo automático está desactivado: escríbeles por WhatsApp desde aquí."}
-            </p>
           </div>
         )}
 
