@@ -16,6 +16,7 @@ import type {
   MarketingAudience,
   MarketingBrand,
   MarketingCampaign,
+  CampaignSalesSummary,
   MarketingCampaignDetail,
   MarketingPreviewRequest,
   MarketingResponse,
@@ -377,7 +378,7 @@ export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
 export const getMarketingAudience = async () => (await axiosConfig.get<MarketingAudience>("/marketing/audience")).data;
 
 export const getMarketingCampaigns = async () =>
-  (await axiosConfig.get<{ campaigns: MarketingCampaign[] }>("/marketing/campaigns")).data;
+  (await axiosConfig.get<{ campaigns: MarketingCampaign[]; sales_summary?: CampaignSalesSummary }>("/marketing/campaigns")).data;
 
 export const getMarketingCampaign = async (id: string) =>
   (await axiosConfig.get<MarketingCampaignDetail>(`/marketing/campaigns/${id}`)).data;

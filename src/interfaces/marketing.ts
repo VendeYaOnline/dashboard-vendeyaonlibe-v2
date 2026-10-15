@@ -168,6 +168,35 @@ export interface MarketingCampaign {
   created_by: string | null;
   created_at: string;
   finished_at: string | null;
+  /** Compras de quienes la recibieron en los 7 días siguientes (cada venta cuenta para la campaña más reciente). */
+  sales?: CampaignSalesStats;
+}
+
+export interface CampaignSalesStats {
+  count: number;
+  /** Clientes distintos que compraron. */
+  buyers: number;
+  /** Pesos. */
+  total: number;
+  /** Ventas que usaron el código de descuento de la campaña. */
+  with_code: number;
+}
+
+/** Venta de alguien que recibió la campaña. */
+export interface CampaignSale {
+  id: string;
+  order_number: string | null;
+  name: string;
+  total: number;
+  purchase_date: string;
+  status: string;
+  used_code: boolean;
+}
+
+/** Total de ventas después de las campañas en los últimos `days` días. */
+export interface CampaignSalesSummary extends CampaignSalesStats {
+  days: number;
+  attribution_days: number;
 }
 
 export interface CampaignRecipient {
@@ -184,6 +213,8 @@ export interface CampaignRecipient {
 
 export interface MarketingCampaignDetail {
   campaign: MarketingCampaign;
+  sales?: CampaignSale[];
+  discount_code?: string | null;
   /** Solo WhatsApp ("{nombre}" = nombre de cada cliente). */
   message: string | null;
   recipients: CampaignRecipient[];
