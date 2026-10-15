@@ -139,13 +139,13 @@ export function MetaFeedPanel() {
             {feed.last_fetched_at ? (
               <p className="flex items-center gap-2 text-sm text-success">
                 <CheckCircle2 className="size-4 shrink-0" />
-                Meta la leyó por última vez el {formatDateTime(feed.last_fetched_at)}
+                Leída por última vez el {formatDateTime(feed.last_fetched_at)}
                 {feed.last_rows ? ` (${feed.last_rows.toLocaleString("es-CO")} ${feed.last_rows === 1 ? "producto" : "productos"})` : ""}.
               </p>
             ) : (
               <p className="flex items-start gap-2 text-sm text-warning">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                Meta aún no la ha leído. Pégala en Commerce Manager siguiendo los pasos de abajo.
+                Aún no se ha leído. Pégala en Meta Commerce Manager siguiendo los pasos de abajo.
               </p>
             )}
 
