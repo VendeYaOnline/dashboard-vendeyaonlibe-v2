@@ -1,11 +1,12 @@
 "use client";
 
-import { Check, ExternalLink, Megaphone, RotateCcw } from "lucide-react";
+import { Check, ExternalLink, Megaphone, RotateCcw, Ticket, TrendingUp } from "lucide-react";
 import { Button, Chip, Modal, Spinner, buttonVariants, cn, useOverlayState } from "@heroui/react";
 import { ModalFormHeader } from "@/components/shared/modal-form-header";
 import { useQueryMarketingCampaign } from "@/app/api/queries";
 import { useMutationMarkRecipient } from "@/app/api/mutations";
 import { handleAxiosError } from "@/lib/error-handler";
+import { formatMoney } from "@/features/analisis/utils";
 import type { CampaignRecipient } from "@/interfaces/marketing";
 import { CHANNELS, CampaignProgress, RECIPIENT_STATUS, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
 
@@ -54,6 +55,47 @@ export function CampaignDetailModal({ campaignId, onClose }: { campaignId: strin
               ) : (
                 <>
                   <CampaignProgress campaign={campaign} />
+                  <section className="space-y-2 rounded-lg border border-border p-3">
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                      <TrendingUp className="size-4 text-success" />
+                      Compraron después de recibirla
+                      {data.sales && data.sales.length > 0 && (
+                        <span className="ml-auto font-semibold tabular-nums text-success">
+                          {formatMoney(data.sales.reduce((sum, sale) => sum + sale.total, 0))}
+                        </span>
+                      )}
+                    </p>
+                    {!data.sales || data.sales.length === 0 ? (
+                      <p className="text-xs text-muted">
+                        Aún nadie que la recibió ha comprado. Se cuentan las compras de los 7 días siguientes al envío.
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-border">
+                        {data.sales.map((sale) => (
+                          <li key={sale.id} className="flex flex-wrap items-center gap-2 py-1.5 text-sm">
+                            <span className="min-w-0 flex-1 truncate">
+                              {sale.name}
+                              <span className="text-xs text-muted">
+                                {" "}· {formatDateTime(sale.purchase_date)}
+                                {sale.order_number ? ` · ${sale.order_number}` : ""} · {sale.status}
+                              </span>
+                            </span>
+                            {sale.used_code && (
+                              <Chip size="sm" variant="soft" color="success">
+                                <Ticket className="size-3" /> Usó el código
+                              </Chip>
+                            )}
+                            <span className="font-medium tabular-nums">{formatMoney(sale.total)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {data.discount_code && (
+                      <p className="text-xs text-muted">
+                        Código de la campaña: <span className="font-medium text-foreground">{data.discount_code}</span>
+                      </p>
+                    )}
+                  </section>
                   {isManual && data.message && (
                     <div className="space-y-1">
                       <p className="text-xs font-medium text-muted">Mensaje (con el nombre de cada cliente)</p>
