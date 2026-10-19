@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, Compass, Megaphone, Send } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Compass, Lock, Megaphone, Send } from "lucide-react";
 import { Button, Card, Input, Label, Spinner, TextField, cn, toast } from "@heroui/react";
 import { PageHeader } from "@/components/layout/page-header";
 import { FeaturePlanButton } from "@/components/layout/feature-billing-dialogs";
@@ -121,6 +121,12 @@ export function MarketingView() {
     return <p className="py-24 text-center text-sm text-muted">No se pudo cargar Marketing. Recarga la página.</p>;
   }
 
+  // La marca es obligatoria y se guarda aparte: mientras no esté guardada (o tenga cambios sin
+  // guardar) no se puede pasar al diseño ni al envío. Así la vista previa y los correos
+  // siempre usan la misma marca guardada.
+  const brandPending = !data.brandSaved || isBrandDirty;
+  const isStepLocked = (id: Step) => id !== "brand" && brandPending;
+
   const stepDone: Record<Step, boolean> = {
     brand: data.brandSaved,
     design: data.templates.some((template) => template.saved),
@@ -225,15 +231,19 @@ export function MarketingView() {
         {STEPS.map((item, index) => {
           const isActive = step === item.id;
           const isDone = stepDone[item.id];
+          const isLocked = isStepLocked(item.id);
           return (
             <button
               key={item.id}
               type="button"
               aria-current={isActive ? "step" : undefined}
+              disabled={isLocked}
+              title={isLocked ? "Guarda tu marca para continuar" : undefined}
               onClick={() => setStep(item.id)}
               className={cn(
                 "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
                 isActive ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border bg-surface hover:bg-surface-secondary",
+                isLocked && "cursor-not-allowed opacity-60 hover:bg-surface",
               )}
             >
               <span
@@ -242,11 +252,11 @@ export function MarketingView() {
                   isActive ? "bg-accent text-accent-foreground" : isDone ? "bg-success text-white" : "bg-surface-secondary text-muted",
                 )}
               >
-                {isDone && !isActive ? <Check className="size-4" aria-label="Listo" /> : index + 1}
+                {isDone && !isActive ? <Check className="size-4" aria-label="Listo" /> : isLocked ? <Lock className="size-3.5" aria-label="Bloqueado" /> : index + 1}
               </span>
               <span className="min-w-0">
                 <span className="block font-semibold">{item.title}</span>
-                <span className="block truncate text-xs text-muted">{item.hint}</span>
+                <span className="block truncate text-xs text-muted">{isLocked ? "Primero guarda tu marca" : item.hint}</span>
               </span>
             </button>
           );
@@ -371,17 +381,24 @@ export function MarketingView() {
                     >
                       Guardar marca
                     </PendingButton>
-                    <Button variant="ghost" isDisabled={!data.brandSaved || isBrandDirty} onPress={() => setStep("design")}>
+                    <Button variant="ghost" isDisabled={brandPending} onPress={() => setStep("design")}>
                       Siguiente: diseña tu correo
                       <ArrowRight className="size-4" />
                     </Button>
+                    {isBrandDirty && data.brandSaved && (
+                      <Button variant="ghost" onPress={() => setBrand(structuredClone(data.brand))}>
+                        Descartar cambios
+                      </Button>
+                    )}
                   </>
                 )}
                 <p className="w-full text-xs text-muted">
                   {step === "brand"
                     ? brandIncomplete
                       ? `Para guardar: ${brandIncomplete}`
-                      : "Se usa en todos tus correos. La vista previa muestra tu marca con la plantilla elegida."
+                      : brandPending
+                        ? "Guarda la marca para poder pasar al diseño de tu correo y al envío."
+                        : "Se usa en todos tus correos. La vista previa muestra tu marca con la plantilla elegida."
                     : incomplete
                       ? `Para guardar: ${incomplete}`
                       : testBlocker
