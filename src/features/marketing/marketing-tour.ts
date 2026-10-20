@@ -106,7 +106,7 @@ const TOURS: Record<TourStep, TourItem[]> = {
       target: "send-channel",
       title: "Correo o WhatsApp",
       description:
-        "El correo sale solo. Por WhatsApp, sin configurar nada, se arma una lista para abrir cada chat con el mensaje listo; si conectas WhatsApp Business, se envía sin abrir chats.",
+        "El correo sale solo. WhatsApp necesita WhatsApp Business conectado: así las campañas salen solas, con tus productos en carrusel (foto, precio y botón «Comprar»).",
     },
     {
       target: "send-history",

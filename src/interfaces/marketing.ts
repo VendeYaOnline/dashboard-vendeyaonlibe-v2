@@ -209,8 +209,6 @@ export interface CampaignRecipient {
   status: RecipientStatus;
   error: string | null;
   sent_at: string | null;
-  /** Solo WhatsApp manual: abre el chat con el mensaje ya escrito. */
-  whatsapp_url?: string;
 }
 
 export interface MarketingCampaignDetail {

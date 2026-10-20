@@ -44,13 +44,13 @@ export function whatsappStatus(settings: WhatsappSettings): { tone: Tone; title:
     return {
       tone: "muted",
       title: "Verificado, pero desactivado",
-      detail: "Las campañas usan enlaces wa.me (abres cada chat). Actívalo para enviar automáticamente.",
+      detail: "Actívalo para enviar campañas por WhatsApp: salen solas, con tus productos en carrusel.",
     };
   }
   return {
     tone: "muted",
     title: "Sin configurar",
-    detail: "Las campañas de WhatsApp usan enlaces wa.me: abres cada chat y envías el mensaje tú.",
+    detail: "Sin WhatsApp Business conectado no se pueden enviar campañas por WhatsApp. El correo sigue disponible.",
   };
 }
 
@@ -221,7 +221,7 @@ interface WhatsappSetupProps {
   guideOpen?: boolean;
 }
 
-const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}}";
+const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}} Si no quieres recibir más promociones, responde BAJA.";
 const CAROUSEL_CARD_BODY = "{{1}} {{2}}";
 const CAROUSEL_CARD_OPTIONS = [2, 3, 4, 5, 6];
 
@@ -306,7 +306,7 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
         toast.success("Configuración guardada. Verificando con Meta…");
         await runTest();
       } else {
-        toast.success(saved.enabled ? "Configuración guardada" : "Guardado: las campañas usarán enlaces wa.me");
+        toast.success(saved.enabled ? "Configuración guardada" : "Guardado: WhatsApp quedó desactivado para las campañas");
       }
     } catch (error) {
       handleAxiosError(error, "No se pudo guardar la configuración de WhatsApp");
@@ -316,7 +316,7 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
   const removeToken = async () => {
     try {
       await onSave({ enabled: false, access_token: null });
-      toast.success("Token eliminado; las campañas vuelven a los enlaces wa.me");
+      toast.success("Token eliminado: WhatsApp quedó desactivado para las campañas");
     } catch (error) {
       handleAxiosError(error, "No se pudo eliminar el token");
     }
