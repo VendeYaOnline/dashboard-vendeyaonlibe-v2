@@ -20,7 +20,6 @@ import {
   saveMarketingTemplate,
   sendMarketingTestEmail,
   createMarketingCampaign,
-  markCampaignRecipient,
   optOutMarketingContact,
   updateAbandonedCart,
   updateAbandonedCartSettings,
@@ -409,18 +408,6 @@ export const useMutationCreateCampaign = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
-      queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
-    },
-  });
-};
-
-export const useMutationMarkRecipient = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: markCampaignRecipient,
-    onSuccess: (_data, { campaignId }) => {
-      queryClient.invalidateQueries({ queryKey: ["marketing", "campaign", campaignId] });
-      queryClient.invalidateQueries({ queryKey: ["marketing", "campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["marketing", "contacts"] });
     },
   });

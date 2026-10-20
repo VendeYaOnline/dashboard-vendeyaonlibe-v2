@@ -221,8 +221,7 @@ export function ContactsPanel() {
             <Mail className="size-3.5" /> Enviado = el servidor de correo lo aceptó; Entregado = llegó al buzón.
           </span>
           <span className="flex items-center gap-1">
-            <MessageCircle className="size-3.5" /> Chat abierto = se abrió WhatsApp; Enviado (confirmado) = la tienda
-            confirmó el envío.
+            <MessageCircle className="size-3.5" /> WhatsApp: Enviado = salió por WhatsApp Business.
           </span>
         </p>
       </div>

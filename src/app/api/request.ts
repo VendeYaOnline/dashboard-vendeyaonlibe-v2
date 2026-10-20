@@ -387,16 +387,6 @@ export const getMarketingCampaign = async (id: string) =>
 export const createMarketingCampaign = async (body: { slot: number; segment: CampaignSegment; channel: CampaignChannel; request_id: string }) =>
   (await axiosConfig.post<CreateCampaignResponse>("/marketing/campaigns", body)).data;
 
-export const markCampaignRecipient = async ({
-  campaignId,
-  recipientId,
-  status,
-}: {
-  campaignId: string;
-  recipientId: string;
-  status: "opened" | "contacted" | "pending";
-}) => (await axiosConfig.patch(`/marketing/campaigns/${campaignId}/recipients/${recipientId}`, { status })).data;
-
 /** La tienda registra una baja (el cliente respondió BAJA): no recibe más correo ni WhatsApp. */
 export const optOutMarketingContact = async (key: string) =>
   (await axiosConfig.post<{ message: string; status: string }>("/marketing/contacts/opt-out", { key })).data;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { History, MessageCircle, Send, TrendingUp, Users } from "lucide-react";
+import { History, Lock, MessageCircle, Send, TrendingUp, Users } from "lucide-react";
 import { Button, Card, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
@@ -100,6 +100,8 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         ? "Tus campañas de correo están pausadas. Puedes seguir enviando por WhatsApp."
       : channel === "email" && !data.sender.configured
         ? "El envío de correos no está configurado en el servidor."
+        : channel === "whatsapp" && !whatsappApi
+          ? "Conecta WhatsApp Business para enviar campañas por WhatsApp."
         : count === 0
           ? channel === "email"
             ? cooldownCount > 0
@@ -126,18 +128,13 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
           if (duplicate) {
             toast.info("Esta campaña ya se había creado; no se envió de nuevo.");
           } else if (campaign.channel === "whatsapp") {
-            toast.success(
-              campaign.delivery === "whatsapp_api"
-                ? `Enviando por WhatsApp a ${campaign.total} clientes.`
-                : "Lista lista: abre cada chat desde aquí",
-            );
+            toast.success(`Enviando por WhatsApp a ${campaign.total} clientes.`);
           } else {
             const omitted = skipped.cooldown + skipped.suppressed + (skipped.opted_out ?? 0) + (skipped.invalid ?? 0);
             toast.success(
               `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días, baja, sin permiso o correo inválido).` : ""}`,
             );
           }
-          if (campaign.channel === "whatsapp" && campaign.delivery !== "whatsapp_api") setOpenCampaign(campaign.id);
         },
         onError: (error) => {
           setIsConfirmOpen(false);
@@ -276,9 +273,25 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
               {channel === "email"
                 ? `Sale desde ${data.sender.email ?? "el correo de VendeYaOnline"} con el nombre «${data.brand.sender_name}». Cada correo lleva un enlace para darse de baja.`
                 : whatsappApi
-                  ? "Se envía automáticamente desde el WhatsApp de tu marca con la plantilla aprobada por Meta."
-                  : "Se arma una lista con un botón por cliente que abre WhatsApp con el mensaje ya escrito; lo envías tú desde el WhatsApp de tu marca."}
+                  ? whatsapp?.carousel_template_name
+                    ? `Se envía automáticamente desde el WhatsApp de tu marca. Con ${whatsapp.carousel_cards} o más productos, en carrusel con foto, precio y botón «Comprar».`
+                    : "Se envía automáticamente desde el WhatsApp de tu marca con la plantilla aprobada por Meta. Configura el carrusel para mostrar tus productos con foto."
+                  : null}
             </p>
+            {channel === "whatsapp" && !whatsappApi && (
+              <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-secondary p-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface">
+                  <Lock className="size-4 text-muted" />
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-semibold">WhatsApp necesita WhatsApp Business conectado</p>
+                  <p className="text-xs text-muted">
+                    Con WhatsApp Business (la API oficial de Meta) tus campañas salen solas, con tus productos en carrusel: foto,
+                    precio y botón «Comprar». Así tu número no corre riesgo de bloqueo por mensajes masivos.
+                  </p>
+                </div>
+              </div>
+            )}
             {channel === "whatsapp" && whatsapp && (
               <div className="space-y-2">
                 <WhatsappStatusBanner settings={whatsapp} className="py-2" />
@@ -341,7 +354,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
             <Button variant="primary" isDisabled={isAudienceLoading || Boolean(blocker) || create.isPending} onPress={openConfirm}>
               <Users className="size-4" />
-              {channel === "email" ? `Enviar a ${clients(count)}` : `Preparar lista de ${clients(count)}`}
+              {`Enviar a ${clients(count)}`}
             </Button>
             {blocker && <p className="text-sm text-warning">{blocker}</p>}
           </div>
@@ -401,13 +414,13 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         onOpenChange={setIsConfirmOpen}
         onConfirm={handleCreate}
         tone="accent"
-        title={channel === "email" ? "¿Enviar la campaña?" : "¿Preparar la lista de WhatsApp?"}
+        title={channel === "email" ? "¿Enviar la campaña?" : "¿Enviar la campaña por WhatsApp?"}
         description={
           channel === "email"
             ? `Se enviará «${template?.name}» a ${count} ${count === 1 ? "cliente" : "clientes"} (${SEGMENT_LABELS[segment].toLowerCase()}). No se puede deshacer.`
-            : `Se armará la lista de ${count} ${count === 1 ? "cliente" : "clientes"} con el mensaje de «${template?.name}».`
+            : `Se enviará «${template?.name}» por WhatsApp a ${count} ${count === 1 ? "cliente" : "clientes"} (${SEGMENT_LABELS[segment].toLowerCase()}). Meta cobra cada mensaje en tu cuenta. No se puede deshacer.`
         }
-        confirmLabel={channel === "email" ? "Enviar ahora" : "Preparar lista"}
+        confirmLabel="Enviar ahora"
         pendingLabel="Creando"
         isPending={create.isPending}
       />
