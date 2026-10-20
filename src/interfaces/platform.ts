@@ -139,6 +139,9 @@ export interface WhatsappSettings {
   phone_number_id: string;
   template_name: string;
   template_language: string;
+  /** Plantilla de carrusel de productos (opcional; "" = sin carrusel) y cuántas tarjetas tiene. */
+  carousel_template_name: string;
+  carousel_cards: number;
   display_phone: string | null;
   verified_name: string | null;
   /** Lista para enviar (activa y con todo lo necesario). */
@@ -155,6 +158,8 @@ export interface WhatsappSettingsPayload {
   phone_number_id?: string;
   template_name?: string;
   template_language?: string;
+  carousel_template_name?: string;
+  carousel_cards?: number;
   /** Texto = reemplazar; ausente = conservar; null = borrar. */
   access_token?: string | null;
 }

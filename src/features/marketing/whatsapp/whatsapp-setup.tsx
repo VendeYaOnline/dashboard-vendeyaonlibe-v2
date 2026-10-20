@@ -174,7 +174,28 @@ export function WhatsappGuide({ defaultOpen = false }: { defaultOpen?: boolean }
               minutos a 24 horas; solo se puede usar cuando diga <strong>Aprobada</strong>.
             </p>
           </GuideStep>
-          <GuideStep number={7} title="Pega los datos aquí y guarda">
+          <GuideStep number={7} title="Opcional: plantilla de carrusel con tus productos">
+            <p>
+              Para que tus clientes reciban tarjetas con la foto, el nombre, el precio y un botón «Comprar» de cada producto,
+              crea otra plantilla: categoría <strong>Marketing</strong>, tipo <strong>Carrusel</strong>, con el mismo idioma.
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Cuerpo del mensaje:</strong> <code>{CAROUSEL_TEMPLATE_BODY}</code> ({"{{1}}"} = nombre del cliente,{" "}
+                {"{{2}}"} = texto de tu campaña).
+              </li>
+              <li>
+                <strong>Cada tarjeta:</strong> encabezado de <em>imagen</em>; cuerpo <code>{CAROUSEL_CARD_BODY}</code> ({"{{1}}"}{" "}
+                = producto, {"{{2}}"} = precio); un botón de <em>sitio web</em> con URL dinámica{" "}
+                <code>https://tutienda.com/{"{{1}}"}</code>, con la dirección de tu tienda.
+              </li>
+              <li>
+                Elige cuántas tarjetas tiene (de 2 a 6) y escribe el mismo número aquí. Si una campaña tiene menos productos
+                que tarjetas, se envía la plantilla de texto.
+              </li>
+            </ul>
+          </GuideStep>
+          <GuideStep number={8} title="Pega los datos aquí y guarda">
             <p>
               Token, Phone number ID, nombre exacto de la plantilla y su idioma (<code>es</code> para Español). Al guardar
               se verifica la conexión con Meta: cuando todo está bien verás <strong>«WhatsApp Business configurado
@@ -200,6 +221,10 @@ interface WhatsappSetupProps {
   guideOpen?: boolean;
 }
 
+const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}}";
+const CAROUSEL_CARD_BODY = "{{1}} {{2}}";
+const CAROUSEL_CARD_OPTIONS = [2, 3, 4, 5, 6];
+
 export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, isSaving, isTesting, guideOpen }: WhatsappSetupProps) {
   const [enabled, setEnabled] = useState(false);
   const [token, setToken] = useState("");
@@ -207,6 +232,8 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [templateName, setTemplateName] = useState("");
   const [language, setLanguage] = useState("es");
+  const [carouselName, setCarouselName] = useState("");
+  const [carouselCards, setCarouselCards] = useState(3);
 
   useEffect(() => {
     if (!settings) return;
@@ -217,6 +244,8 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
     setPhoneNumberId(settings.phone_number_id);
     setTemplateName(settings.template_name);
     setLanguage(settings.template_language || "es");
+    setCarouselName(settings.carousel_template_name ?? "");
+    setCarouselCards(settings.carousel_cards ?? 3);
   }, [settings]);
 
   if (isLoading || !settings) {
@@ -234,14 +263,17 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
   const isPhoneValid = phoneNumberId === "" || PHONE_ID_PATTERN.test(phoneNumberId);
   const isTemplateValid = templateName === "" || TEMPLATE_PATTERN.test(templateName);
   const isLanguageValid = LANGUAGE_PATTERN.test(language);
+  const isCarouselValid = carouselName === "" || TEMPLATE_PATTERN.test(carouselName);
   const missingForEnable = enabled && (!hasToken || !phoneNumberId || !templateName);
-  const isValid = isTokenValid && isPhoneValid && isTemplateValid && isLanguageValid && !missingForEnable;
+  const isValid = isTokenValid && isPhoneValid && isTemplateValid && isLanguageValid && isCarouselValid && !missingForEnable;
   const isDirty =
     tokenTrimmed !== "" ||
     enabled !== settings.enabled ||
     phoneNumberId !== settings.phone_number_id ||
     templateName !== settings.template_name ||
-    language !== (settings.template_language || "es");
+    language !== (settings.template_language || "es") ||
+    carouselName !== (settings.carousel_template_name ?? "") ||
+    carouselCards !== (settings.carousel_cards ?? 3);
 
   const runTest = async () => {
     try {
@@ -263,6 +295,8 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
         phone_number_id: phoneNumberId,
         template_name: templateName,
         template_language: language,
+        carousel_template_name: carouselName,
+        carousel_cards: carouselCards,
         // Vacío = conservar el token guardado.
         ...(tokenTrimmed ? { access_token: tokenTrimmed } : {}),
       });
@@ -363,6 +397,45 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
                 <Label>Idioma</Label>
                 <Input placeholder="es" className="font-mono text-sm" />
               </TextField>
+            </div>
+          </FormSection>
+
+          <FormSection
+            title="Carrusel de productos (opcional)"
+            description="Paso 7 de la guía. Con 2 o más productos en la campaña, cada cliente recibe tarjetas con foto, precio y botón «Comprar»."
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <TextField
+                value={carouselName}
+                onChange={(value) => setCarouselName(value.trim().slice(0, 512))}
+                isInvalid={!isCarouselValid}
+                className="sm:col-span-2"
+              >
+                <Label>Nombre de la plantilla de carrusel</Label>
+                <Input placeholder="carrusel_tienda (vacío = sin carrusel)" className="font-mono text-sm" />
+                {!isCarouselValid && <p className="mt-1 text-xs text-danger">Solo minúsculas, números y guion bajo, igual que en Meta.</p>}
+              </TextField>
+              <div className="space-y-1.5">
+                <Label>Tarjetas</Label>
+                <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Tarjetas del carrusel">
+                  {CAROUSEL_CARD_OPTIONS.map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      role="radio"
+                      aria-checked={carouselCards === count}
+                      onClick={() => setCarouselCards(count)}
+                      className={cn(
+                        "size-9 rounded-lg border text-sm font-medium transition-colors",
+                        carouselCards === count ? "border-accent bg-accent-soft text-accent" : "border-border hover:bg-surface-secondary",
+                      )}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted">Las mismas que tiene la plantilla en Meta.</p>
+              </div>
             </div>
           </FormSection>
 
