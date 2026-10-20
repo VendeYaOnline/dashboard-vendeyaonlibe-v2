@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ImageIcon, ImageOff, ImagePlus, Package, PackagePlus, RotateCcw, X, type LucideIcon } from "lucide-react";
+import { ImageIcon, ImageOff, ImagePlus, LayoutGrid, Package, PackagePlus, Rows3, RotateCcw, X, type LucideIcon } from "lucide-react";
 import { Button, Input, Label, TextArea, TextField, cn } from "@heroui/react";
 import { ImagePickerModal } from "@/components/shared/image-picker-modal";
 import { FormSection } from "@/features/productos/components/form-section";
@@ -13,6 +13,7 @@ import type {
   MarketingProduct,
   MarketingResponse,
   MarketingTemplateDraft,
+  ProductStyle,
 } from "@/interfaces/marketing";
 import { ColorField } from "./color-field";
 import { ProductPickerModal } from "./product-picker-modal";
@@ -57,6 +58,11 @@ const GOALS: { id: MarketingLayout; icon: LucideIcon; title: string; description
   },
 ];
 
+const PRODUCT_STYLES: { id: ProductStyle; icon: LucideIcon; title: string; description: string }[] = [
+  { id: "grid", icon: LayoutGrid, title: "Cuadrícula", description: "2 por fila, también en el celular. Ideal para novedades o varios productos." },
+  { id: "list", icon: Rows3, title: "Destacados", description: "Cada producto en una tarjeta ancha, con su precio y botón. Ideal para promociones." },
+];
+
 /** Paso a paso de una plantilla: qué promocionar, contenido, mensaje y bandeja de entrada. */
 export function TemplateEditor({ draft, onChange, layouts, brand, products, onProductsLoaded }: TemplateEditorProps) {
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
@@ -73,6 +79,43 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
   const chooseGoal = (next: MarketingLayout) =>
     // Al pasar a póster se recortan los productos que sobren (admite menos).
     onChange({ ...draft, layout: next, content: { ...content, product_ids: content.product_ids.slice(0, layouts[next].maxProducts) } });
+
+  const imagePicker = (emptyLabel: string) => (
+    <div className="space-y-3">
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt="" className="max-h-64 w-full rounded-lg border border-border object-contain" />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsImagePickerOpen(true)}
+          className="flex h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm text-muted hover:bg-surface-secondary"
+        >
+          <ImagePlus className="size-6" aria-hidden />
+          {emptyLabel}
+        </button>
+      )}
+      {imageUrl && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onPress={() => setIsImagePickerOpen(true)}>
+            <ImagePlus className="size-4" />
+            Cambiar imagen
+          </Button>
+          <Button variant="ghost" onPress={() => setContent({ image_url: "" })}>
+            <X className="size-4" />
+            Quitar
+          </Button>
+        </div>
+      )}
+      <TextField value={content.image_link ?? ""} onChange={(image_link) => setContent({ image_link: image_link.trim() })} type="url">
+        <Label>Al tocar la imagen, ir a (opcional)</Label>
+        <Input placeholder={brand.store_url || "https://www.tumarca.com/ofertas"} maxLength={LIMITS.url} />
+        <p className="mt-1 text-xs text-muted">Vacío = la página principal de tu tienda.</p>
+      </TextField>
+    </div>
+  );
+
+  const productStyle = content.product_style ?? "grid";
 
   const productList = (
     <div className="space-y-3">
@@ -153,36 +196,7 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
       {isPoster ? (
         <FormSection title="2. Tu imagen" description="Un póster o banner de tu galería.">
           <div className="space-y-4">
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="" className="max-h-64 w-full rounded-lg border border-border object-contain" />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsImagePickerOpen(true)}
-                className="flex h-36 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm text-muted hover:bg-surface-secondary"
-              >
-                <ImagePlus className="size-6" aria-hidden />
-                Elegir imagen de la galería
-              </button>
-            )}
-            {imageUrl && (
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onPress={() => setIsImagePickerOpen(true)}>
-                  <ImagePlus className="size-4" />
-                  Cambiar imagen
-                </Button>
-                <Button variant="ghost" onPress={() => setContent({ image_url: "" })}>
-                  <X className="size-4" />
-                  Quitar
-                </Button>
-              </div>
-            )}
-            <TextField value={content.image_link ?? ""} onChange={(image_link) => setContent({ image_link: image_link.trim() })} type="url">
-              <Label>Al tocar la imagen, ir a (opcional)</Label>
-              <Input placeholder={brand.store_url || "https://www.tumarca.com/ofertas"} maxLength={LIMITS.url} />
-              <p className="mt-1 text-xs text-muted">Vacío = la página principal de tu tienda.</p>
-            </TextField>
+            {imagePicker("Elegir imagen de la galería")}
             <div className="space-y-2 border-t border-border pt-4">
               <p className="text-sm font-medium">Productos debajo de la imagen (opcional)</p>
               <p className="text-xs text-muted">Hasta {layout.maxProducts}, con su foto y precio.</p>
@@ -193,9 +207,44 @@ export function TemplateEditor({ draft, onChange, layouts, brand, products, onPr
       ) : (
         <FormSection
           title="2. Tus productos"
-          description={`Hasta ${layout.maxProducts}. Con 1 se muestra en grande; con 2 o más, en cuadrícula. Foto y precio salen siempre actualizados.`}
+          description={`Hasta ${layout.maxProducts}. Con 1 se muestra en grande. Foto y precio salen siempre actualizados; si tiene descuento, se ve el precio anterior y el porcentaje.`}
         >
-          {productList}
+          <div className="space-y-5">
+            {productList}
+            <div className="space-y-2 border-t border-border pt-4">
+              <p className="text-sm font-medium">Cómo se muestran (con 2 o más)</p>
+              <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Cómo se muestran los productos">
+                {PRODUCT_STYLES.map((style) => {
+                  const Icon = style.icon;
+                  const isActive = productStyle === style.id;
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => setContent({ product_style: style.id })}
+                      className={cn(
+                        "flex gap-3 rounded-xl border p-3 text-left transition-colors",
+                        isActive ? "border-accent bg-accent-soft ring-1 ring-accent" : "border-border hover:bg-surface-secondary",
+                      )}
+                    >
+                      <Icon className={cn("mt-0.5 size-5 shrink-0", isActive ? "text-accent" : "text-muted")} aria-hidden />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold">{style.title}</span>
+                        <span className="block text-xs text-muted">{style.description}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="space-y-2 border-t border-border pt-4">
+              <p className="text-sm font-medium">Banner arriba del correo (opcional)</p>
+              <p className="text-xs text-muted">Una imagen ancha de tu galería, como «Hot Days» o «Hasta 60 % de descuento».</p>
+              {imagePicker("Elegir banner de la galería")}
+            </div>
+          </div>
         </FormSection>
       )}
 

@@ -28,11 +28,13 @@ export interface MarketingTemplateContent {
   body: string;
   button_text: string;
   discount_code: string;
-  /** Imagen de la galería (diseño póster); "" = sin imagen. Plantillas antiguas no la traen. */
+  /** Imagen de la galería: el póster, o el banner opcional arriba de los productos; "" = sin imagen. */
   image_url?: string;
   /** A dónde lleva la imagen; "" = la tienda. */
   image_link?: string;
   product_ids: string[];
+  /** Varios productos: cuadrícula de 2 por fila o destacados en fila. Plantillas antiguas no lo traen (= grid). */
+  product_style?: ProductStyle;
   /** null = colores de la marca. */
   colors: MarketingColors | null;
 }
@@ -325,3 +327,6 @@ export interface AbandonedCartsResponse {
   config: AbandonedCartConfig;
   delay_options: number[];
 }
+
+/** Cómo se muestran varios productos en el correo. */
+export type ProductStyle = "grid" | "list";
