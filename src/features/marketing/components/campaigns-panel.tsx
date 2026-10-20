@@ -23,6 +23,7 @@ import { AbandonedCartsPanel } from "./abandoned-carts-panel";
 import { MetaFeedPanel } from "./meta-feed-panel";
 import { WhatsappStatusBanner } from "../whatsapp/whatsapp-setup";
 import { WhatsappSetupModal } from "../whatsapp/whatsapp-setup-modal";
+import { WhatsappPreview } from "../whatsapp/whatsapp-preview";
 
 const clients = (count: number) => `${formatInteger(count)} ${count === 1 ? "cliente" : "clientes"}`;
 
@@ -292,6 +293,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
                 </div>
               </div>
             )}
+            {channel === "whatsapp" && whatsappApi && <WhatsappPreview slot={slot} onEditTemplates={onEditTemplates} />}
             {channel === "whatsapp" && whatsapp && (
               <div className="space-y-2">
                 <WhatsappStatusBanner settings={whatsapp} className="py-2" />

@@ -36,6 +36,7 @@ import {
   getSuperadmins,
   getMetaCatalogSummary,
   getMetaFeed,
+  getWhatsappPreview,
   getInventory,
   getCustomers,
   getFeatures,
@@ -209,6 +210,15 @@ export const useQueryMarketing = () =>
   });
 
 /** A cuántos clientes llega cada grupo por canal, y el cupo de correos del mes. */
+/** Vista previa de la campaña por WhatsApp con la plantilla elegida. */
+export const useQueryWhatsappPreview = (slot: number | null) =>
+  useQuery({
+    queryKey: ["marketing", "whatsapp-preview", slot],
+    queryFn: () => getWhatsappPreview(slot as number),
+    enabled: slot !== null,
+    staleTime: 30_000,
+  });
+
 export const useQueryMarketingAudience = () =>
   useQuery({ queryKey: ["marketing", "audience"], queryFn: getMarketingAudience, staleTime: 1000 * 60 });
 

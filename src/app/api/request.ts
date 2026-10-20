@@ -16,6 +16,7 @@ import type {
   MarketingAudience,
   MarketingBrand,
   MarketingCampaign,
+  WhatsappPreview,
   CampaignSalesSummary,
   MarketingCampaignDetail,
   MarketingPreviewRequest,
@@ -376,6 +377,9 @@ export const sendMarketingTestEmail = async (body: MarketingPreviewRequest) =>
   (await axiosConfig.post<{ message: string; to: string; test: { used: number; limit: number } }>("/marketing/test-email", body)).data;
 
 export const getMarketingAudience = async () => (await axiosConfig.get<MarketingAudience>("/marketing/audience")).data;
+
+export const getWhatsappPreview = async (slot: number) =>
+  (await axiosConfig.get<WhatsappPreview>(`/marketing/whatsapp-preview?slot=${slot}`)).data;
 
 export const getMarketingCampaigns = async () =>
   (await axiosConfig.get<{ campaigns: MarketingCampaign[]; sales_summary?: CampaignSalesSummary }>("/marketing/campaigns")).data;

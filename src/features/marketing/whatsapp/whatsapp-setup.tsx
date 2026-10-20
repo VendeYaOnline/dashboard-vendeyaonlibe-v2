@@ -221,7 +221,7 @@ interface WhatsappSetupProps {
   guideOpen?: boolean;
 }
 
-const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}} Si no quieres recibir más promociones, responde BAJA.";
+export const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}} Si no quieres recibir más promociones, responde BAJA.";
 const CAROUSEL_CARD_BODY = "{{1}} {{2}}";
 const CAROUSEL_CARD_OPTIONS = [2, 3, 4, 5, 6];
 
