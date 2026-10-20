@@ -328,3 +328,27 @@ export interface AbandonedCartsResponse {
 
 /** Cómo se muestran varios productos en el correo. */
 export type ProductStyle = "grid" | "list";
+
+/** Tarjeta del carrusel de WhatsApp tal como saldrá. */
+export interface WhatsappPreviewCard {
+  image: string;
+  title: string;
+  price: string;
+  url: string;
+}
+
+/**
+ * Vista previa de la campaña por WhatsApp (GET /marketing/whatsapp-preview).
+ * cards = tarjetas de la plantilla de carrusel (null = sin carrusel); products = productos de la plantilla.
+ */
+export type WhatsappPreview =
+  | { mode: "locked" }
+  | { mode: "empty" }
+  | { mode: "carousel"; products: number; cards: number; body: string[]; items: WhatsappPreviewCard[]; extra: number }
+  | {
+      mode: "text";
+      products: number;
+      cards: number | null;
+      params: string[];
+      reason: "no_carousel" | "few_products" | "missing_image_or_link";
+    };
