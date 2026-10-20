@@ -17,6 +17,7 @@ import { AuditLogCard } from "./components/audit-log-card";
 import { EmpresaUsuariosModal } from "./components/empresa-usuarios-modal";
 import { SuperadministradoresModal } from "./components/superadministradores-modal";
 import { MarketingLimitsCard } from "./components/marketing-limits-card";
+import { MarketingPricingCard } from "./components/marketing-pricing-card";
 import { MercadoPagoModal } from "./components/mercadopago-modal";
 import { WhatsappModal } from "./components/whatsapp-modal";
 import { MERCADOPAGO_SOURCE_LABELS, formatDate } from "./utils";
@@ -279,6 +280,8 @@ export function PlataformaView() {
       )}
 
       {isOwner && <AuditLogCard companies={companies} />}
+
+      <MarketingPricingCard />
 
       <MarketingLimitsCard />
 

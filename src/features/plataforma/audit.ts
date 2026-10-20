@@ -14,6 +14,9 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "payments.update": "Cambió Mercado Pago",
   "whatsapp.update": "Cambió WhatsApp",
   "marketing_limits.update": "Cambió los límites de Marketing",
+  "pricing.schedule": "Cambió el precio de Marketing",
+  "pricing.cancel": "Canceló una subida de precio",
+  "pricing.retry": "Reintentó aplicar el precio",
 };
 
 export const AUDIT_CATEGORY_OPTIONS: { id: AuditCategory | "all"; label: string }[] = [
@@ -97,6 +100,15 @@ export const describeAuditEntry = (entry: AuditEntry): string => {
         }),
       );
       break;
+    case "pricing.schedule": {
+      const price = Number(details.price);
+      const money = Number.isFinite(price) ? price.toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }) : "";
+      parts.push(
+        details.immediate ? `bajó a ${money}` : `a ${money} desde el ${details.effective_at ? new Date(String(details.effective_at)).toLocaleDateString("es-CO", { timeZone: "America/Bogota" }) : ""}`,
+        typeof details.emailed === "number" && !details.immediate ? `${details.emailed} correos de aviso` : "",
+      );
+      break;
+    }
     default:
       parts.push(entry.target_label ?? "");
   }

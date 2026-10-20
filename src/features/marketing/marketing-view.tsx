@@ -15,6 +15,7 @@ import {
 import { handleAxiosError } from "@/lib/error-handler";
 import type { MarketingBrand, MarketingProduct, MarketingTemplate, MarketingTemplateDraft } from "@/interfaces/marketing";
 import { BrandForm, isValidStoreUrl } from "./components/brand-form";
+import { BillingNotice } from "./components/billing-notice";
 import { useMarketingTour } from "./marketing-tour";
 import { CampaignsPanel } from "./components/campaigns-panel";
 import { EmailPreview } from "./components/email-preview";
@@ -183,6 +184,8 @@ export function MarketingView() {
         description="Envía promociones a tus clientes por correo o WhatsApp con el estilo de tu marca"
         actions={<FeaturePlanButton feature="marketing" />}
       />
+
+      <BillingNotice notice={data.billing_notice} />
 
       {data.sender.testRedirect && (
         <Card>

@@ -31,12 +31,14 @@ export function FeatureGate({ feature, children }: { feature: PaidFeature; child
 }
 
 function LockedFeature({ feature }: { feature: PaidFeature }) {
-  const { label, description, price, highlights } = PAID_FEATURES[feature];
+  const { label, description, highlights } = PAID_FEATURES[feature];
   const queryClient = useQueryClient();
   const isAdmin = useAuthStore((s) => s.user?.role) === "admin";
   // Solo el admin puede sumarla al plan: los demás no consultan el cobro.
   const { data: billing, isLoading: isBillingLoading } = useQueryFeatureBilling(feature, isAdmin);
   const [isUnlockOpen, setIsUnlockOpen] = useState(false);
+  // El precio lo fija el superadmin: el del servidor; si no se pudo consultar, el de referencia.
+  const price = billing?.addon_price ?? PAID_FEATURES[feature].price;
 
   // Al volver a la pestaña (p. ej. después de pagar) se consulta de nuevo: si ya
   // está activa, la vista se desbloquea sola.

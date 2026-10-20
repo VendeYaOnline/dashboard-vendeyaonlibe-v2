@@ -77,6 +77,11 @@ export interface MarketingResponse {
   test: MarketingTestQuota;
   /** Campañas de correo pausadas por muchos rebotes o quejas de spam (null = puede enviar). */
   pause: MarketingPause | null;
+  /** Cobro de Marketing: cancelado al terminar el mes y/o subida de precio programada (null = nada que avisar). */
+  billing_notice?: {
+    cancel_at: string | null;
+    price_change: { price: number; current_price: number | null; effective_at: string } | null;
+  } | null;
 }
 
 export interface MarketingTestQuota {

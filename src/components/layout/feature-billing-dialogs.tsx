@@ -63,7 +63,7 @@ function PlanChange({ billing, mode }: { billing: FeatureBilling; mode: "activat
         <span>
           {mode === "activate"
             ? `Hoy no se te cobra nada: el nuevo total se aplica desde tu próxima mensualidad${nextDay ? ` (${nextDay})` : ""}, con la misma tarjeta de tu plan.`
-            : `Desde tu próxima mensualidad${nextDay ? ` (${nextDay})` : ""} ya no se cobrará ${billing.label}.`}
+            : `Tu próxima mensualidad${nextDay ? ` (${nextDay})` : ""} ya no incluirá ${billing.label}. Lo sigues usando hasta ese día.`}
         </span>
       </p>
     </div>
@@ -169,25 +169,40 @@ export function UnlockFeatureModal({ feature, isOpen, onClose }: { feature: Paid
   );
 }
 
-/** Cancelar la vista: deja de cobrarse desde el próximo mes y se bloquea ya. */
+/**
+ * Tu plan · la vista: cancelarla (la sigue usando hasta el próximo cobro, que
+ * ya no la incluye) o, si ya la canceló, reactivarla antes de esa fecha.
+ */
 export function CancelFeatureModal({ feature, isOpen, onClose }: { feature: PaidFeature; isOpen: boolean; onClose: () => void }) {
   const state = useOverlayState({ isOpen, onOpenChange: (open) => !open && onClose() });
   const { label } = PAID_FEATURES[feature];
   const { data: billing, isLoading } = useQueryFeatureBilling(feature, isOpen);
   const cancel = useMutationCancelFeature();
+  const reactivate = useMutationActivateFeature();
+  const canceledUntil = billing?.cancel_at ? formatDay(billing.cancel_at) : null;
+  const isPending = cancel.isPending || reactivate.isPending;
 
   const handleCancel = () =>
     cancel.mutate(feature, {
       onSuccess: () => {
-        toast.success(`${label} cancelado. Ya no se cobrará en tu próxima mensualidad.`);
+        toast.success(`${label} cancelado. Lo sigues usando hasta tu próximo cobro, que ya no lo incluye.`);
         onClose();
       },
       onError: (error) => handleAxiosError(error, `No se pudo cancelar ${label}`),
     });
 
+  const handleReactivate = () =>
+    reactivate.mutate(feature, {
+      onSuccess: () => {
+        toast.success(`${label} reactivado. Se sigue sumando a tu mensualidad.`);
+        onClose();
+      },
+      onError: (error) => handleAxiosError(error, `No se pudo reactivar ${label}`),
+    });
+
   return (
     <Modal state={state}>
-      <Modal.Backdrop isDismissable={!cancel.isPending}>
+      <Modal.Backdrop isDismissable={!isPending}>
         <Modal.Container size="md" scroll="inside">
           <Modal.Dialog>
             <ModalFormHeader icon={Sparkles} title={`Tu plan · ${label}`} description={`${label} está sumado a tu mensualidad de VendeYaOnline.`} />
@@ -197,13 +212,27 @@ export function CancelFeatureModal({ feature, isOpen, onClose }: { feature: Paid
                   <Spinner size="sm" />
                   Consultando tu plan...
                 </div>
+              ) : billing.billed && billing.plan && canceledUntil ? (
+                <>
+                  <p className="rounded-lg bg-warning/10 px-3 py-2 text-sm text-warning">
+                    Cancelaste {label}: lo puedes usar hasta el <strong>{canceledUntil}</strong> y ya no se cobra en tu próxima
+                    mensualidad. Si cambias de opinión, reactívalo antes de esa fecha.
+                  </p>
+                  <PlanChange billing={billing} mode="activate" />
+                </>
               ) : billing.billed && billing.plan ? (
                 <>
                   {billing.since && <p className="text-sm text-muted">Activo desde el {formatDay(billing.since)}.</p>}
+                  {billing.price_change && (
+                    <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">
+                      Desde el {formatDay(billing.price_change.effective_at)}, {label} costará{" "}
+                      <strong>{formatMoney(billing.price_change.price)} al mes</strong> (hoy {formatMoney(billing.addon_price ?? 0)}).
+                    </p>
+                  )}
                   <PlanChange billing={billing} mode="cancel" />
-                  <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-                    Si la cancelas, {label} se bloquea de inmediato. Tu marca, plantillas e historial se guardan por si la vuelves a
-                    activar.
+                  <p className="rounded-lg bg-surface-secondary px-3 py-2 text-sm text-muted">
+                    Si lo cancelas, lo sigues usando hasta tu próximo cobro y después se bloquea. Tu marca, plantillas e
+                    historial se guardan por si lo vuelves a activar.
                   </p>
                 </>
               ) : (
@@ -213,10 +242,15 @@ export function CancelFeatureModal({ feature, isOpen, onClose }: { feature: Paid
               )}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="ghost" isDisabled={cancel.isPending} onPress={onClose}>
+              <Button variant="ghost" isDisabled={isPending} onPress={onClose}>
                 Cerrar
               </Button>
-              {billing?.billed && billing.plan && (
+              {billing?.billed && billing.plan && canceledUntil && (
+                <PendingButton variant="primary" isPending={reactivate.isPending} pendingLabel="Reactivando" onPress={handleReactivate}>
+                  Reactivar {label}
+                </PendingButton>
+              )}
+              {billing?.billed && billing.plan && !canceledUntil && (
                 <PendingButton variant="danger" isPending={cancel.isPending} pendingLabel="Cancelando" onPress={handleCancel}>
                   Cancelar {label}
                 </PendingButton>
@@ -242,7 +276,9 @@ export function FeaturePlanButton({ feature }: { feature: PaidFeature }) {
     <>
       <Button variant="outline" size="sm" onPress={() => setIsOpen(true)}>
         <Sparkles className="size-4 text-accent" aria-hidden />
-        {billing.label} · +{formatMoney(billing.addon_price ?? PAID_FEATURES[feature].price)} al mes
+        {billing.cancel_at
+          ? `${billing.label} · hasta el ${formatDay(billing.cancel_at)}`
+          : `${billing.label} · +${formatMoney(billing.addon_price ?? PAID_FEATURES[feature].price)} al mes`}
       </Button>
       <CancelFeatureModal feature={feature} isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
