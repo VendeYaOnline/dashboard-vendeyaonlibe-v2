@@ -1,12 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, BookOpen, CheckCircle2, ChevronDown, Eye, EyeOff, PlugZap, XCircle } from "lucide-react";
-import { Button, Input, InputGroup, Label, Spinner, Switch, TextField, cn, toast } from "@heroui/react";
+import { AlertTriangle, BookOpen, CheckCircle2, Eye, EyeOff, PlugZap, Settings2, XCircle } from "lucide-react";
+import {
+  Button,
+  Input,
+  InputGroup,
+  Label,
+  Spinner,
+  Switch,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  cn,
+  toast,
+} from "@heroui/react";
 import { PendingButton } from "@/components/shared/pending-button";
 import { FormSection } from "@/features/productos/components/form-section";
 import { handleAxiosError } from "@/lib/error-handler";
 import type { WhatsappSettings, WhatsappSettingsPayload } from "@/interfaces/platform";
+import { WhatsappGuide } from "./whatsapp-guide";
+
+type SetupView = "guide" | "form";
 
 /**
  * WhatsApp Cloud API: estado, guía paso a paso y formulario. Lo usan el
@@ -17,9 +32,6 @@ import type { WhatsappSettings, WhatsappSettingsPayload } from "@/interfaces/pla
 const PHONE_ID_PATTERN = /^\d{6,25}$/;
 const TEMPLATE_PATTERN = /^[a-z0-9_]{1,512}$/;
 const LANGUAGE_PATTERN = /^[a-z]{2,3}(_[A-Z]{2})?$/;
-
-/** Cuerpo sugerido para la plantilla de Meta (las 3 variables que llena VendeYaOnline). */
-export const WHATSAPP_TEMPLATE_BODY = "¡Hola {{1}}! 👋\n\n{{2}}\n\nMíralo aquí: {{3}}\n\nSi no quieres recibir más promociones, responde BAJA.";
 
 type Tone = "success" | "warning" | "muted";
 
@@ -82,132 +94,6 @@ export function WhatsappStatusBanner({ settings, className }: { settings: Whatsa
   );
 }
 
-function GuideStep({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
-  return (
-    <li className="flex gap-3">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent">
-        {number}
-      </span>
-      <div className="min-w-0 flex-1 space-y-1 text-sm">
-        <p className="font-medium">{title}</p>
-        <div className="space-y-1 text-muted">{children}</div>
-      </div>
-    </li>
-  );
-}
-
-/** Pasos en Meta para obtener lo que pide el formulario. */
-export function WhatsappGuide({ defaultOpen = false }: { defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="rounded-xl border border-border">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold"
-      >
-        <BookOpen className="size-4 text-accent" />
-        Guía paso a paso para conectar WhatsApp Business
-        <ChevronDown className={cn("ml-auto size-4 transition-transform", open && "rotate-180")} />
-      </button>
-      {open && (
-        <ol className="space-y-4 border-t border-border px-4 py-4">
-          <GuideStep number={1} title="Antes de empezar">
-            <p>
-              Necesitas una cuenta de Facebook, un portafolio comercial en <strong>business.facebook.com</strong> y un número
-              de celular que reciba SMS o llamadas.
-            </p>
-            <p className="text-warning">
-              Ese número no puede estar en uso en la app de WhatsApp o WhatsApp Business. Si lo está, primero elimina la
-              cuenta desde la app (Configuración → Cuenta → Eliminar cuenta) o usa un número nuevo.
-            </p>
-          </GuideStep>
-          <GuideStep number={2} title="Crea la app en Meta">
-            <p>
-              Entra a <strong>developers.facebook.com</strong> → <em>Mis apps</em> → <em>Crear app</em>. Elige el caso de uso
-              «Conectar con clientes a través de WhatsApp» (o tipo «Negocio») y vincúlala a tu portafolio comercial.
-            </p>
-          </GuideStep>
-          <GuideStep number={3} title="Agrega tu número y copia el «Phone number ID»">
-            <p>
-              En la app: <em>WhatsApp → Configuración de la API</em> → <em>Agregar número de teléfono</em>. Escribe el nombre
-              que verán tus clientes, la categoría, y verifica el número con el código por SMS o llamada.
-            </p>
-            <p>
-              Luego, en esa misma pantalla, elige tu número y copia el <strong>Identificador del número de teléfono</strong>{" "}
-              (Phone number ID): son solo dígitos. <em>No es</em> tu número de celular.
-            </p>
-          </GuideStep>
-          <GuideStep number={4} title="Agrega un método de pago">
-            <p>
-              En <strong>business.facebook.com/wa/manage</strong> (Administrador de WhatsApp) → <em>Configuración</em> →{" "}
-              <em>Pagos</em>, agrega una tarjeta. Meta cobra cada mensaje de marketing directamente a tu cuenta; sin método
-              de pago los mensajes no salen.
-            </p>
-          </GuideStep>
-          <GuideStep number={5} title="Genera un token permanente">
-            <p>
-              En <strong>business.facebook.com</strong> → <em>Configuración</em> → <em>Usuarios → Usuarios del sistema</em> →{" "}
-              <em>Agregar</em> (rol Administrador). Con ese usuario: <em>Asignar activos</em> → tu app y tu cuenta de WhatsApp
-              con control total.
-            </p>
-            <p>
-              Después <em>Generar token</em>: elige tu app, vencimiento <strong>Nunca</strong> y los permisos{" "}
-              <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>. Copia el token (empieza
-              por <code>EAA</code>); Meta no lo vuelve a mostrar.
-            </p>
-            <p>El token temporal de 24 horas de «Configuración de la API» no sirve: deja de funcionar al día siguiente.</p>
-          </GuideStep>
-          <GuideStep number={6} title="Crea la plantilla de mensaje y espera la aprobación">
-            <p>
-              En el Administrador de WhatsApp → <em>Plantillas de mensajes</em> → <em>Crear plantilla</em>: categoría{" "}
-              <strong>Marketing</strong>, un nombre en minúsculas con guion bajo (ej. <code>promo_tienda</code>) e idioma
-              Español. En el cuerpo pega exactamente 3 variables:
-            </p>
-            <pre className="whitespace-pre-wrap rounded-lg bg-surface-secondary p-3 font-sans text-xs text-foreground">
-              {WHATSAPP_TEMPLATE_BODY}
-            </pre>
-            <p>
-              {"{{1}}"} = nombre del cliente, {"{{2}}"} = texto de tu campaña, {"{{3}}"} = enlace. Meta pide ejemplos de cada
-              variable (ej. «Ana», «Nueva colección con 20 % de descuento», «https://tutienda.com»). La revisión tarda de
-              minutos a 24 horas; solo se puede usar cuando diga <strong>Aprobada</strong>.
-            </p>
-          </GuideStep>
-          <GuideStep number={7} title="Opcional: plantilla de carrusel con tus productos">
-            <p>
-              Para que tus clientes reciban tarjetas con la foto, el nombre, el precio y un botón «Comprar» de cada producto,
-              crea otra plantilla: categoría <strong>Marketing</strong>, tipo <strong>Carrusel</strong>, con el mismo idioma.
-            </p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>
-                <strong>Cuerpo del mensaje:</strong> <code>{CAROUSEL_TEMPLATE_BODY}</code> ({"{{1}}"} = nombre del cliente,{" "}
-                {"{{2}}"} = texto de tu campaña).
-              </li>
-              <li>
-                <strong>Cada tarjeta:</strong> encabezado de <em>imagen</em>; cuerpo <code>{CAROUSEL_CARD_BODY}</code> ({"{{1}}"}{" "}
-                = producto, {"{{2}}"} = precio); un botón de <em>sitio web</em> con URL dinámica{" "}
-                <code>https://tutienda.com/{"{{1}}"}</code>, con la dirección de tu tienda.
-              </li>
-              <li>
-                Elige cuántas tarjetas tiene (de 2 a 6) y escribe el mismo número aquí. Si una campaña tiene menos productos
-                que tarjetas, se envía la plantilla de texto.
-              </li>
-            </ul>
-          </GuideStep>
-          <GuideStep number={8} title="Pega los datos aquí y guarda">
-            <p>
-              Token, Phone number ID, nombre exacto de la plantilla y su idioma (<code>es</code> para Español). Al guardar
-              se verifica la conexión con Meta: cuando todo está bien verás <strong>«WhatsApp Business configurado
-              correctamente»</strong>.
-            </p>
-          </GuideStep>
-        </ol>
-      )}
-    </div>
-  );
-}
-
 interface WhatsappSetupProps {
   settings: WhatsappSettings | undefined;
   isLoading: boolean;
@@ -221,8 +107,6 @@ interface WhatsappSetupProps {
   guideOpen?: boolean;
 }
 
-export const CAROUSEL_TEMPLATE_BODY = "¡Hola {{1}}! {{2}} Si no quieres recibir más promociones, responde BAJA.";
-const CAROUSEL_CARD_BODY = "{{1}} {{2}}";
 const CAROUSEL_CARD_OPTIONS = [2, 3, 4, 5, 6];
 
 export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, isSaving, isTesting, guideOpen }: WhatsappSetupProps) {
@@ -234,6 +118,11 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
   const [language, setLanguage] = useState("es");
   const [carouselName, setCarouselName] = useState("");
   const [carouselCards, setCarouselCards] = useState(3);
+  const [view, setView] = useState<SetupView>("form");
+
+  // Quien aún no se conecta empieza por la guía; quien ya está verificado, por sus datos.
+  const startsWithGuide = Boolean(guideOpen && settings && !settings.verified);
+  useEffect(() => setView(startsWithGuide ? "guide" : "form"), [startsWithGuide]);
 
   useEffect(() => {
     if (!settings) return;
@@ -333,9 +222,33 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
         </p>
       )}
 
-      {canEdit && <WhatsappGuide defaultOpen={guideOpen && !settings.verified} />}
+      {canEdit && (
+        <ToggleButtonGroup
+          aria-label="Sección"
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={new Set([view])}
+          onSelectionChange={(keys) => {
+            const [next] = Array.from(keys, String);
+            if (next) setView(next as SetupView);
+          }}
+        >
+          {/* En el celular las etiquetas largas no caben juntas. */}
+          <ToggleButton id="guide">
+            <BookOpen className="size-4" /> <span className="sm:hidden">Guía</span>
+            <span className="hidden sm:inline">Guía paso a paso</span>
+          </ToggleButton>
+          <ToggleButton id="form">
+            <Settings2 className="size-4" /> <span className="sm:hidden">Conectar</span>
+            <span className="hidden sm:inline">Datos de conexión</span>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      )}
+
+      {canEdit && view === "guide" && <WhatsappGuide onFinish={() => setView("form")} />}
 
       {canEdit ? (
+        view === "form" && (
         <form onSubmit={handleSubmit} className="space-y-5">
           <FormSection title="Cuenta de Meta" description="Pasos 3 y 5 de la guía. El token se guarda cifrado y nadie puede volver a verlo.">
             <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2">
@@ -473,6 +386,7 @@ export function WhatsappSetup({ settings, isLoading, canEdit, onSave, onTest, is
             </p>
           </div>
         </form>
+        )
       ) : (
         <p className="text-sm text-muted">Solo el administrador de la tienda puede cambiar esta configuración.</p>
       )}
