@@ -99,18 +99,29 @@ export function MarketingPricingCard() {
           <>
             <div className="flex flex-wrap gap-6">
               <div>
-                <p className="text-xs text-muted">Precio actual</p>
+                <p className="text-xs text-muted">Precio para quien lo active hoy</p>
                 <p className="text-2xl font-bold tabular-nums">{formatMoney(pricing.price)}</p>
                 <p className="text-xs text-muted">al mes</p>
               </div>
               <div>
                 <p className="text-xs text-muted">Tiendas que lo pagan</p>
                 <p className="text-2xl font-bold tabular-nums">{pricing.subscribers.total}</p>
-                <p className="text-xs text-muted">
-                  {pricing.subscribers.by_price.map((row) => `${row.count} a ${formatMoney(row.price)}`).join(" · ") || "—"}
-                </p>
+                <ul className="text-xs text-muted">
+                  {pricing.subscribers.by_price.map((row) => (
+                    <li key={row.price}>
+                      {row.count} {row.count === 1 ? "paga" : "pagan"} {formatMoney(row.price)} al mes
+                      {row.price !== pricing.price && " (precio con el que lo activó)"}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
+            {pricing.subscribers.by_price.some((row) => row.price !== pricing.price) && (
+              <p className="text-xs text-muted">
+                Quien lo activó antes sigue pagando su precio. Para cobrarle el precio actual, programa un cambio: al
+                aplicarse, todas las tiendas pasan al precio nuevo (con el aviso de {minNotice} días si es una subida).
+              </p>
+            )}
 
             {pricing.scheduled && (
               <div className="flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/10 p-3 sm:flex-row sm:items-center">
