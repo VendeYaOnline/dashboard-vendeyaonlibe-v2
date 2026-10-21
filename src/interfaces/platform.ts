@@ -144,6 +144,15 @@ export interface WhatsappSettings {
   carousel_cards: number;
   display_phone: string | null;
   verified_name: string | null;
+  /** embedded_signup = conectada con el botón de Meta; null = datos pegados a mano. */
+  onboarding: "embedded_signup" | null;
+  /** El número sigue en la app de WhatsApp Business (coexistencia). */
+  coexistence: boolean;
+  /** Plantilla de promociones en Meta: PENDING, APPROVED, REJECTED… (null si se conectó a mano). */
+  template_status: string | null;
+  template_reason: string | null;
+  /** La tienda quitó a VendeYaOnline en Meta. */
+  disconnected_at: string | null;
   /** Lista para enviar (activa y con todo lo necesario). */
   ready: boolean;
   /** Meta confirmó el token y el número (se pierde si cambian). */
@@ -151,6 +160,21 @@ export interface WhatsappSettings {
   has_token: boolean;
   token_hint: string | null;
   can_store_secrets: boolean;
+}
+
+/** Lo que el panel necesita para abrir el registro de Meta (Embedded Signup). */
+export interface WhatsappSignupConfig {
+  /** false = el servidor aún no tiene la app de Meta configurada. */
+  available: boolean;
+  app_id: string | null;
+  config_id: string | null;
+  graph_version: string;
+}
+
+export interface WhatsappSignupPayload {
+  code: string;
+  waba_id: string;
+  phone_number_id: string;
 }
 
 export interface WhatsappSettingsPayload {

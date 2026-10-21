@@ -49,6 +49,8 @@ import type {
   MarketingLimits,
   WhatsappSettings,
   WhatsappSettingsPayload,
+  WhatsappSignupConfig,
+  WhatsappSignupPayload,
   FeatureBilling, AddonPricing, SchedulePricingResult } from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
@@ -445,6 +447,12 @@ export const getMyWhatsappSettings = async () => (await axiosConfig.get<Whatsapp
 
 export const updateMyWhatsappSettings = async (data: WhatsappSettingsPayload) =>
   (await axiosConfig.put<{ message: string; settings: WhatsappSettings }>("/marketing/whatsapp", data)).data;
+
+export const getWhatsappSignupConfig = async () =>
+  (await axiosConfig.get<WhatsappSignupConfig>("/marketing/whatsapp/signup")).data;
+
+export const completeWhatsappSignup = async (data: WhatsappSignupPayload) =>
+  (await axiosConfig.post<{ message: string; settings: WhatsappSettings }>("/marketing/whatsapp/signup", data)).data;
 
 export const testMyWhatsappSettings = async () =>
   (await axiosConfig.post<{ ok: boolean; display_phone: string | null; verified_name: string | null }>("/marketing/whatsapp/test")).data;

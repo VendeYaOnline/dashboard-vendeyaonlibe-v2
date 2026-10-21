@@ -24,15 +24,27 @@ import { useMutationUpdateAbandonedCart, useMutationUpdateAbandonedCartSettings 
 import { handleAxiosError } from "@/lib/error-handler";
 import { useAuthStore } from "@/store/auth.store";
 import { formatMoney } from "@/features/analisis/utils";
-import type { AbandonedCart, AbandonedCartsFilter } from "@/interfaces/marketing";
+import type { AbandonedCart, AbandonedCartConfig, AbandonedCartsFilter, AbandonedCartWhatsappTarget } from "@/interfaces/marketing";
 import { formatDateTime } from "./campaign-shared";
 
 const PAGE_SIZE = 10;
 
+const WHATSAPP_TARGETS: { id: AbandonedCartWhatsappTarget; label: string }[] = [
+  { id: "no_email", label: "Solo a quien no recibe el correo" },
+  { id: "all", label: "A todos, además del correo" },
+];
+
+/** Recordatorio automático, en palabras según el canal. */
+const reminderLabel = (channel: string | null) => {
+  const channels = (channel ?? "email").split(",");
+  if (channels.includes("email") && channels.includes("whatsapp")) return "Correo y WhatsApp enviados";
+  return channels.includes("whatsapp") ? "WhatsApp enviado" : "Correo enviado";
+};
+
 /** Estado de un carrito, en palabras. */
 const cartState = (cart: AbandonedCart): { label: string; color: "default" | "success" | "warning" | "danger" | "accent" } => {
   if (cart.status === "recovered") return { label: "Compró", color: "success" };
-  if (cart.status === "reminded") return { label: "Correo enviado", color: "accent" };
+  if (cart.status === "reminded") return { label: reminderLabel(cart.reminder_channel), color: "accent" };
   if (cart.status === "contacted") return { label: "WhatsApp enviado", color: "accent" };
   if (cart.status === "dismissed") return { label: "Descartado", color: "default" };
   if (cart.promotions === "declined" || cart.promotions === "unsubscribed") return { label: "No recibe promociones", color: "danger" };
@@ -41,8 +53,9 @@ const cartState = (cart: AbandonedCart): { label: string; color: "default" | "su
 
 /**
  * Carritos abandonados: quién llenó sus datos en el checkout y no compró.
- * Recordatorio automático por correo (configurable) y WhatsApp a mano con el
- * mensaje listo. Si el cliente compra, el carrito pasa a "Compró".
+ * Recordatorio automático por correo y, con WhatsApp Business conectado, por
+ * WhatsApp (los dos configurables); también WhatsApp a mano con el mensaje
+ * listo. Si el cliente compra, el carrito pasa a "Compró".
  */
 export function AbandonedCartsPanel() {
   const isAdmin = useAuthStore((s) => s.user?.role) === "admin";
@@ -57,7 +70,7 @@ export function AbandonedCartsPanel() {
   const summary = data?.summary;
   const config = data?.config;
 
-  const saveConfig = (next: { email_enabled: boolean; delay_hours: number }) =>
+  const saveConfig = (next: AbandonedCartConfig) =>
     settings.mutate(next, {
       onSuccess: () => toast.success("Configuración guardada"),
       onError: (error) => handleAxiosError(error, "No se pudo guardar"),
@@ -213,8 +226,8 @@ export function AbandonedCartsPanel() {
             </Switch>
             <p className="text-xs text-muted">
               {config.email_enabled
-                ? `Si no compra en ${config.delay_hours} ${config.delay_hours === 1 ? "hora" : "horas"}, se le envía un solo correo con sus productos. Por WhatsApp, escríbele desde la tabla.`
-                : "El correo automático está desactivado: escríbeles por WhatsApp desde la tabla."}
+                ? `Si no compra en ${config.delay_hours} ${config.delay_hours === 1 ? "hora" : "horas"}, se le envía un solo correo con sus productos.`
+                : "El correo automático está desactivado."}
             </p>
             </div>
             <div className="flex items-center gap-2">
@@ -240,6 +253,58 @@ export function AbandonedCartsPanel() {
                   </ListBox>
                 </Select.Popover>
               </Select>
+            </div>
+
+            <div className="space-y-1 border-t border-border pt-3 sm:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Switch
+                  isSelected={config.whatsapp_enabled}
+                  isDisabled={!isAdmin || settings.isPending || (!data?.whatsapp_api && !config.whatsapp_enabled)}
+                  onChange={(enabled) => saveConfig({ ...config, whatsapp_enabled: enabled })}
+                >
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    <Label className="text-sm font-medium">Recordatorio automático por WhatsApp</Label>
+                  </Switch.Content>
+                </Switch>
+                {config.whatsapp_enabled && (
+                  <Select
+                    aria-label="A quién se le envía el WhatsApp"
+                    selectedKey={config.whatsapp_target}
+                    isDisabled={!isAdmin || settings.isPending}
+                    onSelectionChange={(key) => saveConfig({ ...config, whatsapp_target: key as AbandonedCartWhatsappTarget })}
+                    className="w-full sm:w-72"
+                  >
+                    <Select.Trigger>
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {WHATSAPP_TARGETS.map((target) => (
+                          <ListBoxItem key={target.id} id={target.id}>
+                            {target.label}
+                          </ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                )}
+              </div>
+              <p className="text-xs text-muted">
+                {!data?.whatsapp_api
+                  ? "Conecta WhatsApp Business (en «Nueva campaña», canal WhatsApp) para activarlo. Mientras tanto, escríbeles desde la tabla."
+                  : config.whatsapp_enabled
+                    ? `Le llega un WhatsApp con sus productos y el enlace para terminar la compra, con tu plantilla aprobada en Meta. ${
+                        config.whatsapp_target === "all" ? "Le llega aunque también reciba el correo." : "Solo si no dejó correo o el correo no se le puede enviar."
+                      } Meta le cobra cada mensaje a tu cuenta.`
+                    : "Envía el recordatorio por WhatsApp sin abrir cada chat. Meta le cobra cada mensaje a tu cuenta."}
+              </p>
+              {config.whatsapp_enabled && !data?.whatsapp_api && (
+                <p className="text-xs text-warning">WhatsApp Business ya no está conectado: no se están enviando recordatorios por WhatsApp.</p>
+              )}
             </div>
           </div>
         )}

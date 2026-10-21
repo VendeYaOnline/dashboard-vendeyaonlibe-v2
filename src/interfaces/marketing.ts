@@ -291,7 +291,7 @@ export interface MarketingContactsResponse {
 
 // * Carritos abandonados
 
-/** open (sin recordar) | reminded (correo enviado) | contacted (WhatsApp) | recovered (compró) | dismissed */
+/** open (sin recordar) | reminded (recordatorio automático) | contacted (WhatsApp a mano) | recovered (compró) | dismissed */
 export type AbandonedCartStatus = "open" | "reminded" | "contacted" | "recovered" | "dismissed";
 
 export interface AbandonedCart {
@@ -307,16 +307,23 @@ export interface AbandonedCart {
   created_at: string;
   updated_at: string;
   reminded_at: string | null;
-  reminder_channel: "email" | "whatsapp" | null;
+  /** Por dónde se le recordó: "email", "whatsapp" o los dos ("email,whatsapp"). */
+  reminder_channel: string | null;
   recovered_at: string | null;
   promotions: PromotionsStatus;
   /** Chat con el mensaje listo (null = sin celular, sin permiso o ya compró). */
   whatsapp_url: string | null;
 }
 
+/** A quién va el WhatsApp automático: solo a quien no recibe el correo, o a todos. */
+export type AbandonedCartWhatsappTarget = "no_email" | "all";
+
 export interface AbandonedCartConfig {
   email_enabled: boolean;
   delay_hours: number;
+  /** Recordatorio automático por WhatsApp (solo con WhatsApp Business conectado). */
+  whatsapp_enabled: boolean;
+  whatsapp_target: AbandonedCartWhatsappTarget;
 }
 
 export type AbandonedCartsFilter = "abandoned" | "recovered" | "all";
@@ -329,6 +336,8 @@ export interface AbandonedCartsResponse {
   summary: { abandoned: number; recovered: number; recovered_total: number };
   config: AbandonedCartConfig;
   delay_options: number[];
+  /** WhatsApp Business conectado: se puede activar el recordatorio por WhatsApp. */
+  whatsapp_api: boolean;
 }
 
 /** Cómo se muestran varios productos en el correo. */
