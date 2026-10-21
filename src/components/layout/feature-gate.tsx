@@ -95,9 +95,12 @@ function LockedFeature({ feature }: { feature: PaidFeature }) {
             </Button>
           ) : billing?.self_service ? (
             <>
-              <Button variant="primary" fullWidth onPress={() => setIsUnlockOpen(true)}>
-                <Sparkles className="size-4" aria-hidden />
-                Desbloquear {label} por +{formatMoney(price)} al mes
+              {/* En el celular el texto no cabe en una línea: se parte en dos. */}
+              <Button variant="primary" fullWidth onPress={() => setIsUnlockOpen(true)} className="h-auto min-h-10 whitespace-normal py-2.5 leading-snug">
+                <Sparkles className="size-4 shrink-0" aria-hidden />
+                <span>
+                  Desbloquear {label} <span className="whitespace-nowrap">por +{formatMoney(price)} al mes</span>
+                </span>
               </Button>
               <p className="text-xs text-muted">
                 Se activa al instante. Hoy no se te cobra nada: el valor se suma desde tu próxima mensualidad.
@@ -109,11 +112,13 @@ function LockedFeature({ feature }: { feature: PaidFeature }) {
                 href={PAID_FEATURES_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={buttonVariants({ variant: "primary", fullWidth: true })}
+                className={`${buttonVariants({ variant: "primary", fullWidth: true })} h-auto min-h-10 whitespace-normal py-2.5 leading-snug`}
               >
-                <Sparkles className="size-4" aria-hidden />
-                Desbloquear {label} en vendeyaonline.com
-                <ExternalLink className="size-4" aria-hidden />
+                <Sparkles className="size-4 shrink-0" aria-hidden />
+                <span>
+                  Desbloquear {label} <span className="whitespace-nowrap">en vendeyaonline.com</span>
+                </span>
+                <ExternalLink className="size-4 shrink-0" aria-hidden />
               </a>
               <p className="text-xs text-muted">
                 {billing?.reason ? `${FEATURE_BILLING_REASONS[billing.reason]} ` : ""}
