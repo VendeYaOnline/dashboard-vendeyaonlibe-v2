@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Package,
   Settings2,
-  Store,
   ShieldCheck,
   ShoppingCart,
   Star,
@@ -68,8 +67,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/ventas", label: "Ventas recibidas", icon: ShoppingCart },
   { href: "/clientes", label: "Clientes", icon: Contact, roles: ["admin", "editor"], releasedAt: "2026-10-06" },
   { href: "/marketing", label: "Marketing", icon: Megaphone, roles: ["admin", "editor"], feature: "marketing" },
-  // Incluido en Marketing, pero aparte: no es parte del envío de mensajes.
-  { href: "/catalogo-meta", label: "Catálogo de Meta", icon: Store, roles: ["admin", "editor"], feature: "marketing", releasedAt: "2026-10-21" },
   { href: "/productos", label: "Productos", icon: Package },
   { href: "/inventario", label: "Inventario", icon: Boxes, releasedAt: "2026-10-06" },
   { href: "/productos-destacados", label: "Productos destacados", icon: Star },
