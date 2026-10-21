@@ -51,7 +51,6 @@ import {
   getMarketingLimits,
   getWhatsappSettings,
   getMyWhatsappSettings,
-  getWhatsappSignupConfig,
   getAttributes,
   getPlan,
   getMercadoPagoSettings,
@@ -270,10 +269,6 @@ export const useQueryMarketingLimits = (enabled = true) =>
 /** WhatsApp Cloud API de la propia tienda (Marketing). */
 export const useQueryMyWhatsappSettings = (enabled = true) =>
   useQuery({ queryKey: ["marketing", "whatsapp"], queryFn: getMyWhatsappSettings, enabled });
-
-/** App de Meta para el botón «Conectar con Facebook» (no cambia: se pide una vez). */
-export const useQueryWhatsappSignupConfig = (enabled = true) =>
-  useQuery({ queryKey: ["marketing", "whatsapp", "signup"], queryFn: getWhatsappSignupConfig, enabled, staleTime: Infinity });
 
 /** Superadmin: WhatsApp Cloud API de una tienda. */
 export const useQueryWhatsappSettings = (companyId: string | null) =>

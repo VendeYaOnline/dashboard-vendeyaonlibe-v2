@@ -38,27 +38,6 @@ type Tone = "success" | "warning" | "muted";
 /** Estado en palabras: lo ven igual el superadmin y la tienda. */
 export function whatsappStatus(settings: WhatsappSettings): { tone: Tone; title: string; detail: string } {
   const account = [settings.verified_name, settings.display_phone].filter(Boolean).join(" · ");
-  // Conectada con el botón de Meta: falta que Meta apruebe la plantilla.
-  if (settings.onboarding === "embedded_signup" && settings.enabled && settings.has_token && !settings.ready) {
-    return settings.template_status === "REJECTED"
-      ? {
-          tone: "warning",
-          title: "Meta rechazó la plantilla de promociones",
-          detail: `${settings.template_reason ? `Motivo: ${settings.template_reason}. ` : ""}Escríbenos y la ajustamos por ti.`,
-        }
-      : {
-          tone: "warning",
-          title: "Conectado: Meta está revisando tu plantilla",
-          detail: `${account ? `${account}. ` : ""}Suele tardar de minutos a 24 horas; cuando la apruebe, WhatsApp se activa solo.`,
-        };
-  }
-  if (settings.disconnected_at && !settings.has_token) {
-    return {
-      tone: "warning",
-      title: "Desconectado desde Meta",
-      detail: "Se quitó el acceso de VendeYaOnline en Meta. Vuelve a conectar para enviar por WhatsApp.",
-    };
-  }
   if (settings.ready && settings.verified) {
     return {
       tone: "success",

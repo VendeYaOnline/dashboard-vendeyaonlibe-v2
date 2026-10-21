@@ -37,7 +37,6 @@ const PROMOTIONS: Record<PromotionsStatus, { label: string; color: "success" | "
 const UNSUBSCRIBE_SOURCES: Record<string, string> = {
   link: "con el enlace del correo",
   panel: "la registró la tienda",
-  whatsapp: "respondió BAJA por WhatsApp",
   spam: "marcó un correo como spam",
   ses: "marcó un correo como spam",
 };

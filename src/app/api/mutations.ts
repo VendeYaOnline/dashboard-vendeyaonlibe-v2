@@ -35,7 +35,6 @@ import {
   testWhatsappSettings,
   updateMyWhatsappSettings,
   testMyWhatsappSettings,
-  completeWhatsappSignup,
   updateMercadoPagoSettings,
   createCover,
   createFeaturedProduct,
@@ -516,19 +515,6 @@ export const useMutationUpdateMyWhatsapp = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketing", "whatsapp"] });
       queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
-    },
-  });
-};
-
-/** Termina la conexión con el código del registro de Meta. */
-export const useMutationCompleteWhatsappSignup = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: completeWhatsappSignup,
-    onSuccess: ({ settings }) => {
-      queryClient.setQueryData(["marketing", "whatsapp"], settings);
-      queryClient.invalidateQueries({ queryKey: ["marketing", "audience"] });
-      queryClient.invalidateQueries({ queryKey: ["marketing", "abandoned-carts"] });
     },
   });
 };
