@@ -22,7 +22,8 @@ const dateInput = (date: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "
  * Precio de Marketing para todas las tiendas que lo pagan en su plan. Subirlo
  * se programa con al menos 30 días: cada tienda recibe un correo y un aviso en
  * Marketing y puede cancelar antes. En la fecha se cobra solo. Bajarlo aplica
- * ya. Solo el propietario de la plataforma lo cambia.
+ * ya, solo a quien paga más que el precio nuevo. Solo el propietario de la
+ * plataforma lo cambia.
  */
 export function MarketingPricingCard() {
   const isOwner = useAuthStore((s) => s.user?.is_owner) === true;
@@ -85,7 +86,8 @@ export function MarketingPricingCard() {
           </h2>
           <p className="text-xs text-muted">
             Lo que se suma a la mensualidad de las tiendas que activan Marketing. Para subirlo hay que avisar con {minNotice} días:
-            cada tienda recibe un correo y un aviso en Marketing, y puede cancelarlo antes. Bajarlo se aplica de inmediato.
+            cada tienda recibe un correo y un aviso en Marketing, y puede cancelarlo antes. Bajarlo se aplica de inmediato a quien
+            paga más; quien paga menos conserva su precio.
           </p>
         </div>
 
@@ -118,8 +120,8 @@ export function MarketingPricingCard() {
             </div>
             {pricing.subscribers.by_price.some((row) => row.price !== pricing.price) && (
               <p className="text-xs text-muted">
-                Quien lo activó antes sigue pagando su precio. Para cobrarle el precio actual, programa un cambio: al
-                aplicarse, todas las tiendas pasan al precio nuevo (con el aviso de {minNotice} días si es una subida).
+                Quien lo activó antes sigue pagando su precio. Una subida programada (con el aviso de {minNotice} días) pasa a
+                todas las tiendas al precio nuevo. Una rebaja solo baja a quien paga más: nadie sube sin aviso.
               </p>
             )}
 
@@ -151,6 +153,9 @@ export function MarketingPricingCard() {
                   <Chip size="sm" variant="soft" color="success">{results.updated.length} actualizadas</Chip>
                   {results.paused.length > 0 && (
                     <Chip size="sm" variant="soft" color="warning">{results.paused.length} pausadas (sin cambio)</Chip>
+                  )}
+                  {(results.kept?.length ?? 0) > 0 && (
+                    <Chip size="sm" variant="soft">{results.kept!.length} ya pagaban menos (conservan su precio)</Chip>
                   )}
                   {results.failed.length > 0 && (
                     <Chip size="sm" variant="soft" color="danger">{results.failed.length} fallidas</Chip>
@@ -237,7 +242,7 @@ export function MarketingPricingCard() {
           confirm === "cancel"
             ? "El precio se queda igual. Las tiendas ya avisadas dejarán de ver el aviso (el correo ya se envió)."
             : isDecrease
-              ? `Marketing pasará a ${formatMoney(newPrice)} al mes para todas las tiendas, desde ya.`
+              ? `Marketing pasará a ${formatMoney(newPrice)} al mes desde ya: para quien lo active y para las tiendas que pagan más. Quien paga menos conserva su precio.`
               : `Marketing costará ${formatMoney(newPrice)} al mes desde el ${date ? longDay(effectiveAt!) : ""}. Se enviará un correo a cada tienda que lo paga (${pricing?.panel_stores ?? 0}) y lo verán en Marketing. Ese día se cobrará solo.`
         }
         confirmLabel={confirm === "cancel" ? "Cancelar subida" : isDecrease ? "Bajar precio" : "Programar y avisar"}

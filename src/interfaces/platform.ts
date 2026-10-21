@@ -290,6 +290,8 @@ export interface AddonPriceChange {
     updated: { subscription_id: number; email: string | null }[];
     failed: { subscription_id: number; email: string | null; error: string }[];
     paused: { subscription_id: number; email: string | null }[];
+    /** Rebaja: ya pagaban menos que el precio nuevo y conservan el suyo (cambios antiguos no lo traen). */
+    kept?: { subscription_id: number; email: string | null }[];
   } | null;
 }
 
