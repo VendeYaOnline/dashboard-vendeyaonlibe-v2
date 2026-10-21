@@ -49,8 +49,7 @@ import type {
   MarketingLimits,
   WhatsappSettings,
   WhatsappSettingsPayload,
-  FeatureBilling,
-} from "@/interfaces/platform";
+  FeatureBilling, AddonPricing, SchedulePricingResult } from "@/interfaces/platform";
 import { ProductRequest } from "@/interfaces/products";
 import { CarouselPayload, CarouselRequest } from "@/interfaces/carousel";
 import { FeaturedProductRequest } from "@/interfaces/featured-products";
@@ -415,6 +414,20 @@ export const getMarketingContacts = async ({ page, search, filter }: { page: num
 };
 
 // Superadmin: límites globales de Marketing y WhatsApp Cloud API por tienda.
+// * Precio de las vistas de pago (superadmin)
+
+export const getAddonPricing = async (feature: string) =>
+  (await axiosConfig.get<{ pricing: AddonPricing }>(`/platform/pricing/${feature}`)).data.pricing;
+
+export const scheduleAddonPricing = async ({ feature, price, effective_at }: { feature: string; price: number; effective_at?: string }) =>
+  (await axiosConfig.post<SchedulePricingResult>(`/platform/pricing/${feature}/schedule`, { price, effective_at })).data;
+
+export const cancelAddonPricing = async (feature: string) =>
+  (await axiosConfig.post<{ pricing: AddonPricing }>(`/platform/pricing/${feature}/cancel`)).data;
+
+export const retryAddonPricing = async (feature: string) =>
+  (await axiosConfig.post<{ pricing: AddonPricing }>(`/platform/pricing/${feature}/retry`)).data;
+
 export const getMarketingLimits = async () =>
   (await axiosConfig.get<{ limits: MarketingLimits }>("/platform/marketing-limits")).data;
 

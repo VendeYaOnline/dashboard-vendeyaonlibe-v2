@@ -36,6 +36,7 @@ import {
   getSuperadmins,
   getMetaCatalogSummary,
   getMetaFeed,
+  getAddonPricing,
   getWhatsappPreview,
   getInventory,
   getCustomers,
@@ -258,6 +259,10 @@ export const useQueryAbandonedCarts = (filters: { page: number; status: Abandone
   });
 
 /** Superadmin: límites globales de Marketing. */
+/** Superadmin: precio de una vista de pago (VendeYaOnline). */
+export const useQueryAddonPricing = (feature: string) =>
+  useQuery({ queryKey: ["platform", "pricing", feature], queryFn: () => getAddonPricing(feature), staleTime: 30_000, retry: false });
+
 export const useQueryMarketingLimits = (enabled = true) =>
   useQuery({ queryKey: ["platform", "marketing-limits"], queryFn: getMarketingLimits, enabled });
 

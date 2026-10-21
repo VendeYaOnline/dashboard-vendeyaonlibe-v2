@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import type { PaidFeature } from "@/config/navigation";
+import type { AddonPricing } from "@/interfaces/platform";
 import {
   createAttribute,
   createCompanyUser,
@@ -9,6 +10,9 @@ import {
   deleteCompanyUser,
   deleteSuperadmin,
   downloadMetaCatalog,
+  scheduleAddonPricing,
+  cancelAddonPricing,
+  retryAddonPricing,
   saveMetaFeed,
   rotateMetaFeed,
   disableMetaFeed,
@@ -421,9 +425,22 @@ const useFeatureBillingMutation = (mutationFn: (feature: PaidFeature) => Promise
     onSuccess: (_data, feature) => {
       queryClient.invalidateQueries({ queryKey: ["features"] });
       queryClient.invalidateQueries({ queryKey: ["feature-billing", feature] });
+      queryClient.invalidateQueries({ queryKey: ["marketing"] });
     },
   });
 };
+
+const usePricingMutation = <T, R extends { pricing: AddonPricing }>(mutationFn: (value: T) => Promise<R>) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (data) => queryClient.setQueryData(["platform", "pricing", data.pricing.addon], data.pricing),
+  });
+};
+
+export const useMutationScheduleAddonPricing = () => usePricingMutation(scheduleAddonPricing);
+export const useMutationCancelAddonPricing = () => usePricingMutation(cancelAddonPricing);
+export const useMutationRetryAddonPricing = () => usePricingMutation(retryAddonPricing);
 
 export const useMutationActivateFeature = () => useFeatureBillingMutation(activateFeature);
 export const useMutationCancelFeature = () => useFeatureBillingMutation(cancelFeature);

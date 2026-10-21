@@ -260,9 +260,13 @@ export interface FeatureBilling {
   /** Se cobra en su suscripción (la activó ella desde el panel). */
   billed: boolean;
   since: string | null;
+  /** Cancelada al terminar el mes: activa hasta esta fecha (null = activa y cobrándose). */
+  cancel_at?: string | null;
   self_service: boolean;
   reason: FeatureBillingReason | null;
   addon_price?: number;
+  /** Subida de precio programada (aviso a la tienda). */
+  price_change?: { price: number; effective_at: string } | null;
   plan: {
     type: string;
     plan_price: number;
@@ -271,4 +275,39 @@ export interface FeatureBilling {
     new_total: number;
     next_payment_date: string | null;
   } | null;
+}
+
+/** Cambio de precio de una vista de pago (VendeYaOnline). */
+export interface AddonPriceChange {
+  id: number;
+  old_price: number;
+  new_price: number;
+  effective_at: string;
+  status: "scheduled" | "applying" | "applied" | "canceled";
+  created_at: string;
+  applied_at: string | null;
+  results: {
+    updated: { subscription_id: number; email: string | null }[];
+    failed: { subscription_id: number; email: string | null; error: string }[];
+    paused: { subscription_id: number; email: string | null }[];
+  } | null;
+}
+
+/** Precio de una vista de pago para el superadmin (GET /platform/pricing/:feature). */
+export interface AddonPricing {
+  addon: string;
+  label: string;
+  price: number;
+  min_notice_days: number;
+  subscribers: { total: number; by_price: { price: number; count: number }[] };
+  scheduled: AddonPriceChange | null;
+  last: AddonPriceChange | null;
+  /** Tiendas de este panel que la pagan (a quién se avisa). */
+  panel_stores: number;
+}
+
+export interface SchedulePricingResult {
+  immediate: boolean;
+  notified: { stores: number; emailed: number; failed: string[]; mailer?: boolean } | null;
+  pricing: AddonPricing;
 }
