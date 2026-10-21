@@ -129,13 +129,6 @@ const TOURS: Record<TourStep, TourItem[]> = {
         "Clientes que llenaron sus datos y no compraron. Se les envía un recordatorio por correo automático y puedes escribirles por WhatsApp con un clic.",
       side: "top",
     },
-    {
-      target: "send-meta",
-      title: "Catálogo automático para Meta",
-      description:
-        "Conecta tus productos a Facebook e Instagram con una URL: Meta la lee sola y tus anuncios siempre muestran precios y unidades al día.",
-      side: "top",
-    },
   ],
 };
 

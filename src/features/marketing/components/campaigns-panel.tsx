@@ -11,7 +11,6 @@ import { CampaignDetailModal } from "./campaign-detail-modal";
 import { CHANNELS, CampaignProgress, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
 import { ContactsPanel } from "./contacts-panel";
 import { AbandonedCartsPanel } from "./abandoned-carts-panel";
-import { MetaFeedPanel } from "./meta-feed-panel";
 import { NewCampaignCard } from "./new-campaign-card";
 
 interface CampaignsPanelProps {
@@ -136,10 +135,6 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
 
       <div data-tour="send-carts">
         <AbandonedCartsPanel />
-      </div>
-
-      <div data-tour="send-meta">
-        <MetaFeedPanel />
       </div>
 
       <CampaignDetailModal campaignId={openCampaign} onClose={() => setOpenCampaign(null)} />

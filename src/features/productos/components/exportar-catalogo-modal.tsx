@@ -457,7 +457,7 @@ export function ExportarCatalogoModal({ isOpen, onOpenChange, mode = "download",
                 </p>
                 <p className="mt-2 text-xs text-muted">
                   ¿Prefieres que se actualice solo? Con Marketing activo puedes darle a Meta una URL que lee cada
-                  hora: <span className="font-medium text-foreground">Marketing → Envía → Catálogo automático para Meta</span>.
+                  hora: <span className="font-medium text-foreground">menú → Catálogo de Meta</span>.
                 </p>
               </details>
               )}
