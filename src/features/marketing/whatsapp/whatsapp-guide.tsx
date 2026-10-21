@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Lightbulb } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Lightbulb, PlayCircle } from "lucide-react";
 import { Button, Chip, cn, toast } from "@heroui/react";
 import { CAROUSEL_CARD_BODY, CAROUSEL_TEMPLATE_BODY, WHATSAPP_TEMPLATE_BODY } from "./whatsapp-templates";
 
@@ -23,6 +23,20 @@ interface GuideStepData {
 }
 
 const STORAGE_KEY = "vy-whatsapp-guide-step";
+
+/** Video de YouTube que muestra la configuración completa ("" = sin video). */
+const SETUP_VIDEO_URL = "https://youtu.be/UQmjs3QyziY";
+
+/** Id del video a partir de su enlace (youtube.com/watch?v=…, youtu.be/…, /shorts/…, /embed/…). */
+const youtubeId = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith("youtu.be")) return parsed.pathname.slice(1) || null;
+    return parsed.searchParams.get("v") ?? parsed.pathname.match(/\/(?:shorts|embed|live)\/([\w-]+)/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+};
 
 function CopyBlock({ label, text }: { label: string; text: string }) {
   const copy = async () => {
@@ -218,8 +232,27 @@ export function WhatsappGuide({ onFinish }: WhatsappGuideProps) {
 
   const isLast = current === STEPS.length - 1;
 
+  const videoId = SETUP_VIDEO_URL ? youtubeId(SETUP_VIDEO_URL) : null;
+
   return (
     <div className="space-y-4">
+      {videoId && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <PlayCircle className="size-4 text-accent" /> Mira el video: así se configura de principio a fin
+          </p>
+          <div className="aspect-video overflow-hidden rounded-xl border border-border bg-surface-secondary">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+              title="Cómo configurar WhatsApp Business"
+              className="size-full"
+              loading="lazy"
+              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs">
           <span className="whitespace-nowrap font-medium">
