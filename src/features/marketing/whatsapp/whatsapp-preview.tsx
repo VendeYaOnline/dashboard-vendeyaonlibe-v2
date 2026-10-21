@@ -3,7 +3,7 @@
 import { AlertTriangle, ExternalLink, Info, PackagePlus } from "lucide-react";
 import { Button, Spinner } from "@heroui/react";
 import { useQueryWhatsappPreview } from "@/app/api/queries";
-import { CAROUSEL_TEMPLATE_BODY, WHATSAPP_TEMPLATE_BODY } from "./whatsapp-setup";
+import { CAROUSEL_TEMPLATE_BODY, WHATSAPP_TEMPLATE_BODY } from "./whatsapp-templates";
 
 /** "{{1}}", "{{2}}"… de la plantilla de Meta → los valores de la vista previa. */
 const fill = (body: string, params: string[]) => params.reduce((text, value, index) => text.replaceAll(`{{${index + 1}}}`, value), body);

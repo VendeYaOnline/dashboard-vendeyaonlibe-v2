@@ -1,57 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { History, Lock, MessageCircle, Send, TrendingUp, Users } from "lucide-react";
-import { Button, Card, ToggleButton, ToggleButtonGroup, cn, toast } from "@heroui/react";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { useState } from "react";
+import { History, TrendingUp } from "lucide-react";
+import { Button, Card } from "@heroui/react";
 import { DataTable, type DataTableColumn } from "@/components/shared/data-table";
-import { useQueryMarketingAudience, useQueryMarketingCampaigns, useQueryMyWhatsappSettings } from "@/app/api/queries";
-import { useMutationCreateCampaign } from "@/app/api/mutations";
-import { handleAxiosError } from "@/lib/error-handler";
-import { formatInteger, formatMoney } from "@/features/analisis/utils";
-import type {
-  CampaignChannel,
-  CampaignSegment,
-  MarketingCampaign,
-  MarketingResponse,
-  QuotaWindow,
-} from "@/interfaces/marketing";
+import { useQueryMarketingCampaigns } from "@/app/api/queries";
+import { formatMoney } from "@/features/analisis/utils";
+import type { MarketingCampaign, MarketingResponse } from "@/interfaces/marketing";
 import { CampaignDetailModal } from "./campaign-detail-modal";
-import { CHANNELS, CampaignProgress, SEGMENTS, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
+import { CHANNELS, CampaignProgress, SEGMENT_LABELS, formatDateTime } from "./campaign-shared";
 import { ContactsPanel } from "./contacts-panel";
 import { AbandonedCartsPanel } from "./abandoned-carts-panel";
 import { MetaFeedPanel } from "./meta-feed-panel";
-import { WhatsappStatusBanner } from "../whatsapp/whatsapp-setup";
-import { WhatsappSetupModal } from "../whatsapp/whatsapp-setup-modal";
-import { WhatsappPreview } from "../whatsapp/whatsapp-preview";
-
-const clients = (count: number) => `${formatInteger(count)} ${count === 1 ? "cliente" : "clientes"}`;
-
-const resetsLabel = (window: QuotaWindow) => (window.resets_at ? `Se restablece el ${formatDateTime(window.resets_at)}.` : "");
-
-/** Uso de un límite de correos: "35 de 100 · quedan 65". */
-function QuotaBar({ label, window }: { label: string; window: QuotaWindow }) {
-  const full = window.remaining === 0;
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-muted">{label}</span>
-        <span className="tabular-nums">
-          {formatInteger(window.used)} de {formatInteger(window.limit)}
-        </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-surface-secondary">
-        <div
-          className={cn("h-full rounded-full", full ? "bg-danger" : "bg-accent")}
-          style={{ width: `${Math.min(100, (window.used / Math.max(window.limit, 1)) * 100)}%` }}
-        />
-      </div>
-      <p className={cn("text-xs", full ? "text-danger" : "text-muted")}>
-        {full ? `Límite alcanzado. ${resetsLabel(window)}` : `${formatInteger(window.remaining)} disponibles`}
-      </p>
-    </div>
-  );
-}
+import { NewCampaignCard } from "./new-campaign-card";
 
 interface CampaignsPanelProps {
   data: MarketingResponse;
@@ -63,87 +24,8 @@ interface CampaignsPanelProps {
 
 /** Paso "Envía": nueva campaña (plantilla, canal y grupo) e historial. */
 export function CampaignsPanel({ data, initialSlot, onEditTemplates }: CampaignsPanelProps) {
-  const savedTemplates = data.templates.filter((template) => template.saved);
-  const [slot, setSlot] = useState<number | null>(initialSlot ?? savedTemplates[0]?.slot ?? null);
-  const [channel, setChannel] = useState<CampaignChannel>("email");
-  const [segment, setSegment] = useState<CampaignSegment>("all");
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
-  const [isWhatsappOpen, setIsWhatsappOpen] = useState(false);
-  const { data: whatsapp } = useQueryMyWhatsappSettings();
-
-  const { data: audience, isLoading: isAudienceLoading } = useQueryMarketingAudience();
   const { data: history, isLoading: isHistoryLoading } = useQueryMarketingCampaigns();
-  const create = useMutationCreateCampaign();
-
-  const count = audience?.segments[segment][channel] ?? 0;
-  const cooldownCount = channel === "email" ? (audience?.segments[segment].email_cooldown ?? 0) : 0;
-  /** No aceptaron promociones en su última compra: no reciben por ningún canal. */
-  const optedOutCount = audience?.segments[segment].opted_out ?? 0;
-  const quota = audience?.quota;
-  const whatsappApi = audience?.whatsapp_mode === "api";
-  const quotaBlocker =
-    channel !== "email" || !quota || count === 0
-      ? null
-      : count > quota.daily.remaining
-        ? `Esta campaña necesita ${count} correos y te quedan ${quota.daily.remaining} hoy. ${resetsLabel(quota.daily)}`
-        : count > quota.monthly.remaining
-          ? `Esta campaña necesita ${count} correos y te quedan ${quota.monthly.remaining} este mes. ${resetsLabel(quota.monthly)}`
-          : null;
-  const template = data.templates.find((item) => item.slot === slot);
-  const blocker = isAudienceLoading
-    ? null
-    : !data.brandSaved
-    ? "Primero guarda tu marca en la pestaña Marca."
-    : !template?.saved
-      ? "Guarda al menos una plantilla para poder enviarla."
-      : channel === "email" && data.pause
-        ? "Tus campañas de correo están pausadas. Puedes seguir enviando por WhatsApp."
-      : channel === "email" && !data.sender.configured
-        ? "El envío de correos no está configurado en el servidor."
-        : channel === "whatsapp" && !whatsappApi
-          ? "Conecta WhatsApp Business para enviar campañas por WhatsApp."
-        : count === 0
-          ? channel === "email"
-            ? cooldownCount > 0
-              ? `Los clientes de este grupo ya recibieron un correo en los últimos ${audience?.cooldown_days ?? 7} días.`
-              : "Ningún cliente de este grupo tiene correo."
-            : "Ningún cliente de este grupo tiene un celular válido."
-          : quotaBlocker;
-
-  // Un id por confirmación: si la petición se repite (doble clic, reintento) no se crea otra campaña.
-  const requestId = useRef<string | null>(null);
-  const openConfirm = () => {
-    requestId.current = crypto.randomUUID();
-    setIsConfirmOpen(true);
-  };
-
-  const handleCreate = () => {
-    if (!slot || !requestId.current || create.isPending) return;
-    create.mutate(
-      { slot, segment, channel, request_id: requestId.current },
-      {
-        onSuccess: ({ campaign, duplicate, skipped }) => {
-          setIsConfirmOpen(false);
-          requestId.current = null;
-          if (duplicate) {
-            toast.info("Esta campaña ya se había creado; no se envió de nuevo.");
-          } else if (campaign.channel === "whatsapp") {
-            toast.success(`Enviando por WhatsApp a ${campaign.total} clientes.`);
-          } else {
-            const omitted = skipped.cooldown + skipped.suppressed + (skipped.opted_out ?? 0) + (skipped.invalid ?? 0);
-            toast.success(
-              `Enviando a ${campaign.total} clientes. Puedes seguir trabajando.${omitted ? ` ${omitted} se omitieron (espera de 7 días, baja, sin permiso o correo inválido).` : ""}`,
-            );
-          }
-        },
-        onError: (error) => {
-          setIsConfirmOpen(false);
-          handleAxiosError(error, "No se pudo crear la campaña");
-        },
-      },
-    );
-  };
 
   const columns: DataTableColumn<MarketingCampaign>[] = [
     {
@@ -210,158 +92,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
 
   return (
     <div className="space-y-6">
-      <Card data-tour="send-new">
-        <Card.Content className="space-y-5 p-5">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <Send className="size-4" /> Nueva campaña
-          </h2>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium">1. Plantilla</p>
-            {savedTemplates.length === 0 ? (
-              <p className="text-sm text-muted">
-                Aún no tienes plantillas guardadas.{" "}
-                <button type="button" onClick={onEditTemplates} className="font-medium text-accent underline">
-                  Diseña tu primer correo
-                </button>
-                .
-              </p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-3">
-                {data.templates.map((item) => (
-                  <button
-                    key={item.slot}
-                    type="button"
-                    disabled={!item.saved}
-                    aria-pressed={item.slot === slot}
-                    onClick={() => setSlot(item.slot)}
-                    className={cn(
-                      "rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                      item.slot === slot ? "border-accent ring-1 ring-accent" : "border-border hover:bg-surface-secondary",
-                    )}
-                  >
-                    <span className="block truncate text-sm font-medium">{item.name}</span>
-                    <span className="block truncate text-xs text-muted">{item.saved ? item.content.subject : "Sin guardar"}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2" data-tour="send-channel">
-            <p className="text-sm font-medium">2. Canal</p>
-            <ToggleButtonGroup
-              aria-label="Canal"
-              selectionMode="single"
-              disallowEmptySelection
-              selectedKeys={new Set([channel])}
-              onSelectionChange={(keys) => {
-                const [next] = Array.from(keys, String);
-                if (next) setChannel(next as CampaignChannel);
-              }}
-            >
-              {(Object.keys(CHANNELS) as CampaignChannel[]).map((key) => {
-                const Icon = CHANNELS[key].icon;
-                return (
-                  <ToggleButton key={key} id={key}>
-                    <Icon className="size-4" />
-                    {CHANNELS[key].label}
-                  </ToggleButton>
-                );
-              })}
-            </ToggleButtonGroup>
-            <p className="text-xs text-muted">
-              {channel === "email"
-                ? `Sale desde ${data.sender.email ?? "el correo de VendeYaOnline"} con el nombre «${data.brand.sender_name}». Cada correo lleva un enlace para darse de baja.`
-                : whatsappApi
-                  ? whatsapp?.carousel_template_name
-                    ? `Se envía automáticamente desde el WhatsApp de tu marca. Con ${whatsapp.carousel_cards} o más productos, en carrusel con foto, precio y botón «Comprar».`
-                    : "Se envía automáticamente desde el WhatsApp de tu marca con la plantilla aprobada por Meta. Configura el carrusel para mostrar tus productos con foto."
-                  : null}
-            </p>
-            {channel === "whatsapp" && !whatsappApi && (
-              <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-secondary p-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface">
-                  <Lock className="size-4 text-muted" />
-                </span>
-                <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-semibold">WhatsApp necesita WhatsApp Business conectado</p>
-                  <p className="text-xs text-muted">
-                    Con WhatsApp Business (la API oficial de Meta) tus campañas salen solas, con tus productos en carrusel: foto,
-                    precio y botón «Comprar». Así tu número no corre riesgo de bloqueo por mensajes masivos.
-                  </p>
-                </div>
-              </div>
-            )}
-            {channel === "whatsapp" && whatsappApi && <WhatsappPreview slot={slot} onEditTemplates={onEditTemplates} />}
-            {channel === "whatsapp" && whatsapp && (
-              <div className="space-y-2">
-                <WhatsappStatusBanner settings={whatsapp} className="py-2" />
-                <Button variant="outline" size="sm" onPress={() => setIsWhatsappOpen(true)}>
-                  <MessageCircle className="size-4" />
-                  {whatsapp.ready && whatsapp.verified ? "Ver configuración" : "Configurar WhatsApp Business"}
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium">3. A quién</p>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {SEGMENTS.map((item) => {
-                const reach = audience?.segments[item.id][channel];
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-pressed={item.id === segment}
-                    onClick={() => setSegment(item.id)}
-                    className={cn(
-                      "flex items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors",
-                      item.id === segment ? "border-accent ring-1 ring-accent" : "border-border hover:bg-surface-secondary",
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className="block text-sm font-medium">{item.label}</span>
-                      <span className="block truncate text-xs text-muted">{item.hint}</span>
-                    </span>
-                    <span className="text-lg font-semibold tabular-nums">
-                      {isAudienceLoading ? "…" : formatInteger(reach ?? 0)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            {audience && (
-              <p className="text-xs text-muted">
-                {channel === "email"
-                  ? `Solo cuentan los clientes con correo que pueden recibir hoy${audience.unsubscribed ? ` (${audience.unsubscribed} no reciben: baja o correo inválido)` : ""}.`
-                  : "Solo cuentan los clientes con un celular colombiano válido."}
-                {cooldownCount > 0 &&
-                  ` ${formatInteger(cooldownCount)} de este grupo ${cooldownCount === 1 ? "está" : "están"} en espera: ya ${cooldownCount === 1 ? "recibió" : "recibieron"} un correo en los últimos ${audience.cooldown_days} días.`}
-                {optedOutCount > 0 &&
-                  ` ${formatInteger(optedOutCount)} no ${optedOutCount === 1 ? "recibe" : "reciben"} promociones: no aceptaron al comprar o se dieron de baja.`}
-              </p>
-            )}
-          </div>
-
-          {channel === "email" && quota && (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <QuotaBar label="Correos enviados hoy" window={quota.daily} />
-              <QuotaBar label="En esta hora" window={quota.hourly} />
-              <QuotaBar label="Este mes" window={quota.monthly} />
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-            <Button variant="primary" isDisabled={isAudienceLoading || Boolean(blocker) || create.isPending} onPress={openConfirm}>
-              <Users className="size-4" />
-              {`Enviar a ${clients(count)}`}
-            </Button>
-            {blocker && <p className="text-sm text-warning">{blocker}</p>}
-          </div>
-        </Card.Content>
-      </Card>
+      <NewCampaignCard data={data} initialSlot={initialSlot} onEditTemplates={onEditTemplates} />
 
       <Card className="overflow-hidden" data-tour="send-history">
         <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
@@ -411,24 +142,7 @@ export function CampaignsPanel({ data, initialSlot, onEditTemplates }: Campaigns
         <MetaFeedPanel />
       </div>
 
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        onOpenChange={setIsConfirmOpen}
-        onConfirm={handleCreate}
-        tone="accent"
-        title={channel === "email" ? "¿Enviar la campaña?" : "¿Enviar la campaña por WhatsApp?"}
-        description={
-          channel === "email"
-            ? `Se enviará «${template?.name}» a ${count} ${count === 1 ? "cliente" : "clientes"} (${SEGMENT_LABELS[segment].toLowerCase()}). No se puede deshacer.`
-            : `Se enviará «${template?.name}» por WhatsApp a ${count} ${count === 1 ? "cliente" : "clientes"} (${SEGMENT_LABELS[segment].toLowerCase()}). Meta cobra cada mensaje en tu cuenta. No se puede deshacer.`
-        }
-        confirmLabel="Enviar ahora"
-        pendingLabel="Creando"
-        isPending={create.isPending}
-      />
-
       <CampaignDetailModal campaignId={openCampaign} onClose={() => setOpenCampaign(null)} />
-      <WhatsappSetupModal isOpen={isWhatsappOpen} onClose={() => setIsWhatsappOpen(false)} />
     </div>
   );
 }
