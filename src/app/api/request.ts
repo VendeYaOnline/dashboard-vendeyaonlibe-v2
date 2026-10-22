@@ -462,8 +462,8 @@ export const getPlan = async () => (await axiosConfig.get<PlanResponse>("/get-pl
 export const getFeatures = async () =>
   (await axiosConfig.get<{
     features: PaidFeature[];
-    /** Mensualidad de VendeYaOnline rechazada (banner en todo el panel). */
-    billing_alert: { type: "payment_failed"; since: string | null } | null;
+    /** Mensualidad de VendeYaOnline rechazada o suscripción cancelada por Mercado Pago (banner en todo el panel). */
+    billing_alert: { type: "payment_failed" | "subscription_cancelled"; since: string | null } | null;
   }>("/get-features")).data;
 
 /** Plan de VendeYaOnline y lo que costaría sumar (o quitar) una vista de pago. */
