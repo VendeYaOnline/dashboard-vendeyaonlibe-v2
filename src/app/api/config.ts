@@ -25,6 +25,9 @@ axiosConfig.interceptors.request.use(
   },
 );
 
+/** Evento del navegador cuando el backend rechaza una petición por el bloqueo por falta de pago (402). */
+export const BILLING_BLOCKED_EVENT = "vyo:billing-blocked";
+
 // Un token vencido o inválido no puede dejar datos privados visibles en el
 // panel. El RouteGuard observa este logout y redirige al acceso.
 axiosConfig.interceptors.response.use(
@@ -34,6 +37,11 @@ axiosConfig.interceptors.response.use(
     const code = error.response?.data?.code;
     const isInvalidSession =
       status === 401 || code === "AUTH_TOKEN_EXPIRED" || code === "AUTH_TOKEN_INVALID";
+
+    // Panel bloqueado por falta de pago: BillingBlockGate muestra la pantalla para suscribirse de nuevo.
+    if (code === "SUBSCRIPTION_CANCELLED" && typeof window !== "undefined") {
+      window.dispatchEvent(new Event(BILLING_BLOCKED_EVENT));
+    }
 
     if (isInvalidSession && typeof window !== "undefined") {
       // El aviso sale una vez: varias peticiones en curso reciben el mismo 401.
