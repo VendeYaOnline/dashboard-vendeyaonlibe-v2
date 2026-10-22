@@ -58,6 +58,12 @@ export interface PlatformCompany {
   vendeya_account_email: string | null;
   /** Vistas cobradas en su suscripción (las demás se activaron a mano). */
   feature_billing: FeatureBillingMap | null;
+  /** Problema con su mensualidad de VendeYaOnline (revisión periódica). */
+  billing_alert: { type: "payment_failed" | "subscription_cancelled"; since: string | null } | null;
+  /** Panel bloqueado por falta de pago (Mercado Pago canceló la suscripción). */
+  billing_blocked: boolean;
+  /** Lo desbloqueaste a mano (vale hasta que se normalice su suscripción). */
+  billing_block_override: { at: string } | null;
 }
 
 /**
@@ -123,6 +129,8 @@ export interface UpdateCompanyPayload {
   reset_test_sends?: boolean;
   /** true = reactiva las campañas de correo pausadas por reputación. */
   marketing_resume?: boolean;
+  /** Panel bloqueado por falta de pago: true = desbloquearlo a mano, false = volver a bloquearlo. */
+  billing_unblock?: boolean;
   vendeya_account_email?: string | null;
 }
 

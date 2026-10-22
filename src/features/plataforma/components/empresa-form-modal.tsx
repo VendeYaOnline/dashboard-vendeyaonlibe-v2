@@ -84,6 +84,8 @@ export function EmpresaFormModal({
   const [resetTests, setResetTests] = useState(false);
   /** Reactivar las campañas de correo pausadas por rebotes o quejas al guardar. */
   const [resumeMarketing, setResumeMarketing] = useState(false);
+  /** Bloqueo por falta de pago: cambiarlo al guardar (desbloquear o volver a bloquear). */
+  const [toggleBlock, setToggleBlock] = useState(false);
   /** Ruta de producto de la tienda (enlaces de Marketing); vacío = /producto/{id}. */
   const [productPath, setProductPath] = useState("");
   /** Correo de su cuenta de VendeYaOnline: con él la tienda suma vistas a su plan. */
@@ -115,6 +117,7 @@ export function EmpresaFormModal({
     setAccountEmail(company?.vendeya_account_email ?? "");
     setResetTests(false);
     setResumeMarketing(false);
+    setToggleBlock(false);
     setAdminUsername("");
     setAdminEmail("");
     setAdminPassword("");
@@ -186,6 +189,7 @@ export function EmpresaFormModal({
         marketing_test_email: testEmail.trim() === "" ? null : testEmail.trim(),
         ...(resetTests ? { reset_test_sends: true } : {}),
         ...(resumeMarketing ? { marketing_resume: true } : {}),
+        ...(toggleBlock ? { billing_unblock: !company?.billing_block_override } : {}),
       });
       return;
     }
@@ -314,6 +318,34 @@ export function EmpresaFormModal({
                     description="La tienda puede desbloquearlas sola desde su panel (se suman a su plan de VendeYaOnline) o puedes activarlas aquí a mano. Si se desactiva una, la ve con candado; sus datos no se borran."
                   >
                     <div className="space-y-3">
+                      {company?.billing_alert?.type === "subscription_cancelled" && (
+                        <div className="space-y-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-3 text-xs">
+                          <p className="font-semibold text-danger">
+                            {company.billing_block_override ? "Panel desbloqueado a mano" : "Panel bloqueado por falta de pago"}
+                          </p>
+                          <p className="text-muted">
+                            Mercado Pago canceló su suscripción de VendeYaOnline
+                            {company.billing_alert.since
+                              ? ` (${new Date(company.billing_alert.since).toLocaleDateString("es-CO", { timeZone: "America/Bogota" })})`
+                              : ""}
+                            .{" "}
+                            {company.billing_block_override
+                              ? `Lo desbloqueaste el ${new Date(company.billing_block_override.at).toLocaleDateString("es-CO", { timeZone: "America/Bogota" })}; sigue así hasta que se suscriba de nuevo.`
+                              : "Su tienda en línea sigue vendiendo; el panel se desbloquea solo cuando se suscriba de nuevo."}
+                          </p>
+                          <Switch isSelected={toggleBlock} onChange={setToggleBlock}>
+                            <Switch.Content>
+                              <Switch.Control>
+                                <Switch.Thumb />
+                              </Switch.Control>
+                              {/* Texto simple (no Label): un label dentro del label del switch no lo activa al hacer clic. */}
+                              <span className="text-xs">
+                                {company.billing_block_override ? "Volver a bloquear el panel al guardar" : "Desbloquear el panel al guardar"}
+                              </span>
+                            </Switch.Content>
+                          </Switch>
+                        </div>
+                      )}
                       <TextField
                         value={accountEmail}
                         onChange={(value) => setAccountEmail(value.slice(0, 254))}
