@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, KeyRound, Lightbulb, PlayCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Copy,
+  ExternalLink as ExternalLinkIcon,
+  KeyRound,
+  Lightbulb,
+  PlayCircle,
+} from "lucide-react";
 import { Button, Chip, cn, toast } from "@heroui/react";
 import { CAROUSEL_CARD_BODY, CAROUSEL_TEMPLATE_BODY, WHATSAPP_TEMPLATE_BODY } from "./whatsapp-templates";
 
@@ -62,6 +72,21 @@ function CopyBlock({ label, text }: { label: string; text: string }) {
 
 const Path = ({ children }: { children: ReactNode }) => <span className="font-medium text-foreground">{children}</span>;
 
+/** Inicio de sesión con Facebook que lleva directo a developers.facebook.com. */
+const META_DEVELOPERS_LOGIN_URL =
+  "https://business.facebook.com/business/loginpage/?next=https%3A%2F%2Fdevelopers.facebook.com%2F";
+
+const ExternalLink = ({ href, children }: { href: string; children: ReactNode }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-1 font-medium text-accent underline underline-offset-2"
+  >
+    {children} <ExternalLinkIcon className="size-3" />
+  </a>
+);
+
 const STEPS: GuideStepData[] = [
   {
     title: "Antes de empezar",
@@ -83,7 +108,8 @@ const STEPS: GuideStepData[] = [
     summary: "Es la «puerta» por la que VendeYaOnline envía tus mensajes.",
     actions: [
       <>
-        Entra a <Path>developers.facebook.com → Mis apps → Crear app</Path>.
+        <ExternalLink href={META_DEVELOPERS_LOGIN_URL}>Inicia sesión con tu cuenta de Facebook</ExternalLink> y entra a{" "}
+        <Path>Mis apps → Crear app</Path>.
       </>,
       "Elige «Conectar con clientes a través de WhatsApp» (o tipo «Negocio»).",
       "Vincúlala a tu portafolio comercial.",
